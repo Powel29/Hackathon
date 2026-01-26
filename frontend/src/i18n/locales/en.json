@@ -1,0 +1,16 @@
+{
+    "welcome": "Welcome to SUVIDHA",
+    "selectLanguage": "Select Language",
+    "selectService": "Select Service",
+    "electricity": "Electricity",
+    "gas": "Gas",
+    "water": "Water & Sanitation",
+    "municipal": "Municipal Services",
+    "login": "Login",
+    "consumerId": "Consumer ID",
+    "mobileNumber": "Mobile Number",
+    "billPayment": "Bill Payment",
+    "newConnection": "New Connection",
+    "complaints": "Register Complaint",
+    "trackStatus": "Track Status"
+}
