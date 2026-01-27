@@ -1,32 +1,25 @@
 {
-  "name": "backend",
+  "name": "suvidha_db",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "devStart": "nodemon --exec node --loader ts-node/esm script.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "@prisma/client": "^7.3.0",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.2.1",
-    "express-validator": "^7.3.1",
-    "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.3",
-    "multer": "^2.0.2",
-    "prisma": "^7.3.0"
-  },
+  "type": "module",
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "@types/node": "^25.0.10",
+    "@types/pg": "^8.16.0",
+    "nodemon": "^3.1.11",
+    "prisma": "^7.3.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "^7.3.0"
   }
 }
