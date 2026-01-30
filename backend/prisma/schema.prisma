@@ -5,10 +5,153 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// MODELS
+
+model Citizen {
+  aadharNumber String   @id @db.VarChar(12)
+  fullName     String   @db.VarChar(150)
+  mobileNumber String   @unique @db.VarChar(10)
+  email        String?  @db.VarChar(150)
+  languagePref String   @default("en") @db.VarChar(10)
+  createdAt    DateTime @default(now())
+
+  serviceAccounts ServiceAccount[]
+  complaints      Complaint[]
+  serviceRequests ServiceRequest[]
+  documents       Document[]
+  kioskLogs       KioskLog[]
+
+  @@map("citizens")
+}
+
+model ServiceAccount {
+  accountId     String  @id @default(uuid()) @db.Uuid
+  citizenId     String  @db.VarChar(12)
+  serviceType   String  @db.VarChar(20)
+  accountNumber String? @db.VarChar(30)
+  status        String  @db.VarChar(20)
+
+  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
+  bills   Bill[]
+
+  @@map("service_accounts")
+}
+
+model Bill {
+  billId        String    @id @default(uuid()) @db.Uuid
+  accountId     String    @db.Uuid
+  billingDate   DateTime? @db.Date
+  billingPeriod String?   @db.VarChar(20)
+  amount        Decimal?  @db.Decimal(10, 2)
+  dueDate       DateTime? @db.Date
+  status        String    @db.VarChar(20)
+
+  account  ServiceAccount @relation(fields: [accountId], references: [accountId])
+  payments Payment[]
+
+  @@map("bills")
+}
+
+model Payment {
+  paymentId      String   @id @default(uuid()) @db.Uuid
+  billId         String   @db.Uuid
+  gateway        String?  @db.VarChar(30)
+  transactionRef String?  @db.VarChar(100)
+  amount         Decimal? @db.Decimal(10, 2)
+  status         String   @db.VarChar(20)
+  paidAt         DateTime @default(now())
+
+  bill Bill @relation(fields: [billId], references: [billId])
+
+  @@map("payments")
+}
+
+model Complaint {
+  complaintId String    @id @default(uuid()) @db.Uuid
+  citizenId   String    @db.VarChar(12)
+  serviceType String    @db.VarChar(20)
+  description String
+  status      String    @db.VarChar(20)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+
+  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
+
+  @@map("complaints")
+}
+
+model ServiceRequestType {
+  requestTypeCode String  @id @db.VarChar(30)
+  description     String?
+  isActive        Boolean @default(true)
+
+  serviceRequests ServiceRequest[]
+
+  @@map("service_request_types")
+}
+
+model ServiceRequest {
+  requestId   String    @id @default(uuid()) @db.Uuid
+  citizenId   String    @db.VarChar(12)
+  serviceType String    @db.VarChar(20)
+  requestType String    @db.VarChar(30)
+  status      String    @db.VarChar(20)
+  details     Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+
+  citizen Citizen            @relation(fields: [citizenId], references: [aadharNumber])
+  type    ServiceRequestType @relation(fields: [requestType], references: [requestTypeCode])
+
+  @@map("service_requests")
+}
+
+model Document {
+  documentId    String   @id @default(uuid()) @db.Uuid
+  citizenId     String   @db.VarChar(12)
+  relatedEntity String   @db.VarChar(30)
+  relatedId     String   @db.Uuid
+  documentType  String   @db.VarChar(30)
+  fileName      String?  @db.VarChar(255)
+  filePath      String
+  uploadedAt    DateTime @default(now())
+
+  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
+
+  @@map("documents")
+}
+
+model Alert {
+  alertId     String    @id @default(uuid()) @db.Uuid
+  alertType   String    @db.VarChar(30)
+  serviceType String?   @db.VarChar(20)
+  title       String    @db.VarChar(150)
+  message     String
+  severity    String?   @db.VarChar(20)
+  startsAt    DateTime
+  endsAt      DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@map("alerts")
+}
+
+model KioskLog {
+  logId     String   @id @default(uuid()) @db.Uuid
+  kioskId   String   @db.VarChar(30)
+  citizenId String?  @db.VarChar(12)
+  action    String   @db.VarChar(50)
+  metadata  Json?
+  timestamp DateTime @default(now())
+
+  citizen Citizen? @relation(fields: [citizenId], references: [aadharNumber])
+
+  @@map("kiosk_logs")
 }
