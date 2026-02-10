@@ -1,44 +1,454 @@
 const prisma = require('../utils/prismaClient');
+// Complaint type definitions
+const COMPLAINT_TYPES = {
+    ELECTRICITY: [
+        'POWER_OUTAGE',
+        'VOLTAGE_FLUCTUATION',
+        'BILLING_ISSUE',
+        'METER_MALFUNCTION',
+        'STREET_LIGHT',
+        'WIRE_DAMAGE',
+        'OTHER'
+    ],
+    GAS: [
+        'GAS_LEAK',
+        'LOW_PRESSURE',
+        'BILLING_ISSUE',
+        'METER_PROBLEM',
+        'SUPPLY_DISRUPTION',
+        'PIPE_DAMAGE',
+        'OTHER'
+    ],
+    WATER: [
+        'NO_WATER_SUPPLY',
+        'LOW_PRESSURE',
+        'WATER_CONTAMINATION',
+        'BILLING_ISSUE',
+        'PIPE_LEAKAGE',
+        'DRAINAGE_BLOCKAGE',
+        'OTHER'
+    ],
+    MUNICIPAL: [
+        'GARBAGE_COLLECTION',
+        'STREET_LIGHT',
+        'ROAD_DAMAGE',
+        'DRAINAGE_ISSUE',
+        'PARK_MAINTENANCE',
+        'STRAY_ANIMALS',
+        'OTHER'
+    ]
+};
 
-// Submit complaint
-exports.submitComplaint = async (req, res) => {
+/**
+ * GET /api/complaints/types
+ * Get complaint types for a service
+ */
+exports.getComplaintTypes = async (req, res) => {
     try {
-        const { complaintType, description, utilityType, attachments } = req.body;
+        const { serviceType } = req.query;
 
+        if (!serviceType || !COMPLAINT_TYPES[serviceType]) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_SERVICE_TYPE',
+                    message: 'Invalid service type'
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            serviceType,
+            types: COMPLAINT_TYPES[serviceType]
+        });
+
+    } catch (error) {
+        console.error('Get Complaint Types Error:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to fetch complaint types'
+            }
+        });
+    }
+};
+
+/**
+ * POST /api/complaints
+ * Register new complaint
+ */
+exports.registerComplaint = async (req, res) => {
+    try {
+        const { citizenId } = req.user;
+        const {
+            serviceType,
+            complaintType,
+            title,
+            description,
+            location,
+            latitude,
+            longitude
+        } = req.body;
+
+        // Validate service type and complaint type
+        if (!COMPLAINT_TYPES[serviceType]?.includes(complaintType)) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_COMPLAINT_TYPE',
+                    message: 'Invalid complaint type for this service'
+                }
+            });
+        }
+
+        // Auto-determine priority based on complaint type
+        const urgentTypes = [
+            'GAS_LEAK',
+            'WATER_CONTAMINATION',
+            'POWER_OUTAGE',
+            'WIRE_DAMAGE',
+            'PIPE_LEAKAGE'
+        ];
+
+        const priority = urgentTypes.includes(complaintType) ? 'URGENT' : 'MEDIUM';
+
+        // Create complaint
         const complaint = await prisma.complaint.create({
             data: {
-                userId: req.user.userId,
+                citizenId,
+                serviceType,
                 complaintType,
+                title: title || complaintType.replace(/_/g, ' '),
                 description,
-                utilityType,
+                priority,
                 status: 'OPEN',
-                priority: 'MEDIUM',
-                attachments: attachments || []
+                location,
+                latitude: latitude ? parseFloat(latitude) : null,
+                longitude: longitude ? parseFloat(longitude) : null,
+                kioskId: req.headers['x-kiosk-id'] || null
+            }
+        });
+
+        // Create status history
+        await prisma.complaintStatusHistory.create({
+            data: {
+                complaintId: complaint.complaintId,
+                oldStatus: null,
+                newStatus: 'OPEN',
+                notes: 'Complaint registered'
+            }
+        });
+
+        // Log audit
+        await prisma.auditLog.create({
+            data: {
+                citizenId,
+                action: 'COMPLAINT_REGISTERED',
+                metadata: {
+                    complaintId: complaint.complaintId,
+                    serviceType,
+                    complaintType,
+                    priority
+                }
+            }
+        });
+
+        // Log kiosk activity
+        if (req.headers['x-kiosk-id']) {
+            await prisma.kioskLog.create({
+                data: {
+                    kioskId: req.headers['x-kiosk-id'],
+                    citizenId,
+                    action: 'COMPLAINT_REGISTERED',
+                    metadata: {
+                        complaintId: complaint.complaintId,
+                        serviceType
+                    }
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Complaint registered successfully',
+            complaint: {
+                complaintId: complaint.complaintId,
+                serviceType: complaint.serviceType,
+                complaintType: complaint.complaintType,
+                title: complaint.title,
+                priority: complaint.priority,
+                status: complaint.status,
+                createdAt: complaint.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Register Complaint Error:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to register complaint'
+            }
+        });
+    }
+};
+
+/**
+ * GET /api/complaints
+ * Get all complaints for logged-in citizen
+ */
+exports.getMyComplaints = async (req, res) => {
+    try {
+        const { citizenId } = req.user;
+        const { status, serviceType } = req.query;
+
+        const complaints = await prisma.complaint.findMany({
+            where: {
+                citizenId,
+                ...(status && { status }),
+                ...(serviceType && { serviceType })
+            },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                statusHistory: {
+                    orderBy: { changedAt: 'desc' },
+                    take: 1
+                }
+            }
+        });
+
+        // Calculate summary
+        const summary = {
+            total: complaints.length,
+            open: complaints.filter(c => c.status === 'OPEN').length,
+            inProgress: complaints.filter(c => c.status === 'IN_PROGRESS').length,
+            resolved: complaints.filter(c => c.status === 'RESOLVED').length,
+            closed: complaints.filter(c => c.status === 'CLOSED').length
+        };
+
+        res.json({
+            success: true,
+            complaints,
+            summary
+        });
+
+    } catch (error) {
+        console.error('Get My Complaints Error:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to fetch complaints'
+            }
+        });
+    }
+};
+
+/**
+ * GET /api/complaints/:complaintId
+ * Get complaint details
+ */
+exports.getComplaintDetails = async (req, res) => {
+    try {
+        const { citizenId } = req.user;
+        const { complaintId } = req.params;
+
+        const complaint = await prisma.complaint.findFirst({
+            where: {
+                complaintId,
+                citizenId
+            },
+            include: {
+                citizen: {
+                    select: {
+                        fullName: true,
+                        mobileNumber: true,
+                        email: true
+                    }
+                },
+                statusHistory: {
+                    orderBy: { changedAt: 'desc' }
+                }
+            }
+        });
+
+        if (!complaint) {
+            return res.status(404).json({
+                success: false,
+                error: {
+                    code: 'COMPLAINT_NOT_FOUND',
+                    message: 'Complaint not found'
+                }
+            });
+        }
+
+        // Get attached documents
+        const documents = await prisma.document.findMany({
+            where: {
+                relatedEntity: 'COMPLAINT',
+                relatedId: complaintId
             }
         });
 
         res.json({
             success: true,
-            message: 'Complaint submitted successfully',
-            complaint
+            complaint: {
+                ...complaint,
+                documents
+            }
         });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Get Complaint Details Error:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to fetch complaint details'
+            }
+        });
     }
 };
 
-// Track complaint
+/**
+ * GET /api/complaints/track/:complaintId
+ * Track complaint by ID (public - no auth required for kiosk)
+ */
 exports.trackComplaint = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { complaintId } = req.params;
 
         const complaint = await prisma.complaint.findUnique({
-            where: { id },
-            include: { user: { select: { name: true, mobile: true } } }
+            where: { complaintId },
+            select: {
+                complaintId: true,
+                serviceType: true,
+                complaintType: true,
+                title: true,
+                status: true,
+                priority: true,
+                createdAt: true,
+                updatedAt: true,
+                resolvedAt: true,
+                statusHistory: {
+                    orderBy: { changedAt: 'desc' }
+                }
+            }
         });
 
-        res.json({ success: true, complaint });
+        if (!complaint) {
+            return res.status(404).json({
+                success: false,
+                error: {
+                    code: 'COMPLAINT_NOT_FOUND',
+                    message: 'Complaint ID not found'
+                }
+            });
+        }
+
+        // Calculate estimated resolution time
+        const avgResolutionDays = {
+            URGENT: 1,
+            HIGH: 3,
+            MEDIUM: 7,
+            LOW: 14
+        };
+
+        const estimatedResolution = new Date(complaint.createdAt);
+        estimatedResolution.setDate(
+            estimatedResolution.getDate() + avgResolutionDays[complaint.priority]
+        );
+
+        res.json({
+            success: true,
+            complaint: {
+                ...complaint,
+                estimatedResolution
+            }
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Track Complaint Error:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SERVER_ERROR',
+                message: 'Failed to track complaint'
+            }
+        });
     }
 };
+
+/**
+ * POST /api/complaints/:complaintId/upload
+ * Upload documents for complaint
+ */
+exports.uploadDocument = async (req, res) => {
+    try {
+        const { citizenId } = req.user;
+        const { complaintId } = req.params;
+
+        // Verify complaint belongs to citizen
+        const complaint = await prisma.complaint.findFirst({
+            where: {
+                complaintId,
+                citizenId
+            }
+        });
+
+        if (!complaint) {
+            return res.status(404).json({
+                success: false,
+                error: {
+                    code: 'COMPLAINT_NOT_FOUND',
+                    message: 'Complaint not found'
+                }
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    code: 'NO_FILE',
+                    message: 'No file uploaded'
+                }
+            });
+        }
+
+        // Create document record
+        const document = await prisma.document.create({
+            data: {
+                citizenId,
+                relatedEntity: 'COMPLAINT',
+                relatedId: complaintId,
+                documentType: req.file.mimetype.startsWith('image/') ? 'PHOTO' : 'PDF',
+                fileName: req.file.originalname,
+                filePath: req.file.path,
+                fileSize: req.file.size,
+                mimeType: req.file.mimetype
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Document uploaded successfully',
+            document
+        });
+
+    } catch (error) {
+        console.error('Upload Document Error:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'UPLOAD_FAILED',
+                message: 'Failed to upload document'
+            }
+        });
+    }
+};
+
+module.exports = exports;

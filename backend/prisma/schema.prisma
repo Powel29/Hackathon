@@ -12,24 +12,110 @@ datasource db {
   provider = "postgresql"
 }
 
-// MODELS
+// ========================================
+// AUTHENTICATION & USER MODELS
+// ========================================
 
 model Citizen {
-  aadharNumber String   @id @db.VarChar(12)
-  fullName     String   @db.VarChar(150)
-  mobileNumber String   @unique @db.VarChar(10)
-  email        String?  @db.VarChar(150)
-  languagePref String   @default("en") @db.VarChar(10)
-  createdAt    DateTime @default(now())
+  aadharNumber String @id @db.VarChar(12) // Keep as-is for compatibility
+  aadharHash   String @unique // NEW: Hashed Aadhaar for secure lookups
 
+  // Basic Info
+  fullName     String  @db.VarChar(150)
+  mobileNumber String  @unique @db.VarChar(10)
+  email        String? @db.VarChar(150)
+
+  // NEW: Aadhaar-fetched data (PRD requirement)
+  dateOfBirth DateTime? @db.Date
+  gender      String?   @db.VarChar(10)
+  address     String?   @db.Text
+
+  // System Fields
+  languagePref String    @default("en") @db.VarChar(10)
+  isVerified   Boolean   @default(false) // NEW: OTP verified
+  isActive     Boolean   @default(true) // NEW: Account status
+  lastLoginAt  DateTime? // NEW: Track last login
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt // NEW: Auto-update timestamp
+
+  // Existing Relations
   serviceAccounts ServiceAccount[]
   complaints      Complaint[]
   serviceRequests ServiceRequest[]
   documents       Document[]
   kioskLogs       KioskLog[]
 
+  // NEW Relations
+  authSessions    AuthSession[]
+  auditLogs       AuditLog[]
+  otpVerifications OTPVerification[]
+
+  @@index([aadharHash])
+  @@index([mobileNumber])
   @@map("citizens")
 }
+
+// NEW: OTP Management
+model OTPVerification {
+  otpId       String   @id @default(uuid()) @db.Uuid
+  citizenId   String   @db.VarChar(12)
+  mobileNumber String?  @db.VarChar(10)
+  otpHash     String   @db.VarChar(64) // SHA-256 hashed OTP
+  purpose     String   @db.VarChar(20) // LOGIN, SIGNUP, VERIFY_MOBILE
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  expiresAt   DateTime
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+
+  @@index([citizenId, isVerified])
+  @@index([expiresAt])
+  @@map("otp_verifications")
+}
+
+// NEW: Session Management
+model AuthSession {
+  sessionId      String   @id @default(uuid()) @db.Uuid
+  citizenId      String   @db.VarChar(12)
+  tokenHash      String   @db.VarChar(64) // Hashed JWT for validation
+  kioskId        String?  @db.VarChar(30)
+  ipAddress      String?  @db.VarChar(45)
+  userAgent      String?  @db.VarChar(255)
+  expiresAt      DateTime
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+
+  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+
+  @@index([citizenId, isActive])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+// NEW: Audit Logs (DPDP Compliance)
+model AuditLog {
+  logId     String   @id @default(uuid()) @db.Uuid
+  citizenId String?  @db.VarChar(12)
+  action    String   @db.VarChar(50) // LOGIN_SUCCESS, OTP_SENT, etc.
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?  @db.VarChar(255)
+  metadata  Json?
+  timestamp DateTime @default(now())
+
+  citizen Citizen? @relation(fields: [citizenId], references: [aadharNumber], onDelete: SetNull)
+
+  @@index([citizenId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// ========================================
+// EXISTING MODELS (Unchanged)
+// ========================================
 
 model ServiceAccount {
   accountId     String  @id @default(uuid()) @db.Uuid
@@ -74,17 +160,59 @@ model Payment {
 }
 
 model Complaint {
-  complaintId String    @id @default(uuid()) @db.Uuid
-  citizenId   String    @db.VarChar(12)
-  serviceType String    @db.VarChar(20)
-  description String
-  status      String    @db.VarChar(20)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime?
+  complaintId   String @id @default(uuid()) @db.Uuid
+  citizenId     String @db.VarChar(12)
+  serviceType   String @db.VarChar(20) // ELECTRICITY, GAS, WATER, MUNICIPAL
+  complaintType String @db.VarChar(50) // NEW: Specific issue type
+  title         String @db.VarChar(200) // NEW: Brief title
+  description   String @db.Text // Changed to Text for longer descriptions
+  priority      String @db.VarChar(20) // NEW: LOW, MEDIUM, HIGH, URGENT
+  status        String @db.VarChar(20) // OPEN, IN_PROGRESS, RESOLVED, CLOSED
 
-  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
+  // Location tracking
+  location  String?  @db.VarChar(255) // NEW: Issue location
+  latitude  Decimal? @db.Decimal(10, 8) // NEW: GPS coordinates
+  longitude Decimal? @db.Decimal(11, 8) // NEW: GPS coordinates
 
+  // Assignment
+  assignedTo String? @db.VarChar(12) // NEW: Technician/Staff ID
+
+  // Resolution
+  resolutionNote String?   @db.Text // NEW: Admin resolution notes
+  resolvedAt     DateTime? // NEW: Resolution timestamp
+
+  // Metadata
+  kioskId   String?  @db.VarChar(30) // NEW: Kiosk where filed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Changed to auto-update
+
+  // Relations
+  citizen       Citizen                  @relation(fields: [citizenId], references: [aadharNumber])
+  statusHistory ComplaintStatusHistory[] // NEW: Track status changes
+
+  @@index([citizenId])
+  @@index([status])
+  @@index([serviceType])
+  @@index([priority])
+  @@index([createdAt])
   @@map("complaints")
+}
+
+// NEW: Track complaint status changes
+model ComplaintStatusHistory {
+  historyId   String   @id @default(uuid()) @db.Uuid
+  complaintId String   @db.Uuid
+  oldStatus   String?  @db.VarChar(20)
+  newStatus   String   @db.VarChar(20)
+  changedBy   String?  @db.VarChar(12) // Admin/Staff ID
+  notes       String?  @db.Text
+  changedAt   DateTime @default(now())
+
+  complaint Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
+
+  @@index([complaintId])
+  @@index([changedAt])
+  @@map("complaint_status_history")
 }
 
 model ServiceRequestType {
@@ -116,15 +244,18 @@ model ServiceRequest {
 model Document {
   documentId    String   @id @default(uuid()) @db.Uuid
   citizenId     String   @db.VarChar(12)
-  relatedEntity String   @db.VarChar(30)
+  relatedEntity String   @db.VarChar(30) // 'COMPLAINT', 'SERVICE_REQUEST', etc.
   relatedId     String   @db.Uuid
-  documentType  String   @db.VarChar(30)
+  documentType  String   @db.VarChar(30) // 'PHOTO', 'VIDEO', 'PDF'
   fileName      String?  @db.VarChar(255)
   filePath      String
+  fileSize      Int? // NEW: File size in bytes
+  mimeType      String?  @db.VarChar(100) // NEW: MIME type
   uploadedAt    DateTime @default(now())
 
   citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
 
+  @@index([relatedEntity, relatedId])
   @@map("documents")
 }
 

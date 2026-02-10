@@ -28,6 +28,7 @@ async function main() {
             const citizen = await prisma.citizen.create({
                 data: {
                     aadharNumber: '123456789012',
+                    aadharHash: 'test-hash-123456789012',
                     fullName: 'John Doe',
                     mobileNumber: '1234567890',
                     email: 'john.doe@example.com',
