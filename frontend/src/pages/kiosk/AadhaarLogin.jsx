@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
+import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
+import * as authService from '../../services/api/auth.service';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 
 export function AadhaarLogin() {
@@ -10,6 +12,7 @@ export function AadhaarLogin() {
   const navigate = useNavigate();
   const [aadhaar, setAadhaar] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 12);
@@ -17,14 +20,30 @@ export function AadhaarLogin() {
     setError('');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(async () => {
     if (aadhaar.length !== 12) {
       setError(t('invalidAadhaar'));
       return;
     }
 
-    navigate('/kiosk/otp-verification', { state: { aadhaarNumber: aadhaar } });
-  };
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await authService.sendOTP({ aadhaarNumber: aadhaar });
+
+      if (response.success) {
+        navigate('/kiosk/otp-verification', { state: { aadhaarNumber: aadhaar } });
+      } else {
+        setError(response.message || t('errorSendingOTP'));
+      }
+    } catch (err) {
+      console.error(err);
+      setError(t('errorSendingOTP'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [aadhaar, navigate, t]);
 
   const formatAadhaar = (value) => {
     return value.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -44,7 +63,11 @@ export function AadhaarLogin() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [aadhaar, navigate]);
+  }, [aadhaar, navigate, handleSubmit]);
+
+  if (isLoading) {
+    return <LoadingScreen message={t('sendingOTP') + '...'} />;
+  }
 
   return (
     <KioskLayout>

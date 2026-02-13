@@ -10,7 +10,7 @@ export function ServiceSelection() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { setSelectedService, isAuthenticated } = useKioskStore();
-    const [focusedIndex, setFocusedIndex] = useState(0);
+
 
     // Check if user is authenticated, if not redirect to login
     useEffect(() => {

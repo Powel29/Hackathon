@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+
 import { useNavigate } from 'react-router-dom';
 import {
   Droplets,
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export function WaterDashboard() {
-  const { t } = useTranslation();
+
   const navigate = useNavigate();
 
   // Mock data for water department

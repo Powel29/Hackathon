@@ -44,7 +44,11 @@
     "newUser": "New user?",
     "alreadyHaveAccount": "Already have an account?",
     "loginToContinue": "Login to continue",
-    "createAccount": "Create your account"
+    "createAccount": "Create your account",
+    "errorSendingOTP": "Failed to send OTP",
+    "errorResendingOTP": "Failed to resend OTP",
+    "errorVerifyingOTP": "Failed to verify OTP",
+    "sendingOTP": "Sending OTP"
   },
   "dashboard": {
     "welcome": "Welcome",

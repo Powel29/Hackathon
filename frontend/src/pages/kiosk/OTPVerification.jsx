@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
+import * as authService from '../../services/api/auth.service';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 
 export function OTPVerification() {
@@ -14,7 +15,7 @@ export function OTPVerification() {
   const { setUser } = useKioskStore();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
-  const [attempts, setAttempts] = useState(3);
+  const [attempts] = useState(3);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -25,7 +26,11 @@ export function OTPVerification() {
     if (resendTimer > 0) {
       const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
       return () => clearTimeout(timer);
-    } else {
+    }
+  }, [resendTimer]);
+
+  useEffect(() => {
+    if (resendTimer === 0) {
       setCanResend(true);
     }
   }, [resendTimer]);
@@ -52,16 +57,26 @@ export function OTPVerification() {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (canResend) {
       setOtp(['', '', '', '', '', '']);
       setError('');
       setResendTimer(30);
       setCanResend(false);
+
+      try {
+        const response = await authService.resendOTP({ aadhaarNumber });
+        if (!response.success) {
+          setError(response.message || t('errorResendingOTP'));
+        }
+      } catch (err) {
+        console.error('Resend OTP error', err);
+        setError(t('errorResendingOTP'));
+      }
     }
   };
 
-  const handleVerify = async () => {
+  const handleVerify = useCallback(async () => {
     const otpValue = otp.join('');
     if (otpValue.length !== 6) {
       setError(t('invalidOTP'));
@@ -69,21 +84,27 @@ export function OTPVerification() {
     }
 
     setIsVerifying(true);
+    setError('');
 
-    setTimeout(() => {
-      const mockUser = {
-        name: 'Rajesh Kumar',
-        aadhaarNumber: aadhaarNumber,
-        consumerId: 'CONS123456',
-        phoneNumber: '+91 98765 43210',
-        email: 'rajesh.kumar@example.com'
-      };
+    try {
+      const response = await authService.verifyOTP({
+        aadhaarNumber,
+        otp: otpValue
+      });
 
-      setUser(mockUser);
+      if (response.success && response.data?.user) {
+        setUser(response.data.user);
+        navigate('/kiosk/dashboard');
+      } else {
+        setError(response.message || t('invalidOTP'));
+      }
+    } catch (err) {
+      console.error(err);
+      setError(t('errorVerifyingOTP'));
+    } finally {
       setIsVerifying(false);
-      navigate('/kiosk/dashboard');
-    }, 1500);
-  };
+    }
+  }, [otp, t, aadhaarNumber, setUser, navigate]);
 
   // Keyboard support for Enter and Escape
   useEffect(() => {
@@ -99,7 +120,7 @@ export function OTPVerification() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [otp, navigate]);
+  }, [otp, navigate, handleVerify]);
 
   if (isVerifying) {
     return <LoadingScreen message={t('verify') + '...'} />;

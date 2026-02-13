@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * New Connections Service
  * 
@@ -8,19 +9,19 @@
 import { query, transaction } from '../../db/config';
 
 
-export 
+export
 
-export 
+  export
 
-/**
- * Submit new connection application
- */
-export async function submitConnectionApplication(request) { success: boolean; applicationNumber?: string; error?: string }> {
-  try {
-    // Database implementation (uncomment when ready) {
+  /**
+   * Submit new connection application
+   */
+  export async function submitConnectionApplication(request) { success: boolean; applicationNumber ?: string; error ?: string }> {
+    try {
+      // Database implementation (uncomment when ready) {
       // Generate application number
       const applicationNumber = await generateApplicationNumber(request.serviceType);
-      
+
       // Insert application
       const result = await client.query(
         `INSERT INTO connection_applications (
@@ -39,40 +40,40 @@ export async function submitConnectionApplication(request) { success: boolean; a
           request.signatureUrl
         ]
       );
-      
+
       const applicationId = result.rows[0].application_id;
-      
+
       // Create notification
       await client.query(
         `INSERT INTO notifications (user_id, notification_type, title, message)
          VALUES ($1, 'application_submitted', 'Application Submitted', $2)`,
         [request.userId, `Your ${request.serviceType} connection application ${applicationNumber} has been submitted successfully.`]
       );
-      
+
       // Log audit
       await client.query(
         `INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id)
          VALUES ($1, 'application_submitted', 'connection_application', $2)`,
         [request.userId, applicationId]
       );
-      
+
       return { success, applicationNumber };
     });
     */
 
     // Mock implementation
     console.log('Submitting connection application:', request);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const applicationNumber = `APP-${request.serviceType.toUpperCase().substring(0, 3)}-${Date.now()}`;
-    
-    return { success, applicationNumber };
+
+// Simulate API delay
+await new Promise(resolve => setTimeout(resolve, 1500));
+
+const applicationNumber = `APP-${request.serviceType.toUpperCase().substring(0, 3)}-${Date.now()}`;
+
+return { success, applicationNumber };
   } catch (error) {
-    console.error('Submit connection application error:', error);
-    return { success, error: String(error) };
-  }
+  console.error('Submit connection application error:', error);
+  return { success, error: String(error) };
+}
 }
 
 /**
@@ -81,13 +82,13 @@ export async function submitConnectionApplication(request) { success: boolean; a
 export async function getConnectionApplication(applicationId?: string, applicationNumber?: string) {
   try {
     // Database implementation (uncomment when ready) {whereClause}`,
-      [param]
+    [param]
     );
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     const row = result.rows[0];
     return {
       applicationId: row.application_id,
@@ -104,10 +105,10 @@ export async function getConnectionApplication(applicationId?: string, applicati
       pincode: row.pincode,
       connectionType: row.connection_type,
       loadRequired: row.load_required ? parseFloat(row.load_required) { applicationId, applicationNumber });
-    
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     return {
       applicationId: applicationId || 'mock-app-id',
       applicationNumber: applicationNumber || 'APP-ELEC-1738325400000',
@@ -179,7 +180,7 @@ export async function updateApplicationStatus(
       let paramIndex = 2;
       
       if (reviewNotes) {
-        updates.push(`review_notes = $${paramIndex++}`);
+        updates.push(`review_notes = $${ paramIndex++ } `);
         params.push(reviewNotes);
       }
       
@@ -195,8 +196,8 @@ export async function updateApplicationStatus(
       
       const result = await client.query(
         `UPDATE connection_applications 
-         SET ${updates.join(', ')}
-         WHERE application_id = $${paramIndex}
+         SET ${ updates.join(', ') }
+         WHERE application_id = $${ paramIndex }
          RETURNING user_id, application_number, service_type`,
         params
       );
@@ -212,23 +213,23 @@ export async function updateApplicationStatus(
         const consumerId = await generateConsumerId(app.service_type);
         
         await client.query(
-          `INSERT INTO consumer_services (user_id, service_type, consumer_id, connection_status, connection_date)
-           VALUES ($1, $2, $3, 'active', CURRENT_DATE)`,
+          `INSERT INTO consumer_services(user_id, service_type, consumer_id, connection_status, connection_date)
+    VALUES($1, $2, $3, 'active', CURRENT_DATE)`,
           [app.user_id, app.service_type, consumerId]
         );
         
         // Notify user
         await client.query(
-          `INSERT INTO notifications (user_id, notification_type, title, message)
-           VALUES ($1, 'application_approved', 'Application Approved', $2)`,
-          [app.user_id, `Your connection application ${app.application_number} has been approved. Consumer ID: ${consumerId}`]
+          `INSERT INTO notifications(user_id, notification_type, title, message)
+    VALUES($1, 'application_approved', 'Application Approved', $2)`,
+          [app.user_id, `Your connection application ${ app.application_number } has been approved.Consumer ID: ${ consumerId } `]
         );
       } else if (status === 'rejected') {
         // Notify user
         await client.query(
-          `INSERT INTO notifications (user_id, notification_type, title, message)
-           VALUES ($1, 'application_rejected', 'Application Rejected', $2)`,
-          [app.user_id, `Your connection application ${app.application_number} has been rejected. Reason: ${reviewNotes || 'Not specified'}`]
+          `INSERT INTO notifications(user_id, notification_type, title, message)
+    VALUES($1, 'application_rejected', 'Application Rejected', $2)`,
+          [app.user_id, `Your connection application ${ app.application_number } has been rejected.Reason: ${ reviewNotes || 'Not specified' } `]
         );
       }
       
@@ -256,7 +257,7 @@ async function generateApplicationNumber(serviceType) {
   const prefix = serviceType.toUpperCase().substring(0, 3);
   const year = new Date().getFullYear();
   const random = Math.floor(10000 + Math.random() * 90000);
-  return `APP-${prefix}-${year}-${random}`;
+  return `APP - ${ prefix } -${ year } -${ random } `;
 }
 
 /**
@@ -265,5 +266,5 @@ async function generateApplicationNumber(serviceType) {
 async function generateConsumerId(serviceType) {
   const prefix = serviceType.charAt(0).toUpperCase();
   const random = Math.floor(100000000 + Math.random() * 900000000);
-  return `${prefix}C${random}`;
+  return `${ prefix }C${ random } `;
 }

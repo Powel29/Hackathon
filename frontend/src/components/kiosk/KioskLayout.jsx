@@ -7,7 +7,7 @@ export function KioskLayout({
     showLanguageSwitch = true,
     showHeader = true
 }) {
-    const { t, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     const { language, setLanguage } = useKioskStore();
 
     const languages = [

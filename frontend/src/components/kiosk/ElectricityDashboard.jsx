@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+
 import {
   Zap,
   TrendingUp,
@@ -12,7 +12,7 @@ import {
 
 export function ElectricityDashboard() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+
 
   // Mock data for electricity department
   const currentUsage = 245; // kWh this month

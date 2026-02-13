@@ -89,30 +89,32 @@ exports.initiateAuth = async (req, res) => {
             targetMobile = existingCitizen.mobileNumber;
         }
 
-        // Rate Limiting: Max 3 OTPs per hour per Aadhaar
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-        const recentOTPs = await prisma.oTPVerification.count({
-            where: {
-                citizenId: isNewUser ? aadharNumber : existingCitizen.aadharNumber,
-                createdAt: { gte: oneHourAgo }
-            }
-        });
-
-        if (recentOTPs >= 3) {
-            await logAudit(
-                existingCitizen?.aadharNumber,
-                'OTP_RATE_LIMIT',
-                req,
-                { count: recentOTPs }
-            );
-
-            return res.status(429).json({
-                success: false,
-                error: {
-                    code: 'RATE_LIMIT',
-                    message: 'Too many OTP requests. Please try after 1 hour'
+        // Rate Limiting: Max 3 OTPs per hour per Aadhaar (Skip in development)
+        if (process.env.NODE_ENV !== 'development') {
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+            const recentOTPs = await prisma.oTPVerification.count({
+                where: {
+                    citizenId: isNewUser ? aadharNumber : existingCitizen.aadharNumber,
+                    createdAt: { gte: oneHourAgo }
                 }
             });
+
+            if (recentOTPs >= 3) {
+                await logAudit(
+                    existingCitizen?.aadharNumber,
+                    'OTP_RATE_LIMIT',
+                    req,
+                    { count: recentOTPs }
+                );
+
+                return res.status(429).json({
+                    success: false,
+                    error: {
+                        code: 'RATE_LIMIT',
+                        message: 'Too many OTP requests. Please try after 1 hour'
+                    }
+                });
+            }
         }
 
         // Generate OTP
@@ -144,6 +146,7 @@ exports.initiateAuth = async (req, res) => {
             success: true,
             isNewUser,
             maskedMobile: targetMobile.replace(/(\d{6})(\d{4})/, '******$2'),
+            mobileNumber: targetMobile, // Full number for Firebase (Hackathon mode)
             maskedAadhaar: maskAadhaar(aadharNumber),
             expiresIn: 300, // seconds
             // For demo/testing only (REMOVE IN PRODUCTION)
@@ -169,7 +172,7 @@ exports.initiateAuth = async (req, res) => {
  */
 exports.verifyOTP = async (req, res) => {
     try {
-        const { aadharNumber, otp } = req.body;
+        const { aadharNumber, otp, firebaseVerified } = req.body;
 
         // Validate inputs
         if (!validateAadhaar(aadharNumber)) {
@@ -182,6 +185,84 @@ exports.verifyOTP = async (req, res) => {
             });
         }
 
+        // HACKATHON MODE: Skip OTP verification if Firebase verified
+        // WARNING: In production, verify the Firebase ID token on the server!
+        if (firebaseVerified && process.env.NODE_ENV === 'development') {
+            console.log('🔥 Firebase bypass mode - skipping OTP verification');
+
+            const aadharHash = hashAadhaar(aadharNumber);
+            let citizen = await prisma.citizen.findUnique({
+                where: { aadharHash }
+            });
+
+            if (!citizen) {
+                return res.status(400).json({
+                    success: false,
+                    error: {
+                        code: 'USER_NOT_FOUND',
+                        message: 'User not found. Please register first.'
+                    }
+                });
+            }
+
+            // Update last login
+            await prisma.citizen.update({
+                where: { aadharNumber: citizen.aadharNumber },
+                data: {
+                    lastLoginAt: new Date(),
+                    isVerified: true
+                }
+            });
+
+            await logAudit(citizen.aadharNumber, 'LOGIN_SUCCESS_FIREBASE', req);
+
+            // Generate JWT token
+            const token = jwt.sign(
+                {
+                    citizenId: citizen.aadharNumber,
+                    aadharHash: citizen.aadharHash,
+                    mobile: citizen.mobileNumber
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '30m' }
+            );
+
+            // Create session record
+            const tokenHash = hashOTP(token);
+            await prisma.authSession.create({
+                data: {
+                    citizenId: citizen.aadharNumber,
+                    tokenHash,
+                    kioskId: req.headers['x-kiosk-id'] || 'DEMO-KIOSK-01',
+                    ipAddress: req.ip || req.headers['x-forwarded-for'],
+                    userAgent: req.headers['user-agent'],
+                    expiresAt: new Date(Date.now() + 30 * 60 * 1000)
+                }
+            });
+
+            // Check if user has service accounts
+            const serviceAccounts = await prisma.serviceAccount.findMany({
+                where: { citizenId: citizen.aadharNumber },
+                select: { serviceType: true, accountNumber: true }
+            });
+
+            return res.json({
+                success: true,
+                token,
+                user: {
+                    aadharNumber: citizen.aadharNumber,
+                    name: citizen.fullName,
+                    mobile: citizen.mobileNumber,
+                    email: citizen.email,
+                    languagePref: citizen.languagePref,
+                    hasServiceAccounts: serviceAccounts.length > 0,
+                    serviceAccounts: serviceAccounts,
+                    isNewUser: serviceAccounts.length === 0
+                }
+            });
+        }
+
+        // Normal OTP verification flow
         if (!/^\d{6}$/.test(otp)) {
             return res.status(400).json({
                 success: false,
@@ -277,18 +358,37 @@ exports.verifyOTP = async (req, res) => {
 
         // Create or update citizen
         if (!citizen) {
-            // NEW USER: Fetch Aadhaar data and create account
-            const aadhaarData = mockAadhaarFetch(aadharNumber);
+            // NEW USER: Fetch Aadhaar data (Mock) OR use provided data
+            // If frontend sends userData, use that. Otherwise fall back to mock.
+            const { userData } = req.body;
+
+            let fullName, dateOfBirth, gender, address;
+
+            if (userData) {
+                // Use data from frontend registration form
+                fullName = userData.fullName;
+                dateOfBirth = new Date(userData.dateOfBirth);
+                gender = userData.gender;
+                address = userData.address;
+            } else {
+                // Fallback to mock fetch
+                const aadhaarData = mockAadhaarFetch(aadharNumber);
+                fullName = aadhaarData.fullName;
+                dateOfBirth = new Date(aadhaarData.dateOfBirth);
+                gender = aadhaarData.gender;
+                address = aadhaarData.address;
+            }
 
             citizen = await prisma.citizen.create({
                 data: {
                     aadharNumber,
                     aadharHash,
-                    fullName: aadhaarData.fullName,
-                    mobileNumber: otpRecord.mobileNumber, // read the persisted mobile number
-                    dateOfBirth: new Date(aadhaarData.dateOfBirth),
-                    gender: aadhaarData.gender,
-                    address: aadhaarData.address,
+                    fullName,
+                    mobileNumber: otpRecord.mobileNumber, // read the persisted mobile number from OTP record
+                    dateOfBirth,
+                    gender,
+                    address,
+                    email: userData?.email || null, // Add email if provided
                     isVerified: true,
                     lastLoginAt: new Date()
                 }

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+
 import { useNavigate } from 'react-router-dom';
 import {
   Building2,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export function MunicipalDashboard() {
-  const { t } = useTranslation();
+
   const navigate = useNavigate();
 
   // Mock data for municipal department
@@ -127,7 +127,7 @@ export function MunicipalDashboard() {
                 <p className="text-sm font-semibold text-gray-900">Regular Collection</p>
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
-              <p className="text-xs text-gray-600">Monday, Wednesday, Friday</p>
+              <p className="text-xs text-gray-600">{garbageCollectionDay}</p>
               <p className="text-xs text-gray-600 mt-1">Time: 6:00 AM - 9:00 AM</p>
             </div>
 
@@ -177,8 +177,8 @@ export function MunicipalDashboard() {
               <div className="flex items-center justify-between mb-2">
                 <MapPin className="w-4 h-4 text-gray-600" />
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${facility.color === 'green' ? 'bg-green-100 text-green-700' :
-                    facility.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                      'bg-red-100 text-red-700'
+                  facility.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                    'bg-red-100 text-red-700'
                   }`}>
                   {facility.status}
                 </span>
@@ -220,12 +220,12 @@ export function MunicipalDashboard() {
               onClick={() => navigate('/kiosk/track-complaint')}>
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 ${complaint.color === 'green' ? 'bg-green-100' :
-                    complaint.color === 'blue' ? 'bg-blue-100' :
-                      'bg-yellow-100'
+                  complaint.color === 'blue' ? 'bg-blue-100' :
+                    'bg-yellow-100'
                   } rounded-lg flex items-center justify-center`}>
                   <FileText className={`w-4 h-4 ${complaint.color === 'green' ? 'text-green-600' :
-                      complaint.color === 'blue' ? 'text-blue-600' :
-                        'text-yellow-600'
+                    complaint.color === 'blue' ? 'text-blue-600' :
+                      'text-yellow-600'
                     }`} />
                 </div>
                 <div>
@@ -234,8 +234,8 @@ export function MunicipalDashboard() {
                 </div>
               </div>
               <span className={`text-xs font-semibold px-2 py-1 rounded-full ${complaint.color === 'green' ? 'bg-green-100 text-green-700' :
-                  complaint.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                    'bg-yellow-100 text-yellow-700'
+                complaint.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                  'bg-yellow-100 text-yellow-700'
                 }`}>
                 {complaint.status}
               </span>

@@ -6,27 +6,59 @@ import { authService } from '../../services/api';
 
 const Login = ({ utilityType, onLoginSuccess }) => {
     const { t } = useTranslation();
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const { register, handleSubmit, formState: { errors }, watch } = useForm();
     const [loading, setLoading] = useState(false);
+    const [showOtpInput, setShowOtpInput] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [formData, setFormData] = useState(null);
 
-    const onSubmit = async (data) => {
+    const onSendOtp = async (data) => {
         setLoading(true);
         try {
-            const response = await authService.login({
-                ...data,
-                utilityType
-            });
+            const response = await authService.sendOTP(data.consumerId, data.mobile);
+            setFormData(data);
+            setShowOtpInput(true);
 
-            if (response.success) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-                toast.success('Login successful!');
-                onLoginSuccess(response.user);
+            // Show demo OTP if available (development mode)
+            if (response._demoOTP) {
+                toast.success(`OTP sent! Demo OTP: ${response._demoOTP}`);
+            } else {
+                toast.success('OTP sent successfully!');
             }
         } catch (error) {
-            toast.error(error.message || 'Login failed');
+            console.error(error);
+            toast.error(error.message || 'Failed to send OTP');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const onVerifyOtp = async () => {
+        if (!formData) return;
+
+        setLoading(true);
+        try {
+            const verifyResponse = await authService.verifyOTP(formData.consumerId, otp);
+
+            if (verifyResponse.success) {
+                localStorage.setItem('token', verifyResponse.token);
+                localStorage.setItem('user', JSON.stringify(verifyResponse.user));
+                toast.success('Login successful!');
+                onLoginSuccess(verifyResponse.user);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'OTP verification failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const onSubmit = (data) => {
+        if (!showOtpInput) {
+            onSendOtp(data);
+        } else {
+            onVerifyOtp();
         }
     };
 
@@ -39,15 +71,23 @@ const Login = ({ utilityType, onLoginSuccess }) => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div>
                     <label className="block text-kiosk-base mb-3">
-                        {t('consumerId')}
+                        Aadhaar Number
                     </label>
                     <input
-                        {...register('consumerId', { required: true })}
+                        {...register('consumerId', {
+                            required: 'Aadhaar number is required',
+                            pattern: {
+                                value: /^[0-9]{12}$/,
+                                message: 'Aadhaar must be exactly 12 digits'
+                            }
+                        })}
                         className="w-full p-6 text-kiosk-base border-2 rounded-xl"
-                        placeholder="Enter Consumer ID"
+                        placeholder="Enter 12-digit Aadhaar Number"
+                        disabled={showOtpInput}
+                        maxLength={12}
                     />
                     {errors.consumerId && (
-                        <span className="text-red-500">This field is required</span>
+                        <span className="text-red-500">{errors.consumerId.message}</span>
                     )}
                 </div>
 
@@ -57,18 +97,39 @@ const Login = ({ utilityType, onLoginSuccess }) => {
                     </label>
                     <input
                         {...register('mobile', {
-                            required: true,
-                            pattern: /^[0-9]{10}$/
+                            required: 'Mobile number is required',
+                            pattern: {
+                                value: /^[6-9][0-9]{9}$/,
+                                message: 'Enter valid 10-digit mobile number starting with 6-9'
+                            }
                         })}
                         className="w-full p-6 text-kiosk-base border-2 rounded-xl"
                         placeholder="Enter Mobile Number"
+                        disabled={showOtpInput}
+                        maxLength={10}
                     />
                     {errors.mobile && (
                         <span className="text-red-500">
-                            Enter valid 10-digit mobile number
+                            {errors.mobile.message}
                         </span>
                     )}
                 </div>
+
+                {showOtpInput && (
+                    <div>
+                        <label className="block text-kiosk-base mb-3">
+                            Enter OTP
+                        </label>
+                        <input
+                            type="text"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            className="w-full p-6 text-kiosk-base border-2 rounded-xl"
+                            placeholder="Enter 6-digit OTP"
+                            maxLength={6}
+                        />
+                    </div>
+                )}
 
                 <button
                     type="submit"
@@ -77,7 +138,7 @@ const Login = ({ utilityType, onLoginSuccess }) => {
                         text-kiosk-lg font-bold hover:bg-blue-700
                         disabled:opacity-50"
                 >
-                    {loading ? 'Loading...' : t('login')}
+                    {loading ? 'Loading...' : (showOtpInput ? 'Verify & Login' : 'Send OTP')}
                 </button>
             </form>
         </div>

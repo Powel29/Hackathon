@@ -420,7 +420,7 @@ export function NewConnection() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, showSuccess, navigate]);
+  }, [currentStep, showSuccess, navigate, handleNext, handlePrevious, handleSubmit]);
 
   // Print application function
   const handlePrintApplication = () => {

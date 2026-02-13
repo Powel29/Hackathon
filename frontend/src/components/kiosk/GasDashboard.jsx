@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+
+
 import { useState, useEffect } from 'react';
 import {
   Flame,
@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 
 export function GasDashboard() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
+
+
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
   // Safety tips that rotate every minute
@@ -42,7 +42,7 @@ export function GasDashboard() {
   // Mock data for gas department
   const currentConsumption = 18.5; // kg this month
   const lastRefill = 'Jan 15, 2026';
-  const nextBooking = 'Expected in 12 days';
+
 
   return (
     <div className="space-y-6">

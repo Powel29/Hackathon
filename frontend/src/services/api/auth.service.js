@@ -1,3 +1,5 @@
+import api from '../api.js';
+
 /**
  * Authentication Service
  * 
@@ -10,25 +12,19 @@
  */
 export async function sendOTP(request) {
     try {
-        // Mock implementation
         console.log('Sending OTP for Aadhaar:', request.aadhaarNumber);
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Call backend API
+        const response = await api.post('/auth/initiate', {
+            aadharNumber: request.aadhaarNumber
+        });
 
-        return {
-            success: true,
-            message: 'OTP sent successfully',
-            data: {
-                mobileNumber: '******1234',
-                otp: '123456' // In production, this should NEVER be returned
-            }
-        };
+        return response.data;
     } catch (error) {
         console.error('Send OTP error:', error);
         return {
             success: false,
-            message: 'Failed to send OTP',
+            message: error.response?.data?.message || 'Failed to send OTP',
             error: String(error)
         };
     }
@@ -39,42 +35,30 @@ export async function sendOTP(request) {
  */
 export async function verifyOTP(request) {
     try {
-        // Mock implementation
         console.log('Verifying OTP for Aadhaar:', request.aadhaarNumber);
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Call backend API
+        const response = await api.post('/auth/verify-otp', {
+            aadharNumber: request.aadhaarNumber,
+            otp: request.otp
+        });
 
-        // Mock validation
-        if (request.otp === '123456') {
-            return {
-                success: true,
-                message: 'Login successful',
-                data: {
-                    user: {
-                        userId: 'mock-user-id-123',
-                        aadhaarNumber: request.aadhaarNumber,
-                        fullName: 'Rajesh Kumar',
-                        mobileNumber: '+91 98765 43210',
-                        email: 'rajesh.kumar@example.com',
-                        preferredLanguage: 'en'
-                    },
-                    sessionToken: 'mock-session-token-' + Date.now()
-                }
-            };
-        } else {
-            return {
-                success: false,
-                message: 'Invalid OTP',
-                error: 'INVALID_OTP',
-                data: { attemptsRemaining: 2 }
-            };
+        if (response.data.success) {
+            // Store token if needed, usually handled by interceptors if returned in headers or body
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+            }
+            if (response.data.user) {
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+            }
         }
+
+        return response.data;
     } catch (error) {
         console.error('Verify OTP error:', error);
         return {
             success: false,
-            message: 'Failed to verify OTP',
+            message: error.response?.data?.message || 'Failed to verify OTP',
             error: String(error)
         };
     }
@@ -85,7 +69,7 @@ export async function verifyOTP(request) {
  */
 export async function verifyConsumerId(request) {
     try {
-        // Mock implementation
+        // Mock implementation for now as per instructions (backend might not have this yet)
         console.log('Verifying Consumer ID:', request.consumerId, 'for service:', request.serviceType);
 
         // Simulate API delay
@@ -133,8 +117,9 @@ export async function verifyConsumerId(request) {
  */
 export async function logout(sessionToken) {
     try {
-        // Mock implementation
-        console.log('Logging out session:', sessionToken);
+        await api.post('/auth/logout');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
 
         return {
             success: true,
@@ -151,25 +136,20 @@ export async function logout(sessionToken) {
 }
 
 /**
- * Helper function to generate session token (placeholder)
- */
-function generateSessionToken(user) {
-    // In production, use JWT or similar secure token generation
-    return `session_${user.user_id}_${Date.now()}`;
-}
-
-/**
  * Resend OTP
  */
 export async function resendOTP(request) {
     try {
-        // Send new OTP
-        return await sendOTP(request);
+        // Call backend API
+        const response = await api.post('/auth/resend-otp', {
+            aadharNumber: request.aadhaarNumber
+        });
+        return response.data;
     } catch (error) {
         console.error('Resend OTP error:', error);
         return {
             success: false,
-            message: 'Failed to resend OTP',
+            message: error.response?.data?.message || 'Failed to resend OTP',
             error: String(error)
         };
     }

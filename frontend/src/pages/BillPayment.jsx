@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 const BillPayment = ({ user }) => {
     const { t } = useTranslation();
     const [bills, setBills] = useState([]);
-    const [selectedBill, setSelectedBill] = useState(null);
+
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -17,7 +17,7 @@ const BillPayment = ({ user }) => {
         try {
             const response = await billService.getUserBills();
             setBills(response.bills);
-        } catch (error) {
+        } catch {
             toast.error('Failed to fetch bills');
         }
     };
@@ -60,7 +60,7 @@ const BillPayment = ({ user }) => {
 
             const razorpay = new window.Razorpay(options);
             razorpay.open();
-        } catch (error) {
+        } catch {
             toast.error('Payment failed');
         } finally {
             setLoading(false);

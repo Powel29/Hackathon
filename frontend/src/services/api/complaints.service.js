@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Complaints Service
  * 
@@ -8,29 +9,14 @@
 import { query, transaction } from '../../db/config';
 
 
-export 
-
-export 
-
-export 
-
-export ;
-  timeline: {
-    status: string;
-    timestamp: string;
-    note: string;
-  }[];
-}
-
-export 
 
 /**
  * Get complaint types for a service
  */
-export async function getComplaintTypes(serviceType, language: string = 'en') {
+export async function getComplaintTypes(serviceType, language = 'en') {
   try {
-    // Database implementation (uncomment when ready) {language}`;
-    const result = await query(
+    /* Database implementation (uncomment when ready)
+    const languageColumn = `type_name_${language}`;
       `SELECT 
         complaint_type_id,
         service_type,
@@ -43,7 +29,7 @@ export async function getComplaintTypes(serviceType, language: string = 'en') {
        ORDER BY priority DESC, type_name`,
       [serviceType]
     );
-    
+
     return result.rows.map(row => ({
       complaintTypeId: row.complaint_type_id,
       serviceType: row.service_type,
@@ -56,8 +42,8 @@ export async function getComplaintTypes(serviceType, language: string = 'en') {
 
     // Mock implementation
     console.log('Getting complaint types for service:', serviceType);
-    
-    const complaintTypesByService: Record<ServiceType, ComplaintType[]> = {
+
+    const complaintTypesByService = {
       electricity: [
         { complaintTypeId: '1', serviceType: 'electricity', typeCode: 'POWER_CUT', typeName: 'Power Outage', priority: 'high', slaHours: 4 },
         { complaintTypeId: '2', serviceType: 'electricity', typeCode: 'VOLTAGE_ISSUE', typeName: 'Voltage Fluctuation', priority: 'normal', slaHours: 24 },
@@ -87,7 +73,7 @@ export async function getComplaintTypes(serviceType, language: string = 'en') {
         { complaintTypeId: '20', serviceType: 'municipal', typeCode: 'PUBLIC_TOILET', typeName: 'Public Toilet Issue', priority: 'normal', slaHours: 48 },
       ],
     };
-    
+
     return complaintTypesByService[serviceType] || [];
   } catch (error) {
     console.error('Get complaint types error:', error);
@@ -98,57 +84,57 @@ export async function getComplaintTypes(serviceType, language: string = 'en') {
 /**
  * Create new complaint
  */
-export async function createComplaint(request) { success: boolean; complaintNumber?: string; error?: string }> {
+export async function createComplaint(request) {
   try {
-    // Database implementation (uncomment when ready) {
-      // Generate complaint number
-      const complaintNumber = await generateComplaintNumber(request.serviceType);
-      
-      // Insert complaint
-      const complaintResult = await client.query(
-        `INSERT INTO complaints 
+    /* Database implementation (uncomment when ready)
+    // Generate complaint number
+    const complaintNumber = await generateComplaintNumber(request.serviceType);
+
+    // Insert complaint
+    const complaintResult = await client.query(
+      `INSERT INTO complaints 
          (complaint_number, user_id, consumer_service_id, complaint_type_id, service_type, description, attachment_url, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'open')
          RETURNING complaint_id`,
-        [complaintNumber, request.userId, request.consumerServiceId, request.complaintTypeId, 
-         request.serviceType, request.description, request.attachmentUrl]
-      );
-      
-      const complaintId = complaintResult.rows[0].complaint_id;
-      
-      // Add initial timeline entry
-      await client.query(
-        `INSERT INTO complaint_timeline (complaint_id, status, note)
+      [complaintNumber, request.userId, request.consumerServiceId, request.complaintTypeId,
+        request.serviceType, request.description, request.attachmentUrl]
+    );
+
+    const complaintId = complaintResult.rows[0].complaint_id;
+
+    // Add initial timeline entry
+    await client.query(
+      `INSERT INTO complaint_timeline (complaint_id, status, note)
          VALUES ($1, 'open', 'Complaint registered')`,
-        [complaintId]
-      );
-      
-      // Create notification for user
-      await client.query(
-        `INSERT INTO notifications (user_id, notification_type, title, message)
+      [complaintId]
+    );
+
+    // Create notification for user
+    await client.query(
+      `INSERT INTO notifications (user_id, notification_type, title, message)
          VALUES ($1, 'complaint_registered', 'Complaint Registered', $2)`,
-        [request.userId, `Your complaint has been registered with number ${complaintNumber}`]
-      );
-      
-      // Log audit
-      await client.query(
-        `INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id)
+      [request.userId, `Your complaint has been registered with number ${complaintNumber}`]
+    );
+
+    // Log audit
+    await client.query(
+      `INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id)
          VALUES ($1, 'complaint_created', 'complaint', $2)`,
-        [request.userId, complaintId]
-      );
-      
-      return { success, complaintNumber };
-    });
+      [request.userId, complaintId]
+    );
+
+    return { success, complaintNumber };
+  });
     */
 
     // Mock implementation
     console.log('Creating complaint:', request);
-    
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const complaintNumber = `CMP-${request.serviceType.toUpperCase().substring(0, 3)}-${Date.now()}`;
-    
+
     return { success, complaintNumber };
   } catch (error) {
     console.error('Create complaint error:', error);
@@ -161,29 +147,29 @@ export async function createComplaint(request) { success: boolean; complaintNumb
  */
 export async function getComplaint(request) {
   try {
-    // Database implementation (uncomment when ready) {
-      whereClause.push(`c.complaint_id = $${paramIndex++}`);
-      params.push(request.complaintId);
-    }
+    /* Database implementation (uncomment when ready)
+    whereClause.push(`c.complaint_id = $${paramIndex++}`);
+    params.push(request.complaintId);
+  }
     if (request.complaintNumber) {
-      whereClause.push(`c.complaint_number = $${paramIndex++}`);
-      params.push(request.complaintNumber);
-    }
-    if (request.userId) {
-      whereClause.push(`c.user_id = $${paramIndex++}`);
-      params.push(request.userId);
-    }
-    if (request.serviceType) {
-      whereClause.push(`c.service_type = $${paramIndex++}`);
-      params.push(request.serviceType);
-    }
-    if (request.status) {
-      whereClause.push(`c.status = $${paramIndex++}`);
-      params.push(request.status);
-    }
-    
-    const result = await query(
-      `SELECT 
+    whereClause.push(`c.complaint_number = $${paramIndex++}`);
+    params.push(request.complaintNumber);
+  }
+  if (request.userId) {
+    whereClause.push(`c.user_id = $${paramIndex++}`);
+    params.push(request.userId);
+  }
+  if (request.serviceType) {
+    whereClause.push(`c.service_type = $${paramIndex++}`);
+    params.push(request.serviceType);
+  }
+  if (request.status) {
+    whereClause.push(`c.status = $${paramIndex++}`);
+    params.push(request.status);
+  }
+
+  const result = await query(
+    `SELECT 
         c.complaint_id,
         c.complaint_number,
         c.user_id,
@@ -199,48 +185,48 @@ export async function getComplaint(request) {
        LEFT JOIN technicians t ON c.assigned_to = t.technician_id
        WHERE ${whereClause.join(' AND ')}
        LIMIT 1`,
-      params
-    );
-    
-    if (result.rows.length === 0) {
-      return null;
-    }
-    
-    const complaint = result.rows[0];
-    
-    // Get timeline
-    const timelineResult = await query(
-      `SELECT status, timestamp, note
+    params
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const complaint = result.rows[0];
+
+  // Get timeline
+  const timelineResult = await query(
+    `SELECT status, timestamp, note
        FROM complaint_timeline
        WHERE complaint_id = $1
        ORDER BY timestamp ASC`,
-      [complaint.complaint_id]
-    );
-    
-    return {
-      complaintId: complaint.complaint_id,
-      complaintNumber: complaint.complaint_number,
-      userId: complaint.user_id,
-      serviceType: complaint.service_type,
-      description: complaint.description,
-      status: complaint.status,
-      priority: complaint.priority,
-      createdAt: complaint.created_at,
-      updatedAt: complaint.updated_at,
-      assignedTechnician: complaint.technician_name ? {
-        name: complaint.technician_name,
-        phone: complaint.technician_phone
-      } : undefined,
-      timeline: timelineResult.rows
-    };
+    [complaint.complaint_id]
+  );
+
+  return {
+    complaintId: complaint.complaint_id,
+    complaintNumber: complaint.complaint_number,
+    userId: complaint.user_id,
+    serviceType: complaint.service_type,
+    description: complaint.description,
+    status: complaint.status,
+    priority: complaint.priority,
+    createdAt: complaint.created_at,
+    updatedAt: complaint.updated_at,
+    assignedTechnician: complaint.technician_name ? {
+      name: complaint.technician_name,
+      phone: complaint.technician_phone
+    } : undefined,
+    timeline: timelineResult.rows
+  };
     */
 
     // Mock implementation
     console.log('Getting complaint:', request);
-    
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     return {
       complaintId: '1',
       complaintNumber: request.complaintNumber || 'CMP-2026-12345',
@@ -277,9 +263,9 @@ export async function getComplaint(request) {
 /**
  * Get user's complaints
  */
-export async function getUserComplaints(userId, serviceType?: ServiceType) {
+export async function getUserComplaints(userId, serviceType) {
   try {
-    // Database implementation (uncomment when ready) {whereClause}
+    /* Database implementation (uncomment when ready)
        ORDER BY c.created_at DESC`,
       params
     );
@@ -318,7 +304,7 @@ export async function getUserComplaints(userId, serviceType?: ServiceType) {
 
     // Mock implementation
     console.log('Getting user complaints:', userId, serviceType);
-    
+
     return [
       {
         complaintId: '1',
@@ -357,23 +343,23 @@ export async function getUserComplaints(userId, serviceType?: ServiceType) {
 /**
  * Update complaint status
  */
-export async function updateComplaint(request) { success: boolean; error?: string }> {
+export async function updateComplaint(request) {
   try {
-    // Database implementation (uncomment when ready) {
+    /* Database implementation (uncomment when ready)
       const updates = [];
       const params: any[] = [];
       let paramIndex = 1;
       
       if (request.status) {
-        updates.push(`status = $${paramIndex++}`);
+        updates.push(`status = $${ paramIndex++ } `);
         params.push(request.status);
       }
       if (request.assignedTo) {
-        updates.push(`assigned_to = $${paramIndex++}`);
+        updates.push(`assigned_to = $${ paramIndex++ } `);
         params.push(request.assignedTo);
       }
       if (request.resolutionNotes) {
-        updates.push(`resolution_notes = $${paramIndex++}`);
+        updates.push(`resolution_notes = $${ paramIndex++ } `);
         params.push(request.resolutionNotes);
       }
       
@@ -387,17 +373,17 @@ export async function updateComplaint(request) { success: boolean; error?: strin
       
       await client.query(
         `UPDATE complaints 
-         SET ${updates.join(', ')}
-         WHERE complaint_id = $${paramIndex}`,
+         SET ${ updates.join(', ') }
+         WHERE complaint_id = $${ paramIndex } `,
         params
       );
       
       // Add timeline entry
       if (request.status) {
         await client.query(
-          `INSERT INTO complaint_timeline (complaint_id, status, note)
-           VALUES ($1, $2, $3)`,
-          [request.complaintId, request.status, request.resolutionNotes || `Status updated to ${request.status}`]
+          `INSERT INTO complaint_timeline(complaint_id, status, note)
+    VALUES($1, $2, $3)`,
+          [request.complaintId, request.status, request.resolutionNotes || `Status updated to ${ request.status } `]
         );
       }
       
@@ -407,10 +393,10 @@ export async function updateComplaint(request) { success: boolean; error?: strin
 
     // Mock implementation
     console.log('Updating complaint:', request);
-    
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     return { success: true };
   } catch (error) {
     console.error('Update complaint error:', error);
@@ -425,5 +411,5 @@ async function generateComplaintNumber(serviceType) {
   const prefix = serviceType.toUpperCase().substring(0, 3);
   const year = new Date().getFullYear();
   const random = Math.floor(10000 + Math.random() * 90000);
-  return `CMP-${prefix}-${year}-${random}`;
+  return `CMP - ${prefix} -${year} -${random} `;
 }

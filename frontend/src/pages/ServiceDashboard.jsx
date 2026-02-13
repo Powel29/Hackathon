@@ -8,7 +8,7 @@ import {
     LogOut
 } from 'lucide-react';
 
-const ServiceDashboard = ({ user, service }) => {
+const ServiceDashboard = ({ user }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
