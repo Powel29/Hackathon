@@ -93,8 +93,11 @@ exports.initiateAuth = async (req, res) => {
         if (process.env.NODE_ENV !== 'development') {
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
             const recentOTPs = await prisma.oTPVerification.count({
-                where: {
-                    citizenId: isNewUser ? aadharNumber : existingCitizen.aadharNumber,
+                where: isNewUser ? {
+                    mobileNumber: targetMobile,
+                    createdAt: { gte: oneHourAgo }
+                } : {
+                    citizenId: existingCitizen.aadharNumber,
                     createdAt: { gte: oneHourAgo }
                 }
             });
@@ -121,10 +124,10 @@ exports.initiateAuth = async (req, res) => {
         const otp = generateOTP();
         const otpHash = hashOTP(otp);
 
-        // Store OTP (for new users, use Aadhaar as temp citizenId). Persist actual mobile number.
+        // Store OTP (for new users, citizenId is null since they don't exist yet). Persist actual mobile number.
         await prisma.oTPVerification.create({
             data: {
-                citizenId: isNewUser ? aadharNumber : existingCitizen.aadharNumber,
+                citizenId: isNewUser ? null : existingCitizen.aadharNumber,
                 mobileNumber: targetMobile,
                 otpHash,
                 purpose: isNewUser ? 'SIGNUP' : 'LOGIN',
@@ -281,12 +284,17 @@ exports.verifyOTP = async (req, res) => {
             where: { aadharHash }
         });
 
-        // Find OTP record (use aadharNumber for new users, aadharNumber for existing)
-        const citizenId = citizen?.aadharNumber || aadharNumber;
-
+        // Find OTP record (for new users, search by mobile number; for existing, by citizenId)
+        const isNewUser = !citizen;
         const otpRecord = await prisma.oTPVerification.findFirst({
-            where: {
-                citizenId,
+            where: isNewUser ? {
+                mobileNumber: req.body.mobileNumber,
+                citizenId: null,
+                otpHash,
+                isVerified: false,
+                expiresAt: { gte: new Date() }
+            } : {
+                citizenId: citizen.aadharNumber,
                 otpHash,
                 isVerified: false,
                 expiresAt: { gte: new Date() }
@@ -297,7 +305,14 @@ exports.verifyOTP = async (req, res) => {
         if (!otpRecord) {
             // Check if OTP expired
             const latestOTP = await prisma.oTPVerification.findFirst({
-                where: { citizenId, isVerified: false },
+                where: isNewUser ? {
+                    mobileNumber: req.body.mobileNumber,
+                    citizenId: null,
+                    isVerified: false
+                } : {
+                    citizenId: citizen.aadharNumber,
+                    isVerified: false
+                },
                 orderBy: { createdAt: 'desc' }
             });
 

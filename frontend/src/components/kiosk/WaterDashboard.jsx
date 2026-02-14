@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Droplets,
@@ -10,16 +11,73 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
+import { useKioskStore } from '../../store/useKioskStore';
+import { departmentService } from '../../services/api';
 
 export function WaterDashboard() {
-
   const navigate = useNavigate();
+  const { user } = useKioskStore();
+  const [accountData, setAccountData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for water department
-  const currentUsage = 12500; // liters this month
-  const avgDailyUsage = 420; // liters per day
-  const lastBillAmount = 650;
-  const waterQuality = 'Good';
+  useEffect(() => {
+    const fetchAccountData = async () => {
+      if (!user?.consumerId) {
+        console.log('❌ No consumerId found:', user);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        console.log('🔍 Fetching water account for:', user.consumerId);
+        const response = await departmentService.getAccountDetails('WATER', user.consumerId);
+        console.log('✅ Water account response:', response);
+
+        if (response.success) {
+          setAccountData(response.account);
+          console.log('✅ Water account data set:', response.account);
+        } else {
+          console.error('❌ API returned success: false');
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch water account data:', error);
+        console.error('Error details:', error.response?.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccountData();
+  }, [user?.consumerId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading water account data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Use live data or fallback to defaults
+  const currentUsage = accountData?.currentMonthUsage || 0;
+  const avgDailyUsage = accountData?.dailyAverage || 0;
+  const lastBillAmount = accountData?.lastBillAmount || 0;
+  const waterQuality = accountData?.waterQualityStatus || 'Unknown';
+  const connectionType = accountData?.connectionType || 'Residential';
+  const lastReading = accountData?.lastReadingDate ? new Date(accountData.lastReadingDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+
+  // Water quality metrics
+  const qualityMetrics = [
+    { param: 'pH Level', value: accountData?.phLevel ? accountData.phLevel.toFixed(1) : '7.2', status: 'Good', color: 'green' },
+    { param: 'TDS', value: accountData?.tdsLevel ? `${accountData.tdsLevel.toFixed(0)} ppm` : '180 ppm', status: 'Good', color: 'green' },
+    { param: 'Chlorine', value: accountData?.chlorineLevel ? `${accountData.chlorineLevel.toFixed(1)} mg/L` : '0.3 mg/L', status: 'Good', color: 'green' },
+    { param: 'Turbidity', value: accountData?.turbidityLevel ? `${accountData.turbidityLevel.toFixed(1)} NTU` : '0.5 NTU', status: 'Excellent', color: 'green' },
+    { param: 'Hardness', value: accountData?.hardnessLevel ? `${accountData.hardnessLevel.toFixed(0)} mg/L` : '95 mg/L', status: 'Moderate', color: 'yellow' }
+  ];
+
 
   return (
     <div className="space-y-6">
@@ -32,7 +90,7 @@ export function WaterDashboard() {
               Active
             </span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{currentUsage}</p>
+          <p className="text-2xl font-bold text-gray-900">{currentUsage.toLocaleString('en-IN')}</p>
           <p className="text-xs text-gray-600 mt-1">Liters This Month</p>
         </div>
 
@@ -41,7 +99,7 @@ export function WaterDashboard() {
             <TrendingUp className="w-6 h-6 text-cyan-600" />
             <span className="text-xs text-cyan-700">Daily Avg</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{avgDailyUsage}</p>
+          <p className="text-2xl font-bold text-gray-900">{avgDailyUsage.toLocaleString('en-IN')}</p>
           <p className="text-xs text-gray-600 mt-1">Liters Per Day</p>
         </div>
 
@@ -168,13 +226,7 @@ export function WaterDashboard() {
         </div>
 
         <div className="grid grid-cols-5 gap-4">
-          {[
-            { param: 'pH Level', value: '7.2', status: 'Good', color: 'green' },
-            { param: 'TDS', value: '180 ppm', status: 'Good', color: 'green' },
-            { param: 'Chlorine', value: '0.3 mg/L', status: 'Good', color: 'green' },
-            { param: 'Turbidity', value: '0.5 NTU', status: 'Excellent', color: 'green' },
-            { param: 'Hardness', value: '95 mg/L', status: 'Moderate', color: 'yellow' }
-          ].map((param, index) => (
+          {qualityMetrics.map((param, index) => (
             <div key={index} className="bg-gray-50 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-600 mb-1">{param.param}</p>
               <p className="text-sm font-bold text-gray-900">{param.value}</p>
@@ -195,17 +247,16 @@ export function WaterDashboard() {
         </div>
       </div>
 
-      {/* Connection Information */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="font-bold text-gray-900 mb-4">Water Connection Details</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-gray-600 mb-1">Connection Type</p>
-            <p className="text-sm font-semibold text-gray-900">Residential</p>
+            <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
           </div>
           <div>
             <p className="text-xs text-gray-600 mb-1">Last Reading</p>
-            <p className="text-sm font-semibold text-gray-900">Jan 28, 2026</p>
+            <p className="text-sm font-semibold text-gray-900">{lastReading}</p>
           </div>
         </div>
       </div>

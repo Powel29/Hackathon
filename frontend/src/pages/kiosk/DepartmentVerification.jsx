@@ -5,6 +5,7 @@ import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, Shield, Zap, Flame, Droplets, Building2 } from 'lucide-react';
+import { departmentService } from '../../services/api';
 
 export function DepartmentVerification() {
   const { t } = useTranslation();
@@ -12,6 +13,7 @@ export function DepartmentVerification() {
   const { selectedService, setUser, user } = useKioskStore();
   const [departmentId, setDepartmentId] = useState('');
   const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     if (!selectedService) {
@@ -30,7 +32,7 @@ export function DepartmentVerification() {
           idLabel: 'Electricity Consumer Number',
           idPlaceholder: 'Enter your EC Number',
           idPrefix: 'EC',
-          maxLength: 11,
+          maxLength: 30,
           description: 'Enter your electricity consumer number to access your account'
         };
       case 'gas':
@@ -42,7 +44,7 @@ export function DepartmentVerification() {
           idLabel: 'Gas Consumer Number',
           idPlaceholder: 'Enter your GC Number',
           idPrefix: 'GC',
-          maxLength: 11,
+          maxLength: 30,
           description: 'Enter your gas consumer number to access your account'
         };
       case 'water':
@@ -54,7 +56,7 @@ export function DepartmentVerification() {
           idLabel: 'Water Consumer Number',
           idPlaceholder: 'Enter your WC Number',
           idPrefix: 'WC',
-          maxLength: 11,
+          maxLength: 30,
           description: 'Enter your water consumer number to access your account'
         };
       case 'municipal':
@@ -66,7 +68,7 @@ export function DepartmentVerification() {
           idLabel: 'Property Tax Number',
           idPlaceholder: 'Enter your PT Number',
           idPrefix: 'PT',
-          maxLength: 11,
+          maxLength: 30,
           description: 'Enter your property tax number to access municipal services'
         };
       default:
@@ -86,34 +88,51 @@ export function DepartmentVerification() {
 
   const deptInfo = getDepartmentInfo();
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     setError('');
+    setIsVerifying(true);
 
-    // Validation
-    if (!departmentId.trim()) {
-      setError('Please enter your department ID number');
-      return;
+    try {
+      // Validation
+      if (!departmentId.trim()) {
+        setError('Please enter your department ID number');
+        setIsVerifying(false);
+        return;
+      }
+
+      if (departmentId.trim().length < 8) {
+        setError('Department ID must be at least 8 characters');
+        setIsVerifying(false);
+        return;
+      }
+
+      // Call backend API to verify account
+      const response = await departmentService.verifyAccount(
+        selectedService,
+        departmentId.trim()
+      );
+
+      if (response.success) {
+        // Update user with department-specific consumer ID and account info
+        if (user) {
+          setUser({
+            ...user,
+            consumerId: response.account.consumerNumber,
+            accountId: response.account.accountId,
+            ownerName: response.account.ownerName,
+            connectionType: response.account.connectionType
+          });
+        }
+
+        // Navigate to dashboard
+        navigate('/kiosk/dashboard');
+      }
+    } catch (err) {
+      console.error('Verification error:', err);
+      setError(err.message || 'Failed to verify account. Please try again.');
+    } finally {
+      setIsVerifying(false);
     }
-
-    if (departmentId.trim().length < 8) {
-      setError('Department ID must be at least 8 characters');
-      return;
-    }
-
-    // For demo purposes, accept any ID with correct format
-    // In production, this would validate against a database
-    const upperCaseId = departmentId.trim().toUpperCase();
-
-    // Update user with department-specific consumer ID
-    if (user) {
-      setUser({
-        ...user,
-        consumerId: upperCaseId
-      });
-    }
-
-    // Navigate to dashboard
-    navigate('/kiosk/dashboard');
   };
 
   const handleInputChange = (value) => {
@@ -209,8 +228,9 @@ export function DepartmentVerification() {
                   size="medium"
                   onClick={handleVerify}
                   className="flex-1"
+                  disabled={isVerifying}
                 >
-                  Verify & Continue
+                  {isVerifying ? 'Verifying...' : 'Verify & Continue'}
                 </TouchButton>
               </div>
             </div>

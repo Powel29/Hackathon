@@ -1,4 +1,7 @@
 import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
+import { useKioskStore } from '../../store/useKioskStore';
+import { departmentService } from '../../services/api';
 
 import {
   Zap,
@@ -12,13 +15,58 @@ import {
 
 export function ElectricityDashboard() {
   const { t } = useTranslation();
+  const { user, selectedService } = useKioskStore();
+  const [accountData, setAccountData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchAccountData = async () => {
+      if (!user || !user.consumerId) {
+        setLoading(false);
+        return;
+      }
 
-  // Mock data for electricity department
-  const currentUsage = 245; // kWh this month
-  const lastBillAmount = 1850;
-  const avgDailyUsage = 8.2; // kWh
-  const peakLoad = 3.5; // kW
+      try {
+        const response = await departmentService.getAccountDetails(
+          selectedService,
+          user.consumerId
+        );
+
+        if (response.success) {
+          setAccountData(response.account);
+        }
+      } catch (error) {
+        console.error('Failed to fetch account data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccountData();
+  }, [user, selectedService]);
+
+  // Use real data from API or fallback to defaults
+  const currentUsage = accountData?.currentMonthUsage || 0;
+  const lastBillAmount = accountData?.lastBillAmount || 0;
+  const avgDailyUsage = accountData?.dailyAverage || 0;
+  const peakLoad = accountData?.peakLoad || 0;
+  const sanctionedLoad = accountData?.sanctionedLoad || '5 kW';
+  const connectionType = accountData?.connectionType || 'Residential';
+  const lastReadingDate = accountData?.lastReadingDate
+    ? new Date(accountData.lastReadingDate).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+    : 'N/A';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -152,15 +200,15 @@ export function ElectricityDashboard() {
         <div className="grid grid-cols-3 gap-4">
           <div>
             <p className="text-xs text-gray-600 mb-1">{t('connectionTypeLabel')}</p>
-            <p className="text-sm font-semibold text-gray-900">{t('residential')}</p>
+            <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
           </div>
           <div>
             <p className="text-xs text-gray-600 mb-1">{t('sanctionedLoad')}</p>
-            <p className="text-sm font-semibold text-gray-900">5 kW</p>
+            <p className="text-sm font-semibold text-gray-900">{sanctionedLoad}</p>
           </div>
           <div>
             <p className="text-xs text-gray-600 mb-1">{t('lastReadingDate')}</p>
-            <p className="text-sm font-semibold text-gray-900">Jan 28, 2026</p>
+            <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
           </div>
         </div>
       </div>

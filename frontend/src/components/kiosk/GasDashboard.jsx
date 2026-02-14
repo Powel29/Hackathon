@@ -1,6 +1,8 @@
 
 
 import { useState, useEffect } from 'react';
+import { useKioskStore } from '../../store/useKioskStore';
+import { departmentService } from '../../services/api';
 import {
   Flame,
   Package,
@@ -12,7 +14,57 @@ import {
 } from 'lucide-react';
 
 export function GasDashboard() {
+  const { user, selectedService } = useKioskStore();
+  const [accountData, setAccountData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchAccountData = async () => {
+      if (!user || !user.consumerId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await departmentService.getAccountDetails(
+          selectedService,
+          user.consumerId
+        );
+
+        if (response.success) {
+          setAccountData(response.account);
+        }
+      } catch (error) {
+        console.error('Failed to fetch gas account data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccountData();
+  }, [user, selectedService]);
+
+  // Use real data from API or fallback to defaults
+  const currentUsage = accountData?.currentMonthUsage || 0;
+  const lastBillAmount = accountData?.lastBillAmount || 0;
+  const avgDailyUsage = accountData?.dailyAverage || 0;
+  const pressure = accountData?.pressure || 0;
+  const gasType = accountData?.gasType || 'PNG';
+  const connectionType = accountData?.connectionType || 'Residential';
+  const pipelineSize = accountData?.pipelineSize || 'N/A';
+  const lastReadingDate = accountData?.lastReadingDate
+    ? new Date(accountData.lastReadingDate).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+    : 'N/A';
+  const nextSafetyCheck = accountData?.nextSafetyCheck
+    ? new Date(accountData.nextSafetyCheck).toLocaleDateString('en-US', {
+      month: 'short',
+      year: 'numeric'
+    })
+    : 'N/A';
 
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
@@ -39,10 +91,13 @@ export function GasDashboard() {
     return () => clearInterval(interval);
   }, [safetyTips.length]);
 
-  // Mock data for gas department
-  const currentConsumption = 18.5; // kg this month
-  const lastRefill = 'Jan 15, 2026';
-
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -53,26 +108,26 @@ export function GasDashboard() {
             <Package className="w-6 h-6 text-blue-600" />
             <span className="text-xs text-blue-700">Current</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{currentConsumption}</p>
-          <p className="text-xs text-gray-600 mt-1">kg Used This Month</p>
+          <p className="text-2xl font-bold text-gray-900">{currentUsage}</p>
+          <p className="text-xs text-gray-600 mt-1">m³ Used This Month</p>
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <Calendar className="w-6 h-6 text-green-600" />
-            <span className="text-xs text-green-700">Last</span>
+            <span className="text-xs text-green-700">Daily Avg</span>
           </div>
-          <p className="text-sm font-bold text-gray-900">{lastRefill}</p>
-          <p className="text-xs text-gray-600 mt-1">Last Refill Date</p>
+          <p className="text-2xl font-bold text-gray-900">{avgDailyUsage}</p>
+          <p className="text-xs text-gray-600 mt-1">m³ per Day</p>
         </div>
 
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="w-6 h-6 text-purple-600" />
-            <span className="text-xs text-purple-700">Next</span>
+            <span className="text-xs text-purple-700">Pressure</span>
           </div>
-          <p className="text-sm font-bold text-gray-900">12 days</p>
-          <p className="text-xs text-gray-600 mt-1">Est. Next Booking</p>
+          <p className="text-2xl font-bold text-gray-900">{pressure}</p>
+          <p className="text-xs text-gray-600 mt-1">PSI</p>
         </div>
       </div>
 
@@ -97,10 +152,10 @@ export function GasDashboard() {
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-gray-900">Safety Check Complete</p>
                   <p className="text-xs text-gray-600 mt-1">
-                    Last inspection: Jan 10, 2026
+                    Last Reading: {lastReadingDate}
                   </p>
                   <p className="text-xs text-green-600 mt-1">
-                    Next inspection due: July 2026
+                    Next inspection due: {nextSafetyCheck}
                   </p>
                 </div>
               </div>
@@ -142,18 +197,22 @@ export function GasDashboard() {
       {/* Connection Information */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="font-bold text-gray-900 mb-4">Gas Connection Details</h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div>
             <p className="text-xs text-gray-600 mb-1">Connection Type</p>
-            <p className="text-sm font-semibold text-gray-900">Domestic</p>
+            <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-600 mb-1">Distributor</p>
-            <p className="text-sm font-semibold text-gray-900">Indian Gas Agency</p>
+            <p className="text-xs text-gray-600 mb-1">Gas Type</p>
+            <p className="text-sm font-semibold text-gray-900">{gasType}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-600 mb-1">Booking Mode</p>
-            <p className="text-sm font-semibold text-gray-900">Online</p>
+            <p className="text-xs text-gray-600 mb-1">Pipeline Size</p>
+            <p className="text-sm font-semibold text-gray-900">{pipelineSize}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-600 mb-1">Last Reading</p>
+            <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
           </div>
         </div>
       </div>

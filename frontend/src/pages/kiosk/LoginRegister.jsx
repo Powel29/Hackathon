@@ -739,7 +739,7 @@ export function LoginRegister() {
               <div className="mb-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-gray-700 text-center">
-                    {t('otpSentTo')} <strong>{maskedPhone || loginCredential}</strong>
+                    {t('otpSentTo')} <strong>{maskedPhone}</strong>
                   </p>
                 </div>
 

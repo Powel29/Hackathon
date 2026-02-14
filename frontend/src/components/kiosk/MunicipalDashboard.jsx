@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2,
@@ -11,16 +12,69 @@ import {
   Clock,
   FileText
 } from 'lucide-react';
+import { useKioskStore } from '../../store/useKioskStore';
+import { departmentService } from '../../services/api';
 
 export function MunicipalDashboard() {
-
   const navigate = useNavigate();
+  const { user } = useKioskStore();
+  const [accountData, setAccountData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for municipal department
-  const propertyTaxDue = 4500;
-  const taxDueDate = 'Mar 31, 2026';
-  const garbageCollectionDay = 'Monday, Wednesday, Friday';
-  const wardNumber = '12-A';
+  useEffect(() => {
+    const fetchAccountData = async () => {
+      if (!user?.consumerId) {
+        console.log('❌ No consumerId found:', user);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        console.log('🔍 Fetching municipal account for:', user.consumerId);
+        const response = await departmentService.getAccountDetails('MUNICIPAL', user.consumerId);
+        console.log('✅ Municipal account response:', response);
+
+        if (response.success) {
+          setAccountData(response.account);
+          console.log('✅ Municipal account data set:', response.account);
+        } else {
+          console.error('❌ API returned success: false');
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch municipal account data:', error);
+        console.error('Error details:', error.response?.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccountData();
+  }, [user?.consumerId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading municipal account data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Use live data or fallback to defaults
+  const propertyTaxDue = accountData?.dueAmount || accountData?.lastBillAmount || 0;
+  const annualTax = accountData?.annualTaxAmount || 0;
+  const propertyType = accountData?.propertyType || 'Residential';
+  const propertyArea = accountData?.propertyArea || 0;
+  const wardNumber = '12-A'; // This would come from address/location data
+  const taxDueDate = accountData?.taxBills?.[0]?.dueDate
+    ? new Date(accountData.taxBills[0].dueDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
+    : 'Mar 31, 2026';
+  const garbageCollectionDay = accountData?.garbageCollection ? 'Monday, Wednesday, Friday' : 'Not Available';
+
+  console.log('📊 Municipal Dashboard values:', { propertyTaxDue, annualTax, propertyType, propertyArea, accountData });
+
 
   return (
     <div className="space-y-6">
@@ -42,7 +96,7 @@ export function MunicipalDashboard() {
             <Home className="w-6 h-6 text-orange-600" />
             <span className="text-xs text-orange-700">Due</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">₹{propertyTaxDue}</p>
+          <p className="text-2xl font-bold text-gray-900">₹{propertyTaxDue.toLocaleString('en-IN')}</p>
           <p className="text-xs text-gray-600 mt-1">Property Tax Due</p>
         </div>
 
@@ -82,7 +136,7 @@ export function MunicipalDashboard() {
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm text-gray-700">Current Year Tax:</span>
-              <span className="text-xl font-bold text-gray-900">₹{propertyTaxDue}</span>
+              <span className="text-xl font-bold text-gray-900">₹{propertyTaxDue.toLocaleString('en-IN')}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600">Due Date:</span>
@@ -100,11 +154,11 @@ export function MunicipalDashboard() {
           <div className="space-y-2 pt-3 border-t border-gray-200">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Property Type:</span>
-              <span className="font-semibold text-gray-900">Residential</span>
+              <span className="font-semibold text-gray-900">{propertyType}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Area:</span>
-              <span className="font-semibold text-gray-900">1200 sq.ft</span>
+              <span className="font-semibold text-gray-900">{propertyArea > 0 ? `${propertyArea.toLocaleString('en-IN')} sq.ft` : 'N/A'}</span>
             </div>
           </div>
         </div>

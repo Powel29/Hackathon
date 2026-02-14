@@ -145,4 +145,39 @@ export const connectionService = {
     }
 };
 
+// Department Service
+export const departmentService = {
+    verifyAccount: async (serviceType, consumerNumber) => {
+        try {
+            console.log('🔍 Verifying department account:', { serviceType, consumerNumber });
+            const response = await api.post('/departments/verify', {
+                serviceType: serviceType.toUpperCase(),
+                consumerNumber
+            });
+            console.log('✅ Verification Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API verifyAccount error:', error);
+            console.error('❌ Error response:', error.response?.data);
+            const err = new Error(error.response?.data?.error?.message || 'Failed to verify account');
+            err.code = error.response?.data?.error?.code;
+            throw err;
+        }
+    },
+    getAccountDetails: async (serviceType, consumerNumber) => {
+        try {
+            console.log('🔍 Getting account details:', { serviceType, consumerNumber });
+            const response = await api.get(`/departments/${serviceType.toUpperCase()}/${consumerNumber}`);
+            console.log('✅ Account Details Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API getAccountDetails error:', error);
+            console.error('❌ Error response:', error.response?.data);
+            const err = new Error(error.response?.data?.error?.message || 'Failed to get account details');
+            err.code = error.response?.data?.error?.code;
+            throw err;
+        }
+    }
+};
+
 export default api;

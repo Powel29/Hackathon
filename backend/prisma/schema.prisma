@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,74 +6,61 @@ datasource db {
   provider = "postgresql"
 }
 
-// ========================================
-// AUTHENTICATION & USER MODELS
-// ========================================
-
 model Citizen {
-  aadharNumber String @id @db.VarChar(12) // Keep as-is for compatibility
-  aadharHash   String @unique // NEW: Hashed Aadhaar for secure lookups
-
-  // Basic Info
-  fullName     String  @db.VarChar(150)
-  mobileNumber String  @unique @db.VarChar(10)
-  email        String? @db.VarChar(150)
-
-  // NEW: Aadhaar-fetched data (PRD requirement)
-  dateOfBirth DateTime? @db.Date
-  gender      String?   @db.VarChar(10)
-  address     String?   @db.Text
-
-  // System Fields
-  languagePref String    @default("en") @db.VarChar(10)
-  isVerified   Boolean   @default(false) // NEW: OTP verified
-  isActive     Boolean   @default(true) // NEW: Account status
-  lastLoginAt  DateTime? // NEW: Track last login
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt // NEW: Auto-update timestamp
-
-  // Existing Relations
-  serviceAccounts ServiceAccount[]
-  complaints      Complaint[]
-  serviceRequests ServiceRequest[]
-  documents       Document[]
-  kioskLogs       KioskLog[]
-
-  // NEW Relations
-  authSessions    AuthSession[]
-  auditLogs       AuditLog[]
-  otpVerifications OTPVerification[]
+  aadharNumber        String              @id @db.VarChar(12)
+  fullName            String              @db.VarChar(150)
+  mobileNumber        String              @unique @db.VarChar(10)
+  email               String?             @db.VarChar(150)
+  languagePref        String              @default("en") @db.VarChar(10)
+  createdAt           DateTime            @default(now())
+  aadharHash          String              @unique
+  address             String?
+  dateOfBirth         DateTime?           @db.Date
+  gender              String?             @db.VarChar(10)
+  isActive            Boolean             @default(true)
+  isVerified          Boolean             @default(false)
+  lastLoginAt         DateTime?
+  updatedAt           DateTime            @updatedAt
+  auditLogs           AuditLog[]
+  authSessions        AuthSession[]
+  complaints          Complaint[]
+  documents           Document[]
+  electricityAccounts ElectricityAccount?
+  gasAccounts         GasAccount?
+  kioskLogs           KioskLog[]
+  municipalAccounts   MunicipalAccount?
+  otpVerifications    OTPVerification[]
+  serviceAccounts     ServiceAccount[]
+  serviceRequests     ServiceRequest[]
+  waterAccounts       WaterAccount?
 
   @@index([aadharHash])
   @@index([mobileNumber])
   @@map("citizens")
 }
 
-// NEW: OTP Management
 model OTPVerification {
-  otpId       String   @id @default(uuid()) @db.Uuid
-  citizenId   String   @db.VarChar(12)
+  otpId        String   @id @default(uuid()) @db.Uuid
+  citizenId    String?  @db.VarChar(12)
+  otpHash      String   @db.VarChar(64)
+  purpose      String   @db.VarChar(20)
+  attempts     Int      @default(0)
+  maxAttempts  Int      @default(3)
+  expiresAt    DateTime
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
   mobileNumber String?  @db.VarChar(10)
-  otpHash     String   @db.VarChar(64) // SHA-256 hashed OTP
-  purpose     String   @db.VarChar(20) // LOGIN, SIGNUP, VERIFY_MOBILE
-  attempts    Int      @default(0)
-  maxAttempts Int      @default(3)
-  expiresAt   DateTime
-  isVerified  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+  citizen      Citizen? @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
 
   @@index([citizenId, isVerified])
   @@index([expiresAt])
   @@map("otp_verifications")
 }
 
-// NEW: Session Management
 model AuthSession {
   sessionId      String   @id @default(uuid()) @db.Uuid
   citizenId      String   @db.VarChar(12)
-  tokenHash      String   @db.VarChar(64) // Hashed JWT for validation
+  tokenHash      String   @db.VarChar(64)
   kioskId        String?  @db.VarChar(30)
   ipAddress      String?  @db.VarChar(45)
   userAgent      String?  @db.VarChar(255)
@@ -87,25 +68,22 @@ model AuthSession {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   lastActivityAt DateTime @default(now())
-
-  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+  citizen        Citizen  @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
 
   @@index([citizenId, isActive])
   @@index([expiresAt])
   @@map("auth_sessions")
 }
 
-// NEW: Audit Logs (DPDP Compliance)
 model AuditLog {
   logId     String   @id @default(uuid()) @db.Uuid
   citizenId String?  @db.VarChar(12)
-  action    String   @db.VarChar(50) // LOGIN_SUCCESS, OTP_SENT, etc.
+  action    String   @db.VarChar(50)
   ipAddress String?  @db.VarChar(45)
   userAgent String?  @db.VarChar(255)
   metadata  Json?
   timestamp DateTime @default(now())
-
-  citizen Citizen? @relation(fields: [citizenId], references: [aadharNumber], onDelete: SetNull)
+  citizen   Citizen? @relation(fields: [citizenId], references: [aadharNumber])
 
   @@index([citizenId])
   @@index([action])
@@ -113,130 +91,113 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// ========================================
-// EXISTING MODELS (Unchanged)
-// ========================================
-
 model ServiceAccount {
   accountId     String  @id @default(uuid()) @db.Uuid
   citizenId     String  @db.VarChar(12)
   serviceType   String  @db.VarChar(20)
   accountNumber String? @db.VarChar(30)
   status        String  @db.VarChar(20)
-
-  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
-  bills   Bill[]
+  bills         Bill[]
+  citizen       Citizen @relation(fields: [citizenId], references: [aadharNumber])
 
   @@map("service_accounts")
 }
 
 model Bill {
-  billId        String    @id @default(uuid()) @db.Uuid
-  accountId     String    @db.Uuid
-  billingDate   DateTime? @db.Date
-  billingPeriod String?   @db.VarChar(20)
-  amount        Decimal?  @db.Decimal(10, 2)
-  dueDate       DateTime? @db.Date
-  status        String    @db.VarChar(20)
-
-  account  ServiceAccount @relation(fields: [accountId], references: [accountId])
-  payments Payment[]
+  billId        String         @id @default(uuid()) @db.Uuid
+  accountId     String         @db.Uuid
+  billingDate   DateTime?      @db.Date
+  billingPeriod String?        @db.VarChar(20)
+  amount        Decimal?       @db.Decimal(10, 2)
+  dueDate       DateTime?      @db.Date
+  status        String         @db.VarChar(20)
+  account       ServiceAccount @relation(fields: [accountId], references: [accountId])
+  payments      Payment[]
 
   @@map("bills")
 }
 
 model Payment {
-  paymentId      String   @id @default(uuid()) @db.Uuid
-  billId         String   @db.Uuid
-  gateway        String?  @db.VarChar(30)
-  transactionRef String?  @db.VarChar(100)
-  amount         Decimal? @db.Decimal(10, 2)
-  status         String   @db.VarChar(20)
-  paidAt         DateTime @default(now())
+  paymentId         String           @id @default(uuid()) @db.Uuid
+  billId            String?          @db.Uuid
+  gateway           String?          @db.VarChar(30)
+  transactionRef    String?          @db.VarChar(100)
+  amount            Decimal          @db.Decimal(10, 2)
+  status            String           @db.VarChar(20)
+  paidAt            DateTime         @default(now())
+  billType          String?          @db.VarChar(20)
+  electricityBillId String?          @db.Uuid
+  gasBillId         String?          @db.Uuid
+  municipalBillId   String?          @db.Uuid
+  waterBillId       String?          @db.Uuid
+  bill              Bill?            @relation(fields: [billId], references: [billId])
+  electricityBill   ElectricityBill? @relation(fields: [electricityBillId], references: [billId])
+  gasBill           GasBill?         @relation(fields: [gasBillId], references: [billId])
+  municipalBill     MunicipalBill?   @relation(fields: [municipalBillId], references: [billId])
+  waterBill         WaterBill?       @relation(fields: [waterBillId], references: [billId])
 
-  bill Bill @relation(fields: [billId], references: [billId])
-
+  @@index([billType])
   @@map("payments")
 }
 
 model Complaint {
-  complaintId   String @id @default(uuid()) @db.Uuid
-  citizenId     String @db.VarChar(12)
-  serviceType   String @db.VarChar(20) // ELECTRICITY, GAS, WATER, MUNICIPAL
-  complaintType String @db.VarChar(50) // NEW: Specific issue type
-  title         String @db.VarChar(200) // NEW: Brief title
-  description   String @db.Text // Changed to Text for longer descriptions
-  priority      String @db.VarChar(20) // NEW: LOW, MEDIUM, HIGH, URGENT
-  status        String @db.VarChar(20) // OPEN, IN_PROGRESS, RESOLVED, CLOSED
-
-  // Location tracking
-  location  String?  @db.VarChar(255) // NEW: Issue location
-  latitude  Decimal? @db.Decimal(10, 8) // NEW: GPS coordinates
-  longitude Decimal? @db.Decimal(11, 8) // NEW: GPS coordinates
-
-  // Assignment
-  assignedTo String? @db.VarChar(12) // NEW: Technician/Staff ID
-
-  // Resolution
-  resolutionNote String?   @db.Text // NEW: Admin resolution notes
-  resolvedAt     DateTime? // NEW: Resolution timestamp
-
-  // Metadata
-  kioskId   String?  @db.VarChar(30) // NEW: Kiosk where filed
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt // Changed to auto-update
-
-  // Relations
-  citizen       Citizen                  @relation(fields: [citizenId], references: [aadharNumber])
-  statusHistory ComplaintStatusHistory[] // NEW: Track status changes
+  complaintId    String                   @id @default(uuid()) @db.Uuid
+  citizenId      String                   @db.VarChar(12)
+  serviceType    String                   @db.VarChar(20)
+  description    String
+  status         String                   @db.VarChar(20)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  assignedTo     String?                  @db.VarChar(12)
+  complaintType  String                   @db.VarChar(50)
+  kioskId        String?                  @db.VarChar(30)
+  location       String?                  @db.VarChar(255)
+  priority       String                   @db.VarChar(20)
+  resolutionNote String?
+  resolvedAt     DateTime?
+  title          String                   @db.VarChar(200)
+  statusHistory  ComplaintStatusHistory[]
+  citizen        Citizen                  @relation(fields: [citizenId], references: [aadharNumber])
 
   @@index([citizenId])
   @@index([status])
-  @@index([serviceType])
-  @@index([priority])
-  @@index([createdAt])
   @@map("complaints")
 }
 
-// NEW: Track complaint status changes
 model ComplaintStatusHistory {
-  historyId   String   @id @default(uuid()) @db.Uuid
-  complaintId String   @db.Uuid
-  oldStatus   String?  @db.VarChar(20)
-  newStatus   String   @db.VarChar(20)
-  changedBy   String?  @db.VarChar(12) // Admin/Staff ID
-  notes       String?  @db.Text
-  changedAt   DateTime @default(now())
-
-  complaint Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
+  historyId   String    @id @default(uuid()) @db.Uuid
+  complaintId String    @db.Uuid
+  oldStatus   String?   @db.VarChar(20)
+  newStatus   String    @db.VarChar(20)
+  changedBy   String?   @db.VarChar(12)
+  notes       String?
+  changedAt   DateTime  @default(now())
+  complaint   Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
 
   @@index([complaintId])
-  @@index([changedAt])
   @@map("complaint_status_history")
 }
 
 model ServiceRequestType {
-  requestTypeCode String  @id @db.VarChar(30)
+  requestTypeCode String           @id @db.VarChar(30)
   description     String?
-  isActive        Boolean @default(true)
-
+  isActive        Boolean          @default(true)
   serviceRequests ServiceRequest[]
 
   @@map("service_request_types")
 }
 
 model ServiceRequest {
-  requestId   String    @id @default(uuid()) @db.Uuid
-  citizenId   String    @db.VarChar(12)
-  serviceType String    @db.VarChar(20)
-  requestType String    @db.VarChar(30)
-  status      String    @db.VarChar(20)
+  requestId   String             @id @default(uuid()) @db.Uuid
+  citizenId   String             @db.VarChar(12)
+  serviceType String             @db.VarChar(20)
+  requestType String             @db.VarChar(30)
+  status      String             @db.VarChar(20)
   details     Json?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime           @default(now())
   updatedAt   DateTime?
-
-  citizen Citizen            @relation(fields: [citizenId], references: [aadharNumber])
-  type    ServiceRequestType @relation(fields: [requestType], references: [requestTypeCode])
+  citizen     Citizen            @relation(fields: [citizenId], references: [aadharNumber])
+  type        ServiceRequestType @relation(fields: [requestType], references: [requestTypeCode])
 
   @@map("service_requests")
 }
@@ -244,16 +205,15 @@ model ServiceRequest {
 model Document {
   documentId    String   @id @default(uuid()) @db.Uuid
   citizenId     String   @db.VarChar(12)
-  relatedEntity String   @db.VarChar(30) // 'COMPLAINT', 'SERVICE_REQUEST', etc.
+  relatedEntity String   @db.VarChar(30)
   relatedId     String   @db.Uuid
-  documentType  String   @db.VarChar(30) // 'PHOTO', 'VIDEO', 'PDF'
+  documentType  String   @db.VarChar(30)
   fileName      String?  @db.VarChar(255)
   filePath      String
-  fileSize      Int? // NEW: File size in bytes
-  mimeType      String?  @db.VarChar(100) // NEW: MIME type
   uploadedAt    DateTime @default(now())
-
-  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
+  fileSize      Int?
+  mimeType      String?  @db.VarChar(100)
+  citizen       Citizen  @relation(fields: [citizenId], references: [aadharNumber])
 
   @@index([relatedEntity, relatedId])
   @@map("documents")
@@ -281,8 +241,255 @@ model KioskLog {
   action    String   @db.VarChar(50)
   metadata  Json?
   timestamp DateTime @default(now())
-
-  citizen Citizen? @relation(fields: [citizenId], references: [aadharNumber])
+  citizen   Citizen? @relation(fields: [citizenId], references: [aadharNumber])
 
   @@map("kiosk_logs")
+}
+
+model ElectricityAccount {
+  accountId          String                   @id @db.Uuid
+  citizenId          String                   @unique @db.VarChar(12)
+  consumerNumber     String                   @unique @db.VarChar(30)
+  connectionType     String                   @db.VarChar(20)
+  sanctionedLoad     String                   @db.VarChar(20)
+  status             String                   @db.VarChar(20)
+  currentMonthUsage  Float?
+  dailyAverage       Float?
+  peakLoad           Float?
+  lastBillAmount     Decimal?                 @db.Decimal(10, 2)
+  lastReadingDate    DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime
+  citizen            Citizen                  @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+  bills              ElectricityBill[]
+  consumptionHistory ElectricityConsumption[]
+
+  @@index([consumerNumber])
+  @@index([status])
+  @@map("electricity_accounts")
+}
+
+model ElectricityBill {
+  billId           String             @id @db.Uuid
+  accountId        String             @db.Uuid
+  billNumber       String             @unique @db.VarChar(30)
+  billingPeriod    String             @db.VarChar(20)
+  billingStartDate DateTime           @db.Date
+  billingEndDate   DateTime           @db.Date
+  unitsConsumed    Float
+  previousReading  Float
+  currentReading   Float
+  energyCharges    Decimal            @db.Decimal(10, 2)
+  fixedCharges     Decimal            @db.Decimal(10, 2)
+  demandCharges    Decimal?           @db.Decimal(10, 2)
+  taxAmount        Decimal            @db.Decimal(10, 2)
+  totalAmount      Decimal            @db.Decimal(10, 2)
+  dueDate          DateTime           @db.Date
+  status           String             @db.VarChar(20)
+  createdAt        DateTime           @default(now())
+  account          ElectricityAccount @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+  payments         Payment[]
+
+  @@index([accountId])
+  @@index([status])
+  @@map("electricity_bills")
+}
+
+model ElectricityConsumption {
+  id          String             @id @db.Uuid
+  accountId   String             @db.Uuid
+  date        DateTime           @db.Date
+  consumption Float
+  createdAt   DateTime           @default(now())
+  account     ElectricityAccount @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+
+  @@index([accountId, date])
+  @@map("electricity_consumption")
+}
+
+model GasAccount {
+  accountId          String           @id @db.Uuid
+  citizenId          String           @unique @db.VarChar(12)
+  consumerNumber     String           @unique @db.VarChar(30)
+  connectionType     String           @db.VarChar(20)
+  gasType            String           @db.VarChar(20)
+  pipelineSize       String?          @db.VarChar(20)
+  status             String           @db.VarChar(20)
+  currentMonthUsage  Float?
+  dailyAverage       Float?
+  pressure           Float?
+  lastBillAmount     Decimal?         @db.Decimal(10, 2)
+  lastReadingDate    DateTime?
+  nextSafetyCheck    DateTime?        @db.Date
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime
+  citizen            Citizen          @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+  bills              GasBill[]
+  consumptionHistory GasConsumption[]
+
+  @@index([consumerNumber])
+  @@map("gas_accounts")
+}
+
+model GasBill {
+  billId           String     @id @db.Uuid
+  accountId        String     @db.Uuid
+  billNumber       String     @unique @db.VarChar(30)
+  billingPeriod    String     @db.VarChar(20)
+  billingStartDate DateTime   @db.Date
+  billingEndDate   DateTime   @db.Date
+  unitsConsumed    Float
+  previousReading  Float
+  currentReading   Float
+  gasCharges       Decimal    @db.Decimal(10, 2)
+  fixedCharges     Decimal    @db.Decimal(10, 2)
+  taxAmount        Decimal    @db.Decimal(10, 2)
+  totalAmount      Decimal    @db.Decimal(10, 2)
+  dueDate          DateTime   @db.Date
+  status           String     @db.VarChar(20)
+  createdAt        DateTime   @default(now())
+  account          GasAccount @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+  payments         Payment[]
+
+  @@index([accountId])
+  @@map("gas_bills")
+}
+
+model GasConsumption {
+  id          String     @id @db.Uuid
+  accountId   String     @db.Uuid
+  date        DateTime   @db.Date
+  consumption Float
+  pressure    Float?
+  createdAt   DateTime   @default(now())
+  account     GasAccount @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+
+  @@index([accountId, date])
+  @@map("gas_consumption")
+}
+
+model MunicipalAccount {
+  accountId           String          @id @db.Uuid
+  citizenId           String          @unique @db.VarChar(12)
+  propertyTaxNumber   String          @unique @db.VarChar(30)
+  propertyType        String          @db.VarChar(30)
+  propertyArea        Float?
+  propertyValue       Decimal?        @db.Decimal(12, 2)
+  constructionYear    Int?
+  numberOfFloors      Int?
+  status              String          @db.VarChar(20)
+  annualTaxAmount     Decimal?        @db.Decimal(10, 2)
+  taxCategory         String?         @db.VarChar(30)
+  lastBillAmount      Decimal?        @db.Decimal(10, 2)
+  lastBillDate        DateTime?       @db.Date
+  dueAmount           Decimal?        @db.Decimal(10, 2)
+  garbageCollection   Boolean         @default(true)
+  drainageConnection  Boolean         @default(true)
+  streetLightCoverage Boolean         @default(true)
+  registrationDate    DateTime?       @db.Date
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime
+  citizen             Citizen         @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+  taxBills            MunicipalBill[]
+
+  @@index([propertyTaxNumber])
+  @@map("municipal_accounts")
+}
+
+model MunicipalBill {
+  billId        String           @id @db.Uuid
+  accountId     String           @db.Uuid
+  billNumber    String           @unique @db.VarChar(30)
+  billingPeriod String           @db.VarChar(20)
+  financialYear String           @db.VarChar(10)
+  propertyTax   Decimal          @db.Decimal(10, 2)
+  waterTax      Decimal?         @db.Decimal(10, 2)
+  sewerageTax   Decimal?         @db.Decimal(10, 2)
+  garbageTax    Decimal?         @db.Decimal(10, 2)
+  educationCess Decimal?         @db.Decimal(10, 2)
+  otherCharges  Decimal?         @db.Decimal(10, 2)
+  totalAmount   Decimal          @db.Decimal(10, 2)
+  dueDate       DateTime         @db.Date
+  status        String           @db.VarChar(20)
+  createdAt     DateTime         @default(now())
+  account       MunicipalAccount @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+  payments      Payment[]
+
+  @@index([accountId])
+  @@map("municipal_bills")
+}
+
+model WaterAccount {
+  accountId          String             @id @db.Uuid
+  citizenId          String             @unique @db.VarChar(12)
+  consumerNumber     String             @unique @db.VarChar(30)
+  connectionType     String             @db.VarChar(20)
+  pipeSize           String?            @db.VarChar(20)
+  numberOfTaps       Int?
+  meterNumber        String?            @db.VarChar(30)
+  status             String             @db.VarChar(20)
+  currentMonthUsage  Float?
+  dailyAverage       Float?
+  waterPressure      Float?
+  lastBillAmount     Decimal?           @db.Decimal(10, 2)
+  lastBillDate       DateTime?          @db.Date
+  dueAmount          Decimal?           @db.Decimal(10, 2)
+  lastMeterReading   Float?
+  lastReadingDate    DateTime?
+  nextReadingDate    DateTime?          @db.Date
+  lastQualityTest    DateTime?          @db.Date
+  waterQualityStatus String?            @db.VarChar(20)
+  phLevel            Float?
+  tdsLevel           Float?
+  chlorineLevel      Float?
+  turbidityLevel     Float?
+  hardnessLevel      Float?
+  connectionDate     DateTime?          @db.Date
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime
+  citizen            Citizen            @relation(fields: [citizenId], references: [aadharNumber], onDelete: Cascade)
+  bills              WaterBill[]
+  consumptionHistory WaterConsumption[]
+
+  @@index([consumerNumber])
+  @@map("water_accounts")
+}
+
+model WaterBill {
+  billId           String       @id @db.Uuid
+  accountId        String       @db.Uuid
+  billNumber       String       @unique @db.VarChar(30)
+  billingPeriod    String       @db.VarChar(20)
+  billingStartDate DateTime     @db.Date
+  billingEndDate   DateTime     @db.Date
+  unitsConsumed    Float
+  previousReading  Float
+  currentReading   Float
+  waterCharges     Decimal      @db.Decimal(10, 2)
+  sewerageCharges  Decimal?     @db.Decimal(10, 2)
+  fixedCharges     Decimal      @db.Decimal(10, 2)
+  taxAmount        Decimal      @db.Decimal(10, 2)
+  totalAmount      Decimal      @db.Decimal(10, 2)
+  dueDate          DateTime     @db.Date
+  status           String       @db.VarChar(20)
+  createdAt        DateTime     @default(now())
+  payments         Payment[]
+  account          WaterAccount @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("water_bills")
+}
+
+model WaterConsumption {
+  id          String       @id @db.Uuid
+  accountId   String       @db.Uuid
+  date        DateTime     @db.Date
+  consumption Float
+  pressure    Float?
+  cost        Decimal?     @db.Decimal(10, 2)
+  createdAt   DateTime     @default(now())
+  account     WaterAccount @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+
+  @@index([accountId, date])
+  @@map("water_consumption")
 }

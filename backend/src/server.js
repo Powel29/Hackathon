@@ -14,6 +14,7 @@ if (!process.env.NODE_ENV || !VALID_ENVS.includes(process.env.NODE_ENV)) {
 const authRoutes = require('./routes/authRoutes');
 const serviceAccountRoutes = require('./routes/serviceAccountRoutes');
 const complaintRoutes = require('./routes/complaintRoutes');
+const departmentRoutes = require('./routes/departmentRoutes');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/service-accounts', serviceAccountRoutes);
 app.use('/api/complaints', complaintRoutes);
+app.use('/api/departments', departmentRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
