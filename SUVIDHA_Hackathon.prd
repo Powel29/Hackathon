@@ -1,0 +1,59 @@
+SUVIDHA – Hackathon PRD (Lean Version)
+Version: 1.0
+Date: Jan 28, 2026
+Team: SUVIDHA
+
+1. Problem
+Citizens face long queues, language barriers, and poor transparency in civic utility services (electricity, gas, water, municipal).
+
+2. Solution
+A smart self-service kiosk enabling Aadhaar-based login, bill payments, complaint registration, and status tracking with multilingual support.
+
+3. Target Users
+- Citizens (18–70 years)
+- Utility staff (monitoring)
+- Admins (kiosk & complaint management)
+
+4. Core Features (Hackathon Scope)
+P0:
+- Aadhaar + OTP authentication
+- Multilingual UI (English, Hindi, Kannada)
+- View & pay utility bills
+- Complaint registration
+- Receipt generation
+- Secure session management
+
+P1:
+- Complaint status tracking
+- Admin dashboard (basic stats)
+
+5. User Flow
+Language Select → Aadhaar Login → Dashboard → 
+(Pay Bill / Register Complaint / Track Status) → Receipt → Auto Logout
+
+6. Tech Stack
+Frontend: React, Tailwind, i18next  
+Backend: Node.js, Express  
+DB: PostgreSQL (Prisma)  
+Payments: Razorpay (sandbox)  
+Auth: OTP (mock Aadhaar)
+
+7. Success Metrics
+- < 3 min per transaction
+- 95%+ payment success
+- Multilingual usability validated by judges
+
+8. Out of Scope
+- Mobile app
+- IoT / Smart meters
+- Advanced analytics
+- Biometric auth
+
+9. Demo Plan
+- Simulated Aadhaar login
+- Live bill payment (sandbox)
+- Register & track a complaint
+- Show admin dashboard stats
+
+10. Future Scope
+Voice navigation, DigiLocker, AI chatbot, more languages

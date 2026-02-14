@@ -1,0 +1,1132 @@
+Product Requirements Document (PRD)
+SUVIDHA - Smart Urban Virtual Interactive Digital Helpdesk Assistant
+________________________________________
+Document Control
+Version	Date	Author	Changes
+1.0	Jan 28, 2026	Team SUVIDHA	Initial Release
+________________________________________
+1. EXECUTIVE SUMMARY
+1.1 Product Vision
+SUVIDHA is a unified self-service kiosk platform that enables citizens to access civic utility services (Electricity, Gas, Water, Municipal) through an intuitive, multilingual, touch-based interface with Aadhaar-based authentication.
+1.2 Problem Statement
+Indian civic utility offices face:
+•	Long queues and manual paperwork
+•	Inconsistent service quality
+•	Limited transparency in complaint resolution
+•	Language barriers for non-English speakers
+•	High administrative burden on staff
+1.3 Solution Overview
+A single integrated kiosk system that:
+•	Supports multiple utility services
+•	Provides self-service capabilities 24/7
+•	Offers multilingual support
+•	Ensures secure Aadhaar-based authentication
+•	Enables real-time service tracking
+1.4 Success Metrics
+•	70% reduction in counter queue time
+•	90%+ citizen satisfaction rate
+•	50% reduction in staff workload
+•	95%+ transaction success rate
+•	Support for 3+ languages at launch
+________________________________________
+2. PRODUCT OVERVIEW
+2.1 Target Users
+Primary Users
+•	Citizens: Ages 18-70, diverse literacy levels
+•	Urban residents: Using electricity, gas, water, municipal services
+•	Languages: Hindi, English, Kannada (expandable)
+Secondary Users
+•	Utility Office Staff: Monitoring kiosk operations
+•	System Administrators: Managing content and configurations
+•	Field Technicians: Responding to complaints
+User Personas
+Persona 1: Ramesh Kumar
+•	Age: 45, Small business owner
+•	Tech literacy: Medium
+•	Language: Hindi
+•	Pain point: Long queues for bill payment
+•	Goal: Pay bills quickly during work hours
+Persona 2: Lakshmi Devi
+•	Age: 62, Homemaker
+•	Tech literacy: Low
+•	Language: Kannada
+•	Pain point: Difficulty understanding English forms
+•	Goal: Register water supply complaint
+Persona 3: Arjun Singh
+•	Age: 28, IT Professional
+•	Tech literacy: High
+•	Language: English
+•	Pain point: Lack of online status tracking
+•	Goal: Track new connection request
+2.2 Product Scope
+In Scope (V1.0)
+✅ Aadhaar-based authentication ✅ Bill payment (Electricity, Gas, Water, Municipal) ✅ Complaint registration and tracking ✅ New connection requests ✅ Status tracking (complaints, connections, bills) ✅ Receipt generation and printing ✅ Multilingual UI (3 languages) ✅ Admin dashboard ✅ Session management and security
+Out of Scope (V1.0)
+❌ Mobile app for citizens ❌ Advanced analytics and reporting ❌ Integration with smart meters/IoT ❌ Blockchain-based tracking ❌ Biometric authentication beyond Aadhaar ❌ Video consultation with officials ❌ Bulk bill payment for commercial users
+Future Roadmap (V2.0+)
+•	Voice-based navigation
+•	AI chatbot assistance
+•	Predictive bill estimation
+•	OCR for document scanning
+•	Integration with DigiLocker
+•	Regional language expansion (10+ languages)
+________________________________________
+3. FUNCTIONAL REQUIREMENTS
+3.1 Authentication System
+FR-AUTH-001: Aadhaar-Based Login
+Priority: P0 (Critical)
+Description: User authentication using 12-digit Aadhaar number and OTP verification
+Acceptance Criteria:
+•	System validates Aadhaar format (12 digits, Verhoeff algorithm)
+•	System sends OTP to Aadhaar-linked mobile number
+•	OTP is valid for 5 minutes
+•	Maximum 3 OTP verification attempts allowed
+•	User can request new OTP after 30 seconds
+•	System displays masked mobile number (******3456)
+•	Failed attempts are logged for security
+User Flow:
+1. User selects language
+2. User selects utility service
+3. User enters 12-digit Aadhaar number
+4. System validates Aadhaar format
+5. System sends OTP to registered mobile
+6. User enters 6-digit OTP
+7. System verifies OTP
+8. System creates/retrieves user profile
+9. User redirected to dashboard
+Error Handling:
+•	Invalid Aadhaar: "Please enter a valid 12-digit Aadhaar number"
+•	OTP expired: "OTP expired. Click 'Resend OTP'"
+•	Wrong OTP: "Incorrect OTP. X attempts remaining"
+•	Rate limit exceeded: "Too many attempts. Try after 1 hour"
+________________________________________
+FR-AUTH-002: New User Registration
+Priority: P0 (Critical)
+Description: Auto-registration for first-time Aadhaar users
+Acceptance Criteria:
+•	System checks if Aadhaar exists in database
+•	For new users, system fetches name, DOB from mock Aadhaar database
+•	System captures mobile number for new users
+•	User profile created with minimal data
+•	Consumer ID generated or linked based on utility type
+Data Fields (Auto-populated):
+•	Name (from Aadhaar)
+•	Date of Birth (from Aadhaar)
+•	Gender (from Aadhaar)
+•	Address (from Aadhaar)
+Data Fields (User Input):
+•	Mobile number (10 digits, validated)
+•	Email (optional)
+•	Utility type selection
+•	Consumer ID (if existing customer)
+________________________________________
+FR-AUTH-003: Session Management
+Priority: P0 (Critical)
+Description: Secure session handling for kiosk usage
+Acceptance Criteria:
+•	Session created on successful login
+•	Session expires after 5 minutes of inactivity
+•	Warning shown at 4 minutes: "Session expiring in 60 seconds"
+•	Auto-logout on session expiry
+•	All form data cleared on logout
+•	Session data not persisted in browser storage
+•	Each kiosk logs session activity
+________________________________________
+3.2 Bill Payment System
+FR-BILL-001: View Bills
+Priority: P0 (Critical)
+Description: Display all bills for authenticated user
+Acceptance Criteria:
+•	Show all bills (paid and unpaid) for logged-in user
+•	Display bill number, amount, due date, status
+•	Sort bills by due date (oldest first)
+•	Highlight overdue bills in red
+•	Show payment history for paid bills
+•	Support pagination if bills > 10
+UI Requirements:
+•	Large touch-friendly cards (minimum 100px height)
+•	Color-coded status: Green (Paid), Red (Overdue), Orange (Pending)
+•	Clear "Pay Now" button for unpaid bills
+•	Icons for bill type (electricity, gas, water, municipal)
+________________________________________
+FR-BILL-002: Bill Payment
+Priority: P0 (Critical)
+Description: Process bill payments through integrated payment gateway
+Acceptance Criteria:
+•	User selects bill to pay
+•	System displays bill summary (amount, due date, bill number)
+•	User confirms payment
+•	System initiates Razorpay payment
+•	Payment methods supported: UPI, Cards, NetBanking
+•	System verifies payment signature
+•	System updates bill status to "PAID" on success
+•	System generates digital receipt
+•	Option to print receipt
+Payment Flow:
+1. User clicks "Pay Now" on bill
+2. Bill summary displayed
+3. User clicks "Proceed to Pay"
+4. Razorpay payment modal opens
+5. User completes payment
+6. System verifies payment
+7. Bill marked as paid
+8. Receipt generated
+9. Option to print/email receipt
+Error Handling:
+•	Payment failed: Show error, allow retry
+•	Network error: Queue transaction for later processing
+•	Timeout: Verify payment status before retrying
+________________________________________
+FR-BILL-003: Receipt Generation
+Priority: P1 (High)
+Description: Generate and print payment receipts
+Acceptance Criteria:
+•	Receipt includes: Bill number, amount, transaction ID, date, time
+•	Receipt displays user name, consumer ID
+•	QR code for verification
+•	Option to print physical copy
+•	Option to send via SMS/email
+•	Receipt stored in user's transaction history
+Receipt Format:
+================================
+        SUVIDHA KIOSK
+     Payment Receipt
+================================
+Bill No: ELEC123456
+Consumer ID: CONS789012
+Name: Rajesh Kumar
+Amount: ₹1,250.00
+Transaction ID: TXN20260128123456
+Date: 28-Jan-2026 14:30 PM
+Status: PAID
+
+[QR CODE]
+
+Thank you!
+================================
+________________________________________
+3.3 Complaint Management
+FR-COMP-001: Register Complaint
+Priority: P0 (Critical)
+Description: Allow users to file complaints/grievances
+Acceptance Criteria:
+•	User selects complaint type from dropdown
+•	User enters complaint description (min 20 chars, max 500 chars)
+•	Optional: Upload supporting documents/photos (max 3 files, 5MB each)
+•	System auto-captures: Location (kiosk ID), timestamp, user details
+•	System generates unique complaint ID
+•	System assigns priority (High/Medium/Low) based on type
+•	Confirmation screen with complaint ID displayed
+•	SMS sent to registered mobile with complaint ID
+Complaint Types by Utility:
+Electricity:
+•	Power Outage
+•	Voltage Fluctuation
+•	Billing Issue
+•	Meter Malfunction
+•	Street Light Issue
+•	Other
+Gas:
+•	Gas Leak (Auto-priority: High)
+•	Low Pressure
+•	Billing Issue
+•	Meter Problem
+•	New Connection Query
+•	Other
+Water:
+•	No Water Supply
+•	Low Pressure
+•	Water Contamination (Auto-priority: High)
+•	Billing Issue
+•	Drainage Problem
+•	Other
+Municipal:
+•	Garbage Collection
+•	Street Light
+•	Road Damage
+•	Drainage Issue
+•	Document Request
+•	Other
+Form Validation:
+•	Complaint type: Required
+•	Description: Required, 20-500 characters
+•	File upload: Optional, jpg/png/pdf only, max 5MB per file
+________________________________________
+FR-COMP-002: Track Complaint Status
+Priority: P1 (High)
+Description: Enable users to track complaint resolution status
+Acceptance Criteria:
+•	User enters complaint ID
+•	System displays complaint details, status, timeline
+•	Status options: Open → In Progress → Resolved → Closed
+•	Show assigned technician (if applicable)
+•	Show estimated resolution time
+•	Display status update history with timestamps
+•	Allow users to add comments/updates
+Status Timeline View:
+● Complaint Registered
+  28-Jan-2026 10:00 AM
+
+● Assigned to Technician
+  28-Jan-2026 11:30 AM
+  Technician: Ramesh Kumar (#TEC-123)
+
+● In Progress
+  28-Jan-2026 02:00 PM
+  Technician reached site
+
+● Resolved
+  28-Jan-2026 04:30 PM
+  Issue fixed. Power restored.
+
+○ Closed
+  (Pending)
+________________________________________
+3.4 New Connection Requests
+FR-CONN-001: Request New Connection
+Priority: P1 (High)
+Description: Allow users to apply for new utility connections
+Acceptance Criteria:
+•	User selects connection type (Electricity/Gas/Water)
+•	User fills multi-step form
+•	Required documents uploaded (Aadhaar, Address proof, Photo)
+•	System validates all required fields
+•	System generates application ID
+•	User receives confirmation SMS
+•	Application status: Pending → Verified → Approved → Installed
+Form Fields:
+Step 1: Applicant Details (Auto-filled from Aadhaar)
+•	Name
+•	Aadhaar Number
+•	Date of Birth
+•	Mobile Number
+Step 2: Installation Address
+•	House/Flat Number
+•	Street/Area
+•	Landmark
+•	Pin Code
+•	Property Type: Residential/Commercial
+Step 3: Connection Details
+•	Connection Type: Domestic/Commercial
+•	Required Load (for electricity): 2KW/5KW/10KW
+•	Existing Consumer (Yes/No)
+•	Transfer from previous owner (Yes/No)
+Step 4: Document Upload
+•	Aadhaar Card (PDF/JPG)
+•	Address Proof (PDF/JPG)
+•	Property Document (PDF/JPG)
+•	Passport Photo (JPG)
+Step 5: Review & Submit
+•	Summary of all details
+•	Terms & conditions checkbox
+•	Digital signature (touch-based)
+•	Submit button
+Validation Rules:
+•	All required fields must be filled
+•	Pin code must be 6 digits
+•	Mobile must be 10 digits
+•	Files must be under 5MB
+•	Accepted formats: JPG, PNG, PDF
+________________________________________
+FR-CONN-002: Track Connection Status
+Priority: P1 (High)
+Description: Track new connection application progress
+Acceptance Criteria:
+•	User enters application ID
+•	System shows current status
+•	Status options: Pending → Document Verification → Site Survey → Approved → Installation Scheduled → Completed
+•	Show estimated completion date
+•	Show assigned officer/technician
+•	Display any pending actions required from user
+________________________________________
+3.5 Multilingual Support
+FR-LANG-001: Language Selection
+Priority: P0 (Critical)
+Description: Support for multiple Indian languages
+Acceptance Criteria:
+•	Language selection on first screen
+•	Supported languages: English, Hindi, Kannada
+•	All UI text translates to selected language
+•	All error messages in selected language
+•	All buttons and labels translated
+•	Receipt generated in selected language
+•	SMS notifications in selected language
+Language Switching:
+•	Language can be changed at any time via top-right button
+•	Interface updates immediately on language change
+•	User preference saved for session
+Translation Coverage:
+•	100% UI elements
+•	100% error messages
+•	100% form labels
+•	100% instructions
+•	100% receipts and documents
+________________________________________
+3.6 Admin Dashboard
+FR-ADMIN-001: Dashboard Overview
+Priority: P1 (High)
+Description: Admin panel for monitoring kiosk operations
+Acceptance Criteria:
+•	Real-time statistics display
+•	Total users registered today/this week/this month
+•	Total transactions (bills paid, complaints filed, connections requested)
+•	Transaction success rate
+•	Average transaction time
+•	Active complaints count
+•	Kiosk status (online/offline)
+Dashboard Metrics:
+┌─────────────────────────────────────┐
+│  Today's Summary                    │
+├─────────────────────────────────────┤
+│  👥 New Users: 45                   │
+│  💰 Bills Paid: 132 (₹2,45,600)    │
+│  📋 Complaints Filed: 23            │
+│  🔌 New Connections: 8              │
+│  ⚡ Success Rate: 97.5%             │
+│  ⏱️  Avg. Transaction: 2m 15s       │
+└─────────────────────────────────────┘
+________________________________________
+FR-ADMIN-002: Complaint Management
+Priority: P1 (High)
+Description: Admin tools for managing citizen complaints
+Acceptance Criteria:
+•	View all complaints (filterable by status, priority, date)
+•	Search complaints by ID, user, or keyword
+•	Assign complaints to technicians
+•	Update complaint status
+•	Add internal notes
+•	Bulk actions (assign multiple, close multiple)
+•	Export complaint reports (CSV/PDF)
+Admin Actions:
+•	Assign to technician
+•	Change priority
+•	Update status
+•	Add notes
+•	Mark as resolved
+•	Close complaint
+•	Reopen complaint
+________________________________________
+FR-ADMIN-003: User Management
+Priority: P2 (Medium)
+Description: Manage registered users
+Acceptance Criteria:
+•	View all registered users
+•	Search users by Aadhaar, mobile, consumer ID
+•	View user transaction history
+•	Block/unblock users
+•	Reset user passwords/OTP
+•	Export user list
+________________________________________
+FR-ADMIN-004: Kiosk Management
+Priority: P1 (High)
+Description: Monitor and manage kiosk hardware
+Acceptance Criteria:
+•	List of all kiosks with status (online/offline)
+•	Last active timestamp
+•	Session logs for each kiosk
+•	Hardware health status (printer, network, screen)
+•	Remote restart capability
+•	Maintenance scheduling
+Kiosk Information:
+•	Kiosk ID
+•	Location
+•	Status (Online/Offline/Maintenance)
+•	Last transaction timestamp
+•	Total transactions today
+•	Printer paper level
+•	Network status
+•	Uptime percentage
+________________________________________
+3.7 Security & Compliance
+FR-SEC-001: Data Encryption
+Priority: P0 (Critical)
+Description: Secure handling of sensitive user data
+Acceptance Criteria:
+•	Aadhaar numbers hashed (SHA-256) before storage
+•	OTPs encrypted in database
+•	Payment data transmitted via HTTPS/TLS
+•	Session tokens encrypted
+•	No plain text storage of sensitive data
+•	Audit logs for all data access
+________________________________________
+FR-SEC-002: Session Security
+Priority: P0 (Critical)
+Description: Prevent unauthorized access and data leakage
+Acceptance Criteria:
+•	Auto-logout after 5 minutes inactivity
+•	Clear all form data on logout
+•	No data cached in browser
+•	Session ID rotated on each login
+•	Rate limiting on API endpoints (100 requests/15 min)
+•	CAPTCHA after 3 failed login attempts
+________________________________________
+FR-SEC-003: DPDP Act Compliance
+Priority: P0 (Critical)
+Description: Comply with Digital Personal Data Protection Act
+Acceptance Criteria:
+•	User consent collected for data processing
+•	Privacy policy displayed before registration
+•	Data retention policy: Delete inactive users after 2 years
+•	Right to erasure: Users can request data deletion
+•	Data minimization: Collect only necessary information
+•	Audit logs maintained for 6 months
+________________________________________
+4. NON-FUNCTIONAL REQUIREMENTS
+4.1 Performance
+Requirement	Target	Measurement
+Page Load Time	< 3 seconds	Time to interactive
+API Response Time	< 200ms	Average response time
+Payment Processing	< 30 seconds	End-to-end transaction
+Concurrent Users	50 per kiosk	Simultaneous sessions
+Transaction Success Rate	> 95%	Successful/Total
+System Uptime	99.5%	Monthly availability
+4.2 Scalability
+•	Support 1000+ kiosks nationwide
+•	Handle 100,000 daily transactions
+•	Database: Support 10 million user records
+•	Horizontal scaling for backend services
+•	CDN for static assets
+4.3 Usability
+Aspect	Requirement
+Touch Targets	Minimum 80x80px
+Font Size	Minimum 24px for body text
+Contrast Ratio	Minimum 4.5:1 (WCAG AA)
+Navigation Depth	Maximum 3 levels
+Transaction Time	< 5 minutes for bill payment
+Error Recovery	Clear error messages with recovery steps
+Language Switch	< 2 seconds to reload interface
+4.4 Accessibility
+•	WCAG 2.1 Level AA compliance
+•	Screen reader compatible (future)
+•	High contrast mode
+•	Large text option
+•	Touch-friendly interface (no hover states)
+•	Audio instructions (future)
+•	Support for elderly and differently-abled users
+4.5 Reliability
+•	Offline Capability: Cache user data for 15 minutes
+•	Graceful Degradation: Show cached bills if API fails
+•	Automatic Retry: Retry failed API calls 3 times
+•	Error Logging: All errors logged to central system
+•	Backup Systems: Daily database backups
+•	Disaster Recovery: RPO: 24 hours, RTO: 4 hours
+4.6 Compatibility
+Hardware:
+•	Touch screen: 21-27 inch, minimum 1080p resolution
+•	Thermal printer: 80mm paper width
+•	Card reader: EMV certified
+•	Network: Minimum 2 Mbps internet
+•	OS: Windows 10/11, Ubuntu 20.04+
+Browser:
+•	Chrome 90+ (primary)
+•	Firefox 88+ (secondary)
+•	Edge 90+ (secondary)
+4.7 Maintainability
+•	Modular architecture (microservices)
+•	Comprehensive API documentation
+•	Code coverage: Minimum 70%
+•	Automated testing: Unit, integration, E2E
+•	Deployment: Containerized with Docker
+•	CI/CD pipeline for automated deployment
+•	Centralized logging and monitoring
+________________________________________
+5. TECHNICAL ARCHITECTURE
+5.1 System Architecture
+┌──────────────────────────────────────────────────┐
+│                 KIOSK (Frontend)                 │
+│  React + Vite + Tailwind CSS + i18next          │
+└────────────────┬─────────────────────────────────┘
+                 │ HTTPS/TLS
+                 │
+┌────────────────▼─────────────────────────────────┐
+│              API Gateway (Node.js)               │
+│         Rate Limiting, Authentication            │
+└────────┬───────────────────────────────┬─────────┘
+         │                               │
+         │                               │
+┌────────▼──────────┐         ┌─────────▼──────────┐
+│  Auth Service     │         │  Utility Services  │
+│  (JWT, OTP)       │         │  (Bill, Complaint) │
+└────────┬──────────┘         └──────────┬─────────┘
+         │                               │
+         │                               │
+         └───────────┬───────────────────┘
+                     │
+         ┌───────────▼────────────┐
+         │   PostgreSQL Database  │
+         │   (Prisma ORM)         │
+         └───────────┬────────────┘
+                     │
+         ┌───────────▼────────────┐
+         │    Redis Cache         │
+         │  (Session, OTP)        │
+         └────────────────────────┘
+
+External Integrations:
+├─ Razorpay (Payment Gateway)
+├─ SMS Gateway (OTP delivery)
+└─ UIDAI API (Aadhaar - Mock for demo)
+5.2 Technology Stack
+Frontend:
+•	React 18+
+•	Vite (build tool)
+•	Tailwind CSS
+•	React Router v6
+•	Axios (HTTP client)
+•	React Hook Form (forms)
+•	i18next (internationalization)
+•	Zustand (state management)
+Backend:
+•	Node.js 18+
+•	Express.js
+•	Prisma ORM
+•	JWT (authentication)
+•	Bcrypt (password hashing)
+•	Multer (file upload)
+•	Helmet (security)
+Database:
+•	PostgreSQL 15+
+•	Redis (caching, session)
+Payment Gateway:
+•	Razorpay
+DevOps:
+•	Docker
+•	GitHub Actions (CI/CD)
+•	PM2 (process manager)
+Testing:
+•	Jest (unit testing)
+•	Playwright (E2E testing)
+•	Postman (API testing)
+________________________________________
+5.3 Database Schema
+See Section 3.1 for detailed Prisma schema.
+Key Tables:
+•	User - User profiles
+•	Bill - Utility bills
+•	Payment - Payment transactions
+•	Complaint - Citizen complaints
+•	Connection - New connection requests
+•	OTPVerification - OTP management
+•	KioskSession - Session logs
+•	AdminUser - Admin accounts
+________________________________________
+5.4 API Specification
+Base URL: https://api.suvidha.gov.in/v1
+Authentication: Bearer token in header
+Authorization: Bearer <JWT_TOKEN>
+Key Endpoints:
+Method	Endpoint	Description
+POST	/auth/initiate	Initiate Aadhaar login
+POST	/auth/verify-otp	Verify OTP
+GET	/bills	Get user bills
+POST	/payments/create-order	Create payment order
+POST	/payments/verify	Verify payment
+POST	/complaints	Register complaint
+GET	/complaints/:id	Track complaint
+POST	/connections	Request new connection
+GET	/connections/:id	Track connection
+GET	/admin/stats	Dashboard statistics
+Error Response Format:
+json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_OTP",
+    "message": "The OTP you entered is incorrect",
+    "field": "otp"
+  }
+}
+```
+
+---
+
+## **6. USER INTERFACE DESIGN**
+
+### **6.1 Design Principles**
+
+1. **Large Touch Targets**: Minimum 80x80px for all buttons
+2. **High Contrast**: Text easily readable from 2 feet away
+3. **Minimal Text**: Use icons + short labels
+4. **Clear Hierarchy**: Primary action always prominent
+5. **Progress Indicators**: Show steps in multi-step flows
+6. **Immediate Feedback**: Loading states, success/error messages
+7. **Forgiving Design**: Allow back/cancel at any step
+
+### **6.2 Color Palette**
+
+**Primary Colors**:
+- Primary Blue: #0066CC (Trust, Government)
+- Success Green: #28A745 (Completed actions)
+- Warning Orange: #FF9800 (Pending items)
+- Error Red: #DC3545 (Errors, overdue)
+
+**Utility Colors**:
+- Electricity: #FFD700 (Yellow/Gold)
+- Gas: #FF6347 (Orange/Red)
+- Water: #1E90FF (Blue)
+- Municipal: #32CD32 (Green)
+
+**Neutral Colors**:
+- Text: #212529 (Dark gray)
+- Background: #F8F9FA (Light gray)
+- White: #FFFFFF
+- Border: #DEE2E6
+
+### **6.3 Typography**
+
+**Font Family**: Inter, Noto Sans (for multilingual support)
+
+**Font Sizes** (Kiosk-optimized):
+- Heading 1: 40px (2.5rem)
+- Heading 2: 32px (2rem)
+- Heading 3: 24px (1.5rem)
+- Body: 20px (1.25rem)
+- Small: 16px (1rem)
+- Button: 24px (1.5rem)
+
+**Font Weights**:
+- Regular: 400
+- Medium: 500
+- Bold: 700
+
+### **6.4 Screen Layouts**
+
+**Home Screen**:
+```
+┌────────────────────────────────────────┐
+│  [SUVIDHA Logo]        [Language: EN ▼]│
+├────────────────────────────────────────┤
+│                                        │
+│     Welcome to SUVIDHA Kiosk           │
+│     Select Your Language               │
+│                                        │
+│  ┌──────────┐  ┌──────────┐  ┌────────┐
+│  │  🇬🇧      │  │  🇮🇳      │  │  🇮🇳    │
+│  │          │  │          │  │        │
+│  │ English  │  │  हिंदी   │  │ ಕನ್ನಡ  │
+│  └──────────┘  └──────────┘  └────────┘
+│                                        │
+│            [Continue →]                │
+└────────────────────────────────────────┘
+```
+
+**Service Selection**:
+```
+┌────────────────────────────────────────┐
+│  ← Back              Select Service    │
+├────────────────────────────────────────┤
+│                                        │
+│  ┌──────────┐  ┌──────────┐           │
+│  │  ⚡       │  │  🔥       │           │
+│  │          │  │          │           │
+│  │Electricity│ │   Gas    │           │
+│  └──────────┘  └──────────┘           │
+│                                        │
+│  ┌──────────┐  ┌──────────┐           │
+│  │  💧       │  │  🏛️       │           │
+│  │          │  │          │           │
+│  │  Water   │  │ Municipal│           │
+│  └──────────┘  └──────────┘           │
+└────────────────────────────────────────┘
+```
+
+**Dashboard** (After Login):
+```
+┌────────────────────────────────────────┐
+│  Welcome, Rajesh Kumar    [Logout 🚪]  │
+│  Consumer ID: ELEC123456               │
+├────────────────────────────────────────┤
+│                                        │
+│  ┌──────────────┐  ┌──────────────┐   │
+│  │  💳          │  │  📄          │   │
+│  │              │  │              │   │
+│  │ Pay Bills    │  │ New          │   │
+│  │              │  │ Connection   │   │
+│  └──────────────┘  └──────────────┘   │
+│                                        │
+│  ┌──────────────┐  ┌──────────────┐   │
+│  │  ⚠️          │  │  🔍          │   │
+│  │              │  │              │   │
+│  │ Register     │  │ Track        │   │
+│  │ Complaint    │  │ Status       │   │
+│  └──────────────┘  └──────────────┘   │
+│                                        │
+│         [Need Help? 📞]                │
+└────────────────────────────────────────┘
+6.5 Interaction Patterns
+Loading State:
+•	Spinner animation
+•	Text: "Please wait..."
+•	Disable all buttons during load
+Success State:
+•	Green checkmark animation
+•	Success message
+•	Auto-proceed after 2 seconds OR manual button
+Error State:
+•	Red X icon
+•	Clear error message
+•	"Try Again" button
+•	"Go Back" option
+Form Validation:
+•	Inline validation on blur
+•	Error messages below field
+•	Red border on error fields
+•	Disable submit until valid
+________________________________________
+7. TESTING STRATEGY
+7.1 Test Types
+Unit Testing:
+•	Target: 70% code coverage
+•	Test all utility functions
+•	Test API controllers
+•	Test React components in isolation
+Integration Testing:
+•	Test API endpoints end-to-end
+•	Test database operations
+•	Test payment gateway integration
+•	Test authentication flow
+End-to-End Testing:
+•	Test complete user journeys
+•	Test on actual kiosk hardware
+•	Test with multiple languages
+•	Test error scenarios
+Performance Testing:
+•	Load testing: 50 concurrent users per kiosk
+•	Stress testing: Find breaking point
+•	API response time verification
+•	Database query optimization
+Security Testing:
+•	Penetration testing
+•	SQL injection attempts
+•	XSS vulnerability testing
+•	Session hijacking tests
+•	Rate limiting verification
+7.2 Test Scenarios
+Critical Path Tests:
+1.	✅ User can login with Aadhaar and OTP
+2.	✅ User can pay a bill successfully
+3.	✅ User can register a complaint
+4.	✅ User can track complaint status
+5.	✅ Receipt is generated after payment
+6.	✅ Session expires correctly
+7.	✅ Language switching works
+Edge Cases:
+1.	Network failure during payment
+2.	OTP expired scenario
+3.	Multiple concurrent sessions
+4.	Invalid Aadhaar number
+5.	File upload size exceeds limit
+6.	Printer out of paper
+7.	Database connection lost
+7.3 Testing Tools
+•	Jest: Unit testing
+•	Playwright: E2E testing
+•	Postman: API testing
+•	**J
+Continue
+Jan 28
+Meter**: Load testing
+•	SonarQube: Code quality
+•	OWASP ZAP: Security testing
+________________________________________
+8. DEPLOYMENT PLAN
+8.1 Deployment Architecture
+Production Environment:
+┌─────────────────────────────────────────┐
+│  Load Balancer (Nginx)                  │
+└────────────┬────────────────────────────┘
+             │
+    ┌────────┴────────┐
+    │                 │
+┌───▼────┐      ┌────▼───┐
+│ Node 1 │      │ Node 2 │  (Auto-scaling)
+└───┬────┘      └────┬───┘
+    │                │
+    └────────┬───────┘
+             │
+     ┌───────▼────────┐
+     │  PostgreSQL    │
+     │  (Primary)     │
+     └────────────────┘
+             │
+     ┌───────▼────────┐
+     │  PostgreSQL    │
+     │  (Replica)     │
+     └────────────────┘
+Hosting:
+•	Frontend: Vercel / Netlify
+•	Backend: AWS EC2 / Railway / Render
+•	Database: AWS RDS / Neon
+•	Redis: AWS ElastiCache / Upstash
+•	CDN: Cloudflare
+8.2 CI/CD Pipeline
+yaml
+# GitHub Actions Workflow
+
+on: push to main branch
+
+jobs:
+  1. Run tests (unit, integration)
+  2. Build Docker image
+  3. Push to container registry
+  4. Deploy to staging
+  5. Run E2E tests on staging
+  6. Deploy to production (manual approval)
+  7. Health check
+  8. Notify team (Slack/Email)
+8.3 Deployment Checklist
+Pre-Deployment:
+•	All tests passing
+•	Database migrations tested
+•	Environment variables configured
+•	SSL certificates installed
+•	Backup systems verified
+•	Monitoring tools configured
+•	Load balancer configured
+Post-Deployment:
+•	Health check API responding
+•	Database connections working
+•	Payment gateway tested
+•	SMS delivery working
+•	Printer connectivity verified
+•	Logs being collected
+•	Metrics dashboard live
+8.4 Rollback Plan
+Automatic Rollback Triggers:
+•	Error rate > 5%
+•	Response time > 2 seconds
+•	Health check fails
+•	Database connection lost
+Manual Rollback:
+bash
+# Restore previous version
+docker pull suvidha:v1.0.0
+docker-compose up -d
+
+# Restore database (if needed)
+pg_restore -d suvidha backup_file.sql
+________________________________________
+9. MONITORING & ANALYTICS
+9.1 Application Monitoring
+Metrics to Track:
+•	Request rate (requests/minute)
+•	Error rate (%)
+•	Response time (ms)
+•	Active sessions
+•	Database queries/second
+•	Payment success rate
+Tools:
+•	Application: New Relic / Datadog
+•	Logs: ELK Stack (Elasticsearch, Logstash, Kibana)
+•	Uptime: UptimeRobot / Pingdom
+•	Errors: Sentry
+9.2 Business Analytics
+Daily Metrics:
+•	Total transactions
+•	Revenue collected
+•	New user registrations
+•	Complaints filed
+•	Complaints resolved
+•	Average transaction time
+•	Peak usage hours
+Weekly/Monthly Reports:
+•	User growth trends
+•	Service utilization (which utility most used)
+•	Common complaint types
+•	Payment method preferences
+•	Kiosk performance ranking
+•	User satisfaction scores
+Dashboards:
+•	Real-time operations dashboard (for staff)
+•	Executive summary dashboard (for management)
+•	Technician dashboard (for field workers)
+________________________________________
+10. SECURITY & COMPLIANCE
+10.1 Data Security
+Encryption:
+•	Data in transit: TLS 1.3
+•	Data at rest: AES-256
+•	Database: Encrypted backups
+•	Aadhaar: SHA-256 hashing
+Access Control:
+•	Role-based access control (RBAC)
+•	Admin: Full access
+•	Operator: Limited access
+•	Technician: Complaint access only
+Audit Logs:
+•	All data access logged
+•	Login/logout tracked
+•	Payment transactions logged
+•	Admin actions logged
+•	Retention: 6 months
+10.2 Compliance
+DPDP Act (2023):
+•	✅ User consent obtained
+•	✅ Data minimization practiced
+•	✅ Purpose limitation enforced
+•	✅ Right to erasure implemented
+•	✅ Data breach notification plan
+•	✅ Privacy policy displayed
+IT Act (2000):
+•	✅ Digital signatures for documents
+•	✅ Electronic records maintained
+•	✅ Secure data transmission
+Aadhaar Act (2016):
+•	✅ Aadhaar stored securely (hashed)
+•	✅ No sharing with third parties
+•	✅ Masked display only
+RBI Guidelines:
+•	✅ Two-factor authentication for payments
+•	✅ Secure payment gateway integration
+•	✅ Transaction limits enforced
+•	✅ Refund mechanism in place
+________________________________________
+11. SUPPORT & MAINTENANCE
+11.1 User Support
+Help Options in Kiosk:
+•	On-screen help button
+•	FAQs for common issues
+•	Video tutorials
+•	Call helpline (toll-free number displayed)
+Helpline Support:
+•	Hours: 9 AM - 6 PM (Monday-Saturday)
+•	Languages: Hindi, English, Kannada
+•	Average response time: < 2 minutes
+•	Escalation to technical team if needed
+11.2 Maintenance Schedule
+Daily:
+•	Monitor kiosk uptime
+•	Check error logs
+•	Verify payment reconciliation
+Weekly:
+•	Review complaint resolution times
+•	Check database performance
+•	Update content/announcements
+Monthly:
+•	Security patches
+•	Performance optimization
+•	User feedback review
+•	Generate analytics reports
+Quarterly:
+•	Major feature updates
+•	Comprehensive security audit
+•	Hardware health check
+•	Staff training refresh
+11.3 SLA (Service Level Agreement)
+Service	Target	Penalty
+Uptime	99.5%	Refund per incident
+Response Time	< 200ms	Performance review
+Support Response	< 2 hours	Escalation
+Bug Fix (Critical)	< 24 hours	Priority support
+Bug Fix (Non-critical)	< 1 week	Next sprint
+________________________________________
+12. RISKS & MITIGATION
+12.1 Technical Risks
+Risk	Impact	Probability	Mitigation
+Payment gateway failure	High	Low	Backup gateway, offline mode
+Database crash	High	Low	Daily backups, replica database
+Network downtime	Medium	Medium	Offline capability, queue transactions
+Hardware failure	Medium	Medium	Spare hardware, remote diagnostics
+Security breach	High	Low	Regular audits, encryption, monitoring
+12.2 Operational Risks
+Risk	Impact	Probability	Mitigation
+User adoption low	High	Medium	Training, awareness campaigns
+Staff resistance	Medium	Medium	Training programs, incentives
+Vandalism	Medium	Medium	Secure enclosures, surveillance
+Power outages	Low	High	UPS backup, solar power option
+12.3 Business Risks
+Risk	Impact	Probability	Mitigation
+Budget overrun	Medium	Medium	Phased implementation, cost monitoring
+Timeline delay	Medium	Low	Agile methodology, weekly reviews
+Compliance issues	High	Low	Legal review, regular audits
+Vendor lock-in	Low	Low	Use open standards, avoid proprietary tech
+________________________________________
+13. SUCCESS CRITERIA
+13.1 Launch Criteria (Go-Live)
+•	All P0 features implemented and tested
+•	Security audit passed
+•	Load testing successful (50 concurrent users)
+•	99% uptime in staging for 1 week
+•	Admin staff trained
+•	User manual published
+•	Helpline operational
+•	10 pilot kiosks deployed
+13.2 Success Metrics (3 Months Post-Launch)
+User Adoption:
+•	10,000+ registered users
+•	5,000+ monthly active users
+•	60%+ of users prefer kiosk over counter
+Performance:
+•	95%+ transaction success rate
+•	< 3 minutes average transaction time
+•	99.5%+ system uptime
+Business Impact:
+•	50%+ reduction in counter queues
+•	30%+ reduction in staff workload
+•	80%+ user satisfaction (survey)
+•	70%+ complaints resolved within SLA
+Financial:
+•	₹10 lakh+ processed through kiosks
+•	ROI positive within 12 months
+•	< ₹5,000 monthly maintenance per kiosk
+________________________________________
+14. FUTURE ENHANCEMENTS (V2.0+)
+Phase 2 (6 months)
+•	Voice-based navigation for illiterate users
+•	Biometric authentication (fingerprint)
+•	Integration with DigiLocker
+•	Mobile app for citizens
+•	WhatsApp notifications
+Phase 3 (12 months)
+•	AI chatbot for query resolution
+•	Predictive bill estimation using ML
+•	OCR for automatic document processing
+•	IoT integration (smart meters)
+•	Blockchain for transparent tracking
+Phase 4 (18 months)
+•	Expansion to 10+ languages
+•	Video consultation with officials
+•	AR-based facility tours
+•	Cross-utility unified billing
+•	Advanced analytics dashboard
+________________________________________
+15. APPENDICES
+Appendix A: Glossary
+Term	Definition
+Aadhaar	12-digit unique identification number issued by UIDAI
+Consumer ID	Unique ID assigned by utility company to customers
+OTP	One-Time Password for authentication
+Kiosk	Self-service interactive terminal
+SUVIDHA	Smart Urban Virtual Interactive Digital Helpdesk Assistant
+UIDAI	Unique Identification Authority of India
+DPDP Act	Digital Personal Data Protection Act, 2023
+SLA	Service Level Agreement
+Appendix B: References
+•	UIDAI Aadhaar Authentication API Documentation
+•	RBI Payment Gateway Guidelines
+•	DPDP Act 2023
+•	IT Act 2000
+•	WCAG 2.1 Accessibility Guidelines
+•	Smart Cities Mission Guidelines
+Appendix C: Contact Information
+Development Team:
+•	Project Lead: [Name]
+•	Backend Lead: Member 1
+•	Frontend Lead: Member 2
+•	ML Lead: Member 3
+•	Database/Documentation: Member 4
+Stakeholders:
+•	C-DAC Project Coordinator
+•	Utility Department Representatives
+•	UX Consultant
+•	Security Auditor
+________________________________________
+Document Approval
+Role	Name	Signature	Date
+Product Owner			
+Technical Lead	Member 1		
+UX Lead	Member 2		
+QA Lead			
+Security Lead			
+________________________________________
+Version History

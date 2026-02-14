@@ -54,7 +54,7 @@ const ComplaintRegistration = ({ utilityType }) => {
                 );
                 reset();
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to register complaint');
         } finally {
             setLoading(false);

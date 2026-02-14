@@ -18,71 +18,165 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+import { kioskDb } from './kioskDb';
+
 // Auth Service
 export const authService = {
     login: async (credentials) => {
-        const { data } = await api.post('/auth/login', credentials);
-        return data;
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const user = kioskDb.login(credentials.consumerId, credentials.mobile);
+
+        if (user) {
+            return {
+                success: true,
+                token: 'mock-jwt-token-' + user.id,
+                user: user
+            };
+        } else {
+            throw new Error('Invalid credentials');
+        }
     },
-    sendOTP: async (mobile) => {
-        const { data } = await api.post('/auth/send-otp', { mobile });
-        return data;
+    sendOTP: async (aadharNumber, mobileNumber) => {
+        try {
+            console.log('🔍 API URL:', API_URL);
+            console.log('🔍 Sending OTP request:', { aadharNumber, mobileNumber });
+
+            // Only include mobileNumber if it's provided (not empty)
+            const payload = { aadharNumber };
+            if (mobileNumber && mobileNumber.trim()) {
+                payload.mobileNumber = mobileNumber;
+            }
+
+            const response = await api.post('/auth/initiate', payload);
+            console.log('✅ OTP Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error("❌ API sendOTP error:", error);
+            console.error("❌ Error response:", error.response?.data);
+            const err = new Error(error.response?.data?.error?.message || 'Failed to send OTP');
+            err.code = error.response?.data?.error?.code;
+            throw err;
+        }
     },
-    verifyOTP: async (mobile, otp) => {
-        const { data } = await api.post('/auth/verify-otp', { mobile, otp });
-        return data;
+    verifyOTP: async (aadharNumber, otp, userData = null) => {
+        try {
+            console.log('🔍 Verifying OTP:', { aadharNumber, otp, hasUserData: !!userData });
+            const response = await api.post('/auth/verify-otp', {
+                aadharNumber,
+                otp,
+                userData // Optional: Only for registration
+            });
+            console.log('✅ Verify Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error("❌ API verifyOTP error:", error);
+            console.error("❌ Error response:", error.response?.data);
+            const err = new Error(error.response?.data?.error?.message || 'OTP verification failed');
+            err.code = error.response?.data?.error?.code;
+            throw err;
+        }
     }
 };
 
-// Bill Service
+// Bill Service (Mock)
 export const billService = {
     getUserBills: async () => {
-        const { data } = await api.get('/bills');
-        return data;
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // We need the current user to get their bills. 
+        // In a real app, the token auth handles this.
+        // Here we'll grab from localStorage or kioskDb if we had current user stored there too
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return [];
+        const user = JSON.parse(userStr);
+        return kioskDb.getBills(user.consumerId);
     },
-    getBillByNumber: async (billNumber) => {
-        const { data } = await api.get(`/bills/${billNumber}`);
-        return data;
+    getBillByNumber: async (_billNumber) => {
+        // Not implemented in simple kioskDb yet, but could filter
+        return null;
     }
 };
 
-// Payment Service
+// Payment Service (Mock)
 export const paymentService = {
     createOrder: async (orderData) => {
-        const { data } = await api.post('/payments/create-order', orderData);
-        return data;
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return {
+            id: 'order_' + Math.random().toString(36).substr(2, 9),
+            amount: orderData.amount,
+            currency: 'INR'
+        };
     },
-    verifyPayment: async (paymentData) => {
-        const { data } = await api.post('/payments/verify', paymentData);
-        return data;
+    verifyPayment: async (_paymentData) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
     }
 };
 
-// Complaint Service
+// Complaint Service (Mock)
 export const complaintService = {
     submit: async (complaintData) => {
-        const { data } = await api.post('/complaints', complaintData);
-        return data;
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const newComplaint = kioskDb.addComplaint(complaintData);
+        return { success: true, complaint: newComplaint };
     },
-    track: async (id) => {
-        const { data } = await api.get(`/complaints/${id}`);
-        return data;
+    track: async (_id) => {
+        // Not impl
+        return null;
     },
     getUserComplaints: async () => {
-        const { data } = await api.get('/complaints');
-        return data;
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return [];
+        const user = JSON.parse(userStr);
+        return kioskDb.getComplaints(user.consumerId);
     }
 };
 
-// Connection Service
+// Connection Service (Mock)
 export const connectionService = {
-    requestNew: async (connectionData) => {
-        const { data } = await api.post('/connections', connectionData);
-        return data;
+    requestNew: async (_connectionData) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true, message: 'Request submitted' };
     },
-    track: async (id) => {
-        const { data } = await api.get(`/connections/${id}`);
-        return data;
+    track: async (_id) => {
+        return null;
+    }
+};
+
+// Department Service
+export const departmentService = {
+    verifyAccount: async (serviceType, consumerNumber) => {
+        try {
+            console.log('🔍 Verifying department account:', { serviceType, consumerNumber });
+            const response = await api.post('/departments/verify', {
+                serviceType: serviceType.toUpperCase(),
+                consumerNumber
+            });
+            console.log('✅ Verification Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API verifyAccount error:', error);
+            console.error('❌ Error response:', error.response?.data);
+            const err = new Error(error.response?.data?.error?.message || 'Failed to verify account');
+            err.code = error.response?.data?.error?.code;
+            throw err;
+        }
+    },
+    getAccountDetails: async (serviceType, consumerNumber) => {
+        try {
+            console.log('🔍 Getting account details:', { serviceType, consumerNumber });
+            const response = await api.get(`/departments/${serviceType.toUpperCase()}/${consumerNumber}`);
+            console.log('✅ Account Details Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API getAccountDetails error:', error);
+            console.error('❌ Error response:', error.response?.data);
+            const err = new Error(error.response?.data?.error?.message || 'Failed to get account details');
+            err.code = error.response?.data?.error?.code;
+            throw err;
+        }
     }
 };
 
