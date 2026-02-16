@@ -89,8 +89,7 @@ export function GasDashboard() {
     }, 60000); // 60000 ms = 1 minute
 
     return () => clearInterval(interval);
-  }, [safetyTips.length]);
-
+  }, []);
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">

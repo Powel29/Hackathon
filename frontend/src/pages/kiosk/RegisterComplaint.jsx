@@ -5,12 +5,14 @@ import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, FileText, Upload, Zap, Flame, Droplets, Building2 } from 'lucide-react';
+import { complaintService } from '../../services/api';
 
 export function RegisterComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { addComplaint, selectedService } = useKioskStore();
   const [description, setDescription] = useState('');
+  const [selectedIssue, setSelectedIssue] = useState('');
   const [files, setFiles] = useState([]);
   const [fileErrors, setFileErrors] = useState([]);
   const [errors, setErrors] = useState({});
@@ -176,39 +178,93 @@ export function RegisterComplaint() {
 
     if (description.length < 20) {
       newErrors.description = 'Description must be at least 20 characters';
-    } else if (description.length > 500) {
-      newErrors.description = 'Description must not exceed 500 characters';
+    } else if (description.length > 2000) {
+      newErrors.description = 'Description must not exceed 2000 characters';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate() || !selectedService) return;
 
-    const newComplaintId = 'CMP-2026-' + Math.floor(10000 + Math.random() * 90000);
+    try {
+      // Helper to map
+      function getBackendComplaintType(key) {
+        // key should be normalized (lowercase, trimmed)
+        const mapping = {
+          // Electricity
+          'frequent power cuts': 'POWER_OUTAGE',
+          'low voltage issue': 'VOLTAGE_FLUCTUATION',
+          'meter not working': 'METER_MALFUNCTION',
+          'incorrect billing': 'BILLING_ISSUE',
+          'wire damage/hanging wires': 'WIRE_DAMAGE',
+          'street light not working': 'STREET_LIGHT',
+          'transformer issue': 'TRANSFORMER_ISSUE',
+          'new meter installation required': 'NEW_METER_INSTALLATION',
+          // Gas
+          'gas leak detected': 'GAS_LEAK',
+          'no gas supply': 'NO_GAS_SUPPLY',
+          'cylinder not delivered': 'CYLINDER_NOT_DELIVERED',
+          'meter problem': 'METER_PROBLEM',
+          'pipeline damage': 'PIPELINE_DAMAGE',
+          'regulator malfunction': 'REGULATOR_MALFUNCTION',
+          'safety inspection required': 'SAFETY_INSPECTION',
+          // Water
+          'no water supply': 'NO_WATER_SUPPLY',
+          'low water pressure': 'LOW_WATER_PRESSURE',
+          'contaminated/dirty water': 'CONTAMINATED_WATER',
+          'pipeline leakage': 'PIPELINE_LEAKAGE',
+          'irregular supply timing': 'IRREGULAR_SUPPLY',
+          'sewage overflow': 'SEWAGE_OVERFLOW',
+          'water tanker request': 'WATER_TANKER_REQUEST',
+          // Municipal
+          'garbage not collected': 'GARBAGE_NOT_COLLECTED',
+          'road damage/potholes': 'ROAD_DAMAGE',
+          'drainage blockage': 'DRAINAGE_BLOCKAGE',
+          'illegal dumping': 'ILLEGAL_DUMPING',
+          'park maintenance issue': 'PARK_MAINTENANCE',
+          'stray animal problem': 'STRAY_ANIMAL',
+          'property tax query': 'PROPERTY_TAX_QUERY',
+        };
+        return mapping[key] || 'OTHER';
+      }
 
-    const newComplaint = {
-      id: Date.now().toString(),
-      complaintId: newComplaintId,
-      serviceType: selectedService,
-      description,
-      status: 'open',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      timeline: [
-        {
-          status: 'open',
-          timestamp: new Date().toISOString(),
-          note: 'Complaint registered'
-        }
-      ]
-    };
+      // Use selectedIssue if set, else try to extract from description
+      let normalizedKey = '';
+      if (selectedIssue) {
+        normalizedKey = selectedIssue.trim().toLowerCase();
+      } else {
+        // Try to extract the first sentence/issue from description
+        const firstSentence = description.split('.')[0].trim().toLowerCase();
+        normalizedKey = firstSentence;
+      }
 
-    addComplaint(newComplaint);
-    setComplaintId(newComplaintId);
-    setShowSuccess(true);
+      const complaintType = getBackendComplaintType(normalizedKey);
+
+      const complaintData = {
+        serviceType: selectedService.toUpperCase(),
+        complaintType,
+        title: description,
+        description: description, // Use same for now since we have one field
+        // files... need to upload separately or multipart?
+      };
+
+      const response = await complaintService.submit(complaintData);
+
+      if (response && response.success) {
+        const newComplaintId = response.complaint.complaintId;
+        setComplaintId(newComplaintId);
+        // Upload files if any (skipped for now)
+
+        setShowSuccess(true);
+      }
+    } catch (error) {
+      console.error("Complaint submission failed", error);
+      // Show error?
+      alert("Failed to submit complaint. Please try again.");
+    }
   };
 
   if (showSuccess) {
@@ -281,7 +337,7 @@ export function RegisterComplaint() {
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t('back')}
+          {t('common.back')}
         </button>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -311,10 +367,16 @@ export function RegisterComplaint() {
               {complaintTypes.map((issue) => (
                 <button
                   key={issue}
-                  onClick={() => setDescription(issue)}
-                  className={`p-3 border-2 rounded-lg text-sm font-medium transition-all text-left ${description === issue
-                      ? 'border-[#0066CC] bg-blue-50 text-[#0066CC]'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                  onClick={() => {
+                    setSelectedIssue(issue);
+                    // Prepend issue type to description if not already there
+                    if (!description.includes(issue)) {
+                      setDescription(description ? `${issue}. ${description}` : `${issue}. Please provide more details about this issue.`);
+                    }
+                  }}
+                  className={`p-3 border-2 rounded-lg text-sm font-medium transition-all text-left ${selectedIssue === issue || description.includes(issue)
+                    ? 'border-[#0066CC] bg-blue-50 text-[#0066CC]'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                 >
                   {issue}
@@ -336,11 +398,11 @@ export function RegisterComplaint() {
               }}
               placeholder="Describe your complaint in detail. Include location, timing, and any other relevant information..."
               className="w-full h-32 p-4 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent"
-              maxLength={500}
+              maxLength={2000}
             />
             <div className="flex justify-between items-center mt-2">
               <span className="text-xs text-gray-600">
-                Minimum 20 characters • {description.length} / 500
+                Minimum 20 characters • {description.length} / 2000
               </span>
               {errors.description && (
                 <span className="text-xs text-[#DC3545]">{errors.description}</span>
@@ -447,7 +509,7 @@ export function RegisterComplaint() {
               onClick={() => navigate('/kiosk/dashboard')}
               className="flex-1"
             >
-              {t('cancel')}
+              {t('common.cancel')}
             </TouchButton>
 
             <TouchButton

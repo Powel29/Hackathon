@@ -12,11 +12,11 @@ import api from '../api.js';
  */
 export async function sendOTP(request) {
     try {
-        console.log('Sending OTP for Aadhaar:', request.aadhaarNumber);
-
+        console.log('Sending OTP for Aadhaar: [REDACTED]');
         // Call backend API
         const response = await api.post('/auth/initiate', {
-            aadharNumber: request.aadhaarNumber
+            aadharNumber: request.aadhaarNumber,
+            mobileNumber: request.mobileNumber
         });
 
         return response.data;
@@ -35,8 +35,7 @@ export async function sendOTP(request) {
  */
 export async function verifyOTP(request) {
     try {
-        console.log('Verifying OTP for Aadhaar:', request.aadhaarNumber);
-
+        console.log('Verifying OTP for Aadhaar: [REDACTED]');
         // Call backend API
         const response = await api.post('/auth/verify-otp', {
             aadharNumber: request.aadhaarNumber,

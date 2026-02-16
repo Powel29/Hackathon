@@ -10,9 +10,8 @@ exports.verifyDepartmentAccount = async (req, res) => {
 
         // Validate service type
         const validServices = ['ELECTRICITY', 'GAS', 'WATER', 'MUNICIPAL'];
-        if (!validServices.includes(serviceType.toUpperCase())) {
-            return res.status(400).json({
-                success: false,
+        if (!serviceType || typeof serviceType !== 'string' || !validServices.includes(serviceType.toUpperCase())) {
+            return res.status(400).json({                success: false,
                 error: {
                     code: 'INVALID_SERVICE_TYPE',
                     message: 'Invalid service type. Must be ELECTRICITY, GAS, WATER, or MUNICIPAL'
@@ -132,6 +131,20 @@ exports.verifyDepartmentAccount = async (req, res) => {
             });
         }
 
+        // Compute a defensive masked mobile value to avoid exceptions
+        const mobile = account?.citizen?.mobileNumber;
+        let maskedMobileValue = '********';
+        if (typeof mobile === 'string') {
+            if (mobile.length >= 4) {
+                const last4 = mobile.slice(-4);
+                const stars = '*'.repeat(Math.max(0, mobile.length - 4));
+                maskedMobileValue = `${stars}${last4}`;
+            } else {
+                // short or unexpected format — use fixed placeholder
+                maskedMobileValue = '********';
+            }
+        }
+
         res.json({
             success: true,
             message: 'Account verified successfully',
@@ -140,9 +153,8 @@ exports.verifyDepartmentAccount = async (req, res) => {
                 consumerNumber: account.consumerNumber || account.propertyTaxNumber,
                 connectionType: account.connectionType || account.propertyType,
                 status: account.status,
-                ownerName: account.citizen.fullName,
-                // Mask mobile number for security (show last 4 digits)
-                maskedMobile: account.citizen.mobileNumber.replace(/(\d{6})(\d{4})/, '******$2')
+                ownerName: account.citizen?.fullName || null,
+                maskedMobile: maskedMobileValue
             }
         });
 

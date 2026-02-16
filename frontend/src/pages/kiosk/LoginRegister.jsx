@@ -7,7 +7,7 @@ import { TouchButton } from '../../components/kiosk/TouchButton';
 import { SuccessScreen } from '../../components/kiosk/SuccessScreen';
 import { ArrowLeft } from 'lucide-react';
 import { kioskDb } from '../../services/kioskDb';
-import { authService } from '../../services/api';
+import * as authService from '../../services/api/auth.service';
 import { toast } from 'sonner';
 
 export function LoginRegister() {
@@ -59,11 +59,11 @@ export function LoginRegister() {
   const validateStep1 = () => {
     const newErrors = {};
 
-    if (!formData.fullName.trim()) newErrors.fullName = t('fullNameRequired');
-    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = t('emailInvalid');
-    if (!formData.mobileNumber.match(/^[0-9]{10}$/)) newErrors.mobileNumber = t('mobileInvalid');
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = t('dateOfBirthRequired');
-    if (!formData.gender) newErrors.gender = t('genderRequired');
+    if (!formData.fullName.trim()) newErrors.fullName = t('validation.fullNameRequired');
+    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = t('validation.emailRequired');
+    if (!formData.mobileNumber.match(/^[0-9]{10}$/)) newErrors.mobileNumber = t('validation.mobileNumberDigits');
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = t('validation.dateOfBirthRequired');
+    if (!formData.gender) newErrors.gender = t('validation.genderRequired');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -72,44 +72,51 @@ export function LoginRegister() {
   const validateStep2 = () => {
     const newErrors = {};
 
-    if (!formData.aadhaarNumber.match(/^[0-9]{12}$/)) newErrors.aadhaarNumber = t('aadhaarInvalid');
-    if (!formData.address.trim()) newErrors.address = t('addressRequired');
+    if (!formData.aadhaarNumber.match(/^[0-9]{12}$/)) newErrors.aadhaarNumber = t('authentication.invalidAadhaar');
+    if (!formData.address.trim()) newErrors.address = t('validation.addressRequired');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
-    console.log("👉 handleNext called. Step:", step);
+    if (import.meta.env.DEV) console.log("👉 handleNext called. Step:", step);
     let isValid = false;
 
     if (step === 1) isValid = validateStep1();
     else if (step === 2) isValid = validateStep2();
 
-    console.log("👉 Validation result:", isValid, errors);
+    if (import.meta.env.DEV) console.log("👉 Validation result:", isValid, errors);
 
     if (isValid) {
       if (step < 2) {
-        console.log("👉 Moving to next step");
+        if (import.meta.env.DEV) console.log("👉 Moving to next step");
         setStep(step + 1);
       } else {
-        console.log("👉 Calling handleRegister");
+        if (import.meta.env.DEV) console.log("👉 Calling handleRegister");
         handleRegister();
       }
     }
   };
 
   const handleRegister = async () => {
-    console.log("🚀 handleRegister started");
+    if (import.meta.env.DEV) console.log("🚀 handleRegister started");
     try {
       // Send OTP to registered mobile
-      const response = await authService.sendOTP(formData.aadhaarNumber, formData.mobileNumber);
+      const response = await authService.sendOTP({
+        aadhaarNumber: formData.aadhaarNumber,
+        mobileNumber: formData.mobileNumber
+      });
 
-      // Show debugging toast if demo OTP is available
-      if (response._demoOTP) {
+      // Show debugging toast if demo OTP is available (only in dev)
+      if (import.meta.env.DEV && response._demoOTP) {
         toast.success(`OTP sent! Demo OTP: ${response._demoOTP}`);
       } else {
-        toast.success(t('otpSentSuccessfully'));
+        toast.success(t('authentication.otpSentSuccessfully'));
+      }
+
+      if (response.maskedMobile) {
+        setMaskedPhone(response.maskedMobile);
       }
 
       // Switch to OTP mode for verification
@@ -122,7 +129,7 @@ export function LoginRegister() {
     } catch (error) {
       console.error('❌ Registration OTP Error:', error);
       alert("Error: " + (error.message || "Failed to send OTP"));
-      toast.error(error.message || t('failedToSendOtp'));
+      toast.error(error.message || t('authentication.errorSendingOTP'));
     }
   };
 
@@ -130,18 +137,18 @@ export function LoginRegister() {
     console.log('🔵 handleLoginSubmit called', { loginType, loginCredential });
 
     if (!loginCredential.trim()) {
-      alert(t('enterCredentials'));
+      alert(t('authentication.enterCredentials'));
       return;
     }
 
     // Validate based on login type
     if (loginType === 'aadhaar' && loginCredential.length !== 12) {
-      alert(t('validAadhaarRequired'));
+      alert(t('authentication.invalidAadhaar'));
       return;
     }
 
     if (loginType === 'mobile' && loginCredential.length !== 10) {
-      alert(t('validMobileRequired'));
+      alert(t('validation.mobileNumberDigits'));
       return;
     }
 
@@ -158,14 +165,22 @@ export function LoginRegister() {
       }
 
       console.log('🔵 Sending OTP via backend:', { aadhar, mobile });
-      const response = await authService.sendOTP(aadhar, mobile);
+      const response = await authService.sendOTP({
+        aadhaarNumber: aadhar,
+        mobileNumber: mobile
+      });
       console.log('✅ OTP Sent successfully:', response);
 
       if (response.maskedMobile) {
         setMaskedPhone(response.maskedMobile);
       }
 
-      toast.success(t('otpSentSuccessfully'));
+      // Show debugging toast if demo OTP is available (only in dev)
+      if (import.meta.env.DEV && response._demoOTP) {
+        toast.success(`OTP sent! Demo OTP: ${response._demoOTP}`);
+      } else {
+        toast.success(t('authentication.otpSentSuccessfully'));
+      }
       setMode('otp');
       setOtp(['', '', '', '', '', '']);
       setOtpTimer(60);
@@ -180,7 +195,7 @@ export function LoginRegister() {
           setLoginType(null);
         }
       } else {
-        toast.error(error.message || t('failedToSendOtp'));
+        toast.error(error.message || t('authentication.errorSendingOTP'));
       }
     }
   };
@@ -210,7 +225,7 @@ export function LoginRegister() {
   const handleOtpVerify = async () => {
     const otpValue = otp.join('');
     if (otpValue.length !== 6) {
-      alert(t('enterCompleteOtp'));
+      alert(t('authentication.enterOTP'));
       return;
     }
 
@@ -218,9 +233,13 @@ export function LoginRegister() {
       // Check if we are in registration flow
       const isRegistration = formData.aadhaarNumber === loginCredential && formData.fullName;
       const userData = isRegistration ? formData : null;
+      console.log('🔵 Verifying OTP:', { loginCredential, otpValue, userData });
 
-      console.log('🔵 Verifying OTP with backend...');
-      const verifyResponse = await authService.verifyOTP(loginCredential, otpValue, userData);
+      const verifyResponse = await authService.verifyOTP({
+        aadhaarNumber: loginCredential,
+        otp: otpValue,
+        userData: userData
+      });
 
       if (verifyResponse.success) {
         // Set user in store
@@ -247,15 +266,39 @@ export function LoginRegister() {
       }
     } catch (error) {
       console.error("❌ OTP Verify Error:", error);
-      toast.error(error.message || t('invalidOtp'));
+      toast.error(error.message || t('authentication.invalidOTP'));
     }
   };
 
-  const handleResendOtp = () => {
-    setOtp(['', '', '', '', '', '']);
-    setOtpTimer(60);
-    setCanResendOtp(false);
-    alert(t('otpResentSuccessfully'));
+  const handleResendOtp = async () => {
+    try {
+      setOtp(['', '', '', '', '', '']);
+      setOtpTimer(60);
+      setCanResendOtp(false);
+
+      let aadhar = '';
+      let mobile = '';
+
+      // Check if we are in registration flow
+      const isRegistration = formData.aadhaarNumber === loginCredential && formData.fullName;
+
+      if (isRegistration) {
+        aadhar = formData.aadhaarNumber;
+        mobile = formData.mobileNumber;
+      } else {
+        if (loginType === 'aadhaar') {
+          aadhar = loginCredential;
+        } else if (loginType === 'mobile') {
+          mobile = loginCredential;
+        }
+      }
+
+      await authService.sendOTP(aadhar, mobile);
+      toast.success(t('authentication.otpResentSuccessfully'));
+    } catch (error) {
+      console.error("❌ Resend OTP Error:", error);
+      toast.error(error.message || t('authentication.errorResendingOTP'));
+    }
   };
 
   if (mode === 'choice') {
@@ -268,13 +311,13 @@ export function LoginRegister() {
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              {t('back')}
+              {t('common.back')}
             </button>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-[#212529] mb-2">{t('welcomeToSuvidha')}</h2>
-                <p className="text-gray-600">{t('digitalServicesPortal')}</p>
+                <h2 className="text-3xl font-bold text-[#212529] mb-2">{t('authentication.welcomeTitle')}</h2>
+                <p className="text-gray-600">{t('authentication.portalSubtitle')}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
@@ -290,8 +333,8 @@ export function LoginRegister() {
                       </svg>
                     </div>
                     <div className="text-center">
-                      <h3 className="text-xl font-bold text-[#212529] mb-2">{t('login')}</h3>
-                      <p className="text-sm text-gray-600">{t('alreadyHaveAccount')}<br />{t('Login To Continue')}</p>
+                      <h3 className="text-xl font-bold text-[#212529] mb-2">{t('common.login')}</h3>
+                      <p className="text-sm text-gray-600">{t('authentication.alreadyHaveAccount')}<br />{t('authentication.loginToContinue')}</p>
                     </div>
                   </div>
                 </button>
@@ -307,8 +350,8 @@ export function LoginRegister() {
                       </svg>
                     </div>
                     <div className="text-center">
-                      <h3 className="text-xl font-bold text-[#212529] mb-2">{t('register')}</h3>
-                      <p className="text-sm text-gray-600">{t('newUser')}<br />{t('createYourAccount')}</p>
+                      <h3 className="text-xl font-bold text-[#212529] mb-2">{t('authentication.register')}</h3>
+                      <p className="text-sm text-gray-600">{t('authentication.newUser')}<br />{t('authentication.createYourAccount')}</p>
                     </div>
                   </div>
                 </button>
@@ -316,7 +359,7 @@ export function LoginRegister() {
 
               <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-center text-gray-700">
-                  {t('registerOnceAccessServices')}
+                  {t('authentication.registerOnceAccessServices')}
                 </p>
               </div>
             </div>
@@ -329,7 +372,7 @@ export function LoginRegister() {
   if (mode === 'register') {
     return (
       <KioskLayout>
-        {showSuccess && <SuccessScreen message={t('registrationSuccessful')} />}
+        {showSuccess && <SuccessScreen message={t('authentication.registrationSuccessful')} />}
         <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
           <div className="w-full max-w-3xl">
             <button
@@ -350,7 +393,7 @@ export function LoginRegister() {
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              {t('back')}
+              {t('common.back')}
             </button>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -361,14 +404,14 @@ export function LoginRegister() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-[#212529]">{t('register')}</h2>
-                  <p className="text-sm text-gray-600">{t('createYourAccount')}</p>
+                  <h2 className="text-2xl font-bold text-[#212529]">{t('authentication.register')}</h2>
+                  <p className="text-sm text-gray-600">{t('authentication.createYourAccount')}</p>
                 </div>
               </div>
 
               {/* Progress Steps */}
               <div className="flex items-center justify-between mb-8 max-w-md mx-auto">
-                {[t('personalDetails'), t('identityAndAddress')].map((label, index) => (
+                {[t('newConnection.applicantDetails'), t('newConnection.addressDetails')].map((label, index) => (
                   <div key={index} className="flex items-center flex-1 last:flex-none">
                     <div className="flex flex-col items-center relative z-10">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${index + 1 < step ? 'bg-[#10B981] text-white' :
@@ -400,12 +443,12 @@ export function LoginRegister() {
                   <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
                     <h3 className="text-xl font-bold text-[#212529] mb-4 flex items-center gap-2">
                       <span className="w-1 h-6 bg-[#0066CC] rounded-full"></span>
-                      {t('personalInformation')}
+                      {t('newConnection.applicantDetails')}
                     </h3>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {t('fullNameAsPerAadhaar')} *
+                        {t('newConnection.fullName')} *
                       </label>
                       <input
                         type="text"
@@ -420,7 +463,7 @@ export function LoginRegister() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          {t('emailAddress')}
+                          {t('newConnection.emailAddress')}
                         </label>
                         <input
                           type="email"
@@ -434,7 +477,7 @@ export function LoginRegister() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          {t('mobileNumber')} *
+                          {t('newConnection.mobileNumber')} *
                         </label>
                         <input
                           type="tel"
@@ -451,7 +494,7 @@ export function LoginRegister() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          {t('dateOfBirth')} *
+                          {t('validation.dateOfBirthRequired')} *
                         </label>
                         <input
                           type="date"
@@ -464,7 +507,7 @@ export function LoginRegister() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          {t('gender')} *
+                          {t('validation.genderRequired')} *
                         </label>
                         <div className="grid grid-cols-3 gap-3">
                           {['Male', 'Female', 'Other'].map((g) => (
@@ -492,12 +535,12 @@ export function LoginRegister() {
                   <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
                     <h3 className="text-xl font-bold text-[#212529] mb-4 flex items-center gap-2">
                       <span className="w-1 h-6 bg-[#0066CC] rounded-full"></span>
-                      {t('identityInformation')}
+                      {t('newConnection.addressDetails')}
                     </h3>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {t('aadhaarNumber')} *
+                        {t('authentication.aadhaarNumber')} *
                       </label>
                       <div className="relative">
                         <input
@@ -522,14 +565,14 @@ export function LoginRegister() {
 
                     <div className="pt-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {t('address')} *
+                        {t('newConnection.address')} *
                       </label>
                       <textarea
                         value={formData.address}
                         onChange={(e) => handleInputChange('address', e.target.value)}
                         rows={3}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent transition-all shadow-sm resize-none"
-                        placeholder={t('addressPlaceholder')}
+                        placeholder={t('newConnection.addressDetails')}
                       />
                       {errors.address && <p className="text-xs text-red-600 mt-1 flex items-center gap-1">⚠️ {errors.address}</p>}
                     </div>
@@ -545,7 +588,7 @@ export function LoginRegister() {
                     onClick={() => setStep(step - 1)}
                     className="flex-1"
                   >
-                    {t('previous')}
+                    {t('newConnection.previous')}
                   </TouchButton>
                 )}
                 <TouchButton
@@ -554,7 +597,7 @@ export function LoginRegister() {
                   onClick={handleNext}
                   className="flex-1"
                 >
-                  {step === 2 ? t('submit') : t('next')}
+                  {step === 2 ? t('newConnection.submit') : t('newConnection.next')}
                 </TouchButton>
               </div>
 
@@ -576,7 +619,7 @@ export function LoginRegister() {
                   }}
                   className="text-sm text-[#0066CC] hover:underline"
                 >
-                  {t('alreadyHaveAccountLoginHere')}
+                  {t('authentication.alreadyHaveAccount')}
                 </button>
               </div>
             </div>
@@ -600,7 +643,7 @@ export function LoginRegister() {
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              {t('back')}
+              {t('common.back')}
             </button>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -612,14 +655,14 @@ export function LoginRegister() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-[#212529]">{t('login')}</h2>
-                  <p className="text-sm text-gray-600">{t('chooseLoginMethod')}</p>
+                  <h2 className="text-2xl font-bold text-[#212529]">{t('common.login')}</h2>
+                  <p className="text-sm text-gray-600">{t('authentication.chooseLoginMethod')}</p>
                 </div>
               </div>
 
               {!loginType ? (
                 <div className="space-y-4 mb-6">
-                  <p className="text-sm font-medium text-gray-700 mb-4">{t('selectLoginMethod')}</p>
+                  <p className="text-sm font-medium text-gray-700 mb-4">{t('authentication.selectHowToLogin')}</p>
 
                   <button
                     onClick={() => {
@@ -638,8 +681,8 @@ export function LoginRegister() {
                         </svg>
                       </div>
                       <div>
-                        <p className="font-semibold text-[#212529] mb-1">{t('usingAadhaarNumber')}</p>
-                        <p className="text-xs text-gray-600">{t('aadhaarNumberHelper')}</p>
+                        <p className="font-semibold text-[#212529] mb-1">{t('authentication.usingAadhaarNumber')}</p>
+                        <p className="text-xs text-gray-600">{t('authentication.twelveDigitAadhaar')}</p>
                       </div>
                     </div>
                   </button>
@@ -653,17 +696,17 @@ export function LoginRegister() {
                     }}
                     className="text-sm text-gray-600 hover:text-gray-900 mb-4"
                   >
-                    {t('changeLoginMethod')}
+                    {t('authentication.selectHowToLogin')}
                   </button>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('aadhaarNumberLabelRequired')}
+                      {t('authentication.aadhaarNumber')}
                     </label>
                     <input
                       type="text"
                       value={loginCredential}
                       onChange={(e) => setLoginCredential(e.target.value)}
-                      placeholder={t('aadhaarNumberHelper')}
+                      placeholder={t('authentication.enterAadhaar')}
                       maxLength={12}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent"
                     />
@@ -671,7 +714,7 @@ export function LoginRegister() {
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-xs text-gray-700">
-                      <strong>{t('otpWillBeSent')}</strong> {t('otpVerificationNote')}
+                      <strong>{t('authentication.otp')}</strong>: {t('authentication.otpVerificationNote')}
                     </p>
                   </div>
                 </div>
@@ -687,7 +730,7 @@ export function LoginRegister() {
                   onClick={handleLoginSubmit}
                   className="w-full mb-4"
                 >
-                  {t('sendOtp')}
+                  {t('authentication.proceedToOTP')}
                 </TouchButton>
               )}
 
@@ -699,7 +742,7 @@ export function LoginRegister() {
                   }}
                   className="text-sm text-[#0066CC] hover:underline"
                 >
-                  {t('dontHaveAccountRegisterHere')}
+                  {t('authentication.newUser')}
                 </button>
               </div>
             </div>
@@ -719,7 +762,7 @@ export function LoginRegister() {
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              {t('back')}
+              {t('common.back')}
             </button>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -731,15 +774,15 @@ export function LoginRegister() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-[#212529]">{t('verifyOtp')}</h2>
-                  <p className="text-sm text-gray-600">{t('enterOtpSentToMobile')}</p>
+                  <h2 className="text-2xl font-bold text-[#212529]">{t('authentication.otpVerification')}</h2>
+                  <p className="text-sm text-gray-600">{t('authentication.enterOTP')}</p>
                 </div>
               </div>
 
               <div className="mb-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-gray-700 text-center">
-                    {t('otpSentTo')} <strong>{maskedPhone}</strong>
+                    {t('authentication.otpSentTo')} <strong>{maskedPhone}</strong>
                   </p>
                 </div>
 
@@ -764,11 +807,11 @@ export function LoginRegister() {
                       onClick={handleResendOtp}
                       className="text-sm text-[#0066CC] hover:underline font-semibold"
                     >
-                      {t('resendOTP')}
+                      {t('authentication.resendOTP')}
                     </button>
                   ) : (
                     <p className="text-sm text-gray-600">
-                      {t('resendOtpIn', { seconds: otpTimer })}
+                      {t('authentication.resendIn')} {otpTimer} {t('authentication.seconds')}
                     </p>
                   )}
                 </div>
@@ -780,7 +823,7 @@ export function LoginRegister() {
                 onClick={handleOtpVerify}
                 className="w-full"
               >
-                {t('verifyAndContinue')}
+                {t('authentication.verify')}
               </TouchButton>
             </div>
           </div>
@@ -791,7 +834,7 @@ export function LoginRegister() {
 
   // Register mode
   if (showSuccess) {
-    return <SuccessScreen message={t('registrationSuccessRedirect')} />;
+    return <SuccessScreen message={t('authentication.registrationSuccessful')} />;
   }
 
   return (
@@ -805,7 +848,7 @@ export function LoginRegister() {
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t('back')}
+          {t('common.back')}
         </button>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6 relative z-0">
@@ -1101,7 +1144,7 @@ export function LoginRegister() {
               onClick={() => setStep(step - 1)}
               className="flex-1"
             >
-              {t('previous')}
+              {t('common.previous')}
             </TouchButton>
           )}
 
@@ -1111,7 +1154,7 @@ export function LoginRegister() {
             onClick={handleNext}
             className="flex-1"
           >
-            {step === 3 ? t('completeRegistration') : t('next')}
+            {step === 3 ? t('completeRegistration') : t('common.next')}
           </TouchButton>
         </div>
       </div>

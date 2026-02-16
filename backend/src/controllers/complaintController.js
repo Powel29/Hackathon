@@ -1,4 +1,5 @@
 const prisma = require('../utils/prismaClient');
+const crypto = require('crypto');
 // Complaint type definitions
 const COMPLAINT_TYPES = {
     ELECTRICITY: [
@@ -114,6 +115,11 @@ exports.registerComplaint = async (req, res) => {
 
         const priority = urgentTypes.includes(complaintType) ? 'URGENT' : 'MEDIUM';
 
+        // Generate collision-proof Readable Complaint ID (CMP-YYYY-XXXXXXXX)
+        const year = new Date().getFullYear();
+        const uuidPart = crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase();
+        const complaintNumber = `CMP-${year}-${uuidPart}`;
+
         // Create complaint
         const complaint = await prisma.complaint.create({
             data: {
@@ -125,9 +131,8 @@ exports.registerComplaint = async (req, res) => {
                 priority,
                 status: 'OPEN',
                 location,
-                latitude: latitude ? parseFloat(latitude) : null,
-                longitude: longitude ? parseFloat(longitude) : null,
-                kioskId: req.headers['x-kiosk-id'] || null
+                kioskId: req.headers['x-kiosk-id'] || null,
+                complaintNumber
             }
         });
 
@@ -173,8 +178,9 @@ exports.registerComplaint = async (req, res) => {
         res.json({
             success: true,
             message: 'Complaint registered successfully',
+            complaintInternalId: complaint.complaintId, // Keep internal ID safe
             complaint: {
-                complaintId: complaint.complaintId,
+                complaintId: complaint.complaintNumber || complaint.complaintId,
                 serviceType: complaint.serviceType,
                 complaintType: complaint.complaintType,
                 title: complaint.title,
@@ -231,7 +237,11 @@ exports.getMyComplaints = async (req, res) => {
 
         res.json({
             success: true,
-            complaints,
+            complaints: complaints.map(c => ({
+                ...c,
+                originalId: c.complaintId,
+                complaintId: c.complaintNumber || c.complaintId
+            })),
             summary
         });
 
@@ -256,9 +266,13 @@ exports.getComplaintDetails = async (req, res) => {
         const { citizenId } = req.user;
         const { complaintId } = req.params;
 
+        const whereClause = complaintId.startsWith('CMP-')
+            ? { complaintNumber: complaintId }
+            : { complaintId };
+
         const complaint = await prisma.complaint.findFirst({
             where: {
-                complaintId,
+                ...whereClause,
                 citizenId
             },
             include: {
@@ -289,7 +303,7 @@ exports.getComplaintDetails = async (req, res) => {
         const documents = await prisma.document.findMany({
             where: {
                 relatedEntity: 'COMPLAINT',
-                relatedId: complaintId
+                relatedId: complaint.complaintId
             }
         });
 
@@ -297,6 +311,8 @@ exports.getComplaintDetails = async (req, res) => {
             success: true,
             complaint: {
                 ...complaint,
+                originalId: complaint.complaintId,
+                complaintId: complaint.complaintNumber || complaint.complaintId,
                 documents
             }
         });
@@ -321,10 +337,15 @@ exports.trackComplaint = async (req, res) => {
     try {
         const { complaintId } = req.params;
 
+        const whereClause = complaintId.startsWith('CMP-')
+            ? { complaintNumber: complaintId }
+            : { complaintId };
+
         const complaint = await prisma.complaint.findUnique({
-            where: { complaintId },
+            where: whereClause,
             select: {
                 complaintId: true,
+                complaintNumber: true,
                 serviceType: true,
                 complaintType: true,
                 title: true,
@@ -366,6 +387,8 @@ exports.trackComplaint = async (req, res) => {
             success: true,
             complaint: {
                 ...complaint,
+                originalId: complaint.complaintId,
+                complaintId: complaint.complaintNumber || complaint.complaintId,
                 estimatedResolution
             }
         });
@@ -392,9 +415,13 @@ exports.uploadDocument = async (req, res) => {
         const { complaintId } = req.params;
 
         // Verify complaint belongs to citizen
+        const whereClause = complaintId.startsWith('CMP-')
+            ? { complaintNumber: complaintId }
+            : { complaintId };
+
         const complaint = await prisma.complaint.findFirst({
             where: {
-                complaintId,
+                ...whereClause,
                 citizenId
             }
         });
@@ -424,7 +451,7 @@ exports.uploadDocument = async (req, res) => {
             data: {
                 citizenId,
                 relatedEntity: 'COMPLAINT',
-                relatedId: complaintId,
+                relatedId: complaint.complaintId, // Must use internal UUID
                 documentType: req.file.mimetype.startsWith('image/') ? 'PHOTO' : 'PDF',
                 fileName: req.file.originalname,
                 filePath: req.file.path,

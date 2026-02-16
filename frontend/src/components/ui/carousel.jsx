@@ -54,15 +54,27 @@ function Carousel({
 
   const handleKeyDown = React.useCallback(
     (event) => {
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        scrollPrev();
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        scrollNext();
+      if (orientation === "vertical") {
+        // Vertical carousel: respond to ArrowUp and ArrowDown
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          scrollPrev();
+        } else if (event.key === "ArrowDown") {
+          event.preventDefault();
+          scrollNext();
+        }
+      } else {
+        // Horizontal carousel: respond to ArrowLeft and ArrowRight
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          scrollPrev();
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          scrollNext();
+        }
       }
     },
-    [scrollPrev, scrollNext],
+    [scrollPrev, scrollNext, orientation],
   );
 
   React.useEffect(() => {
@@ -77,10 +89,10 @@ function Carousel({
     api.on("select", onSelect);
 
     return () => {
+      api?.off("reInit", onSelect);
       api?.off("select", onSelect);
     };
   }, [api, onSelect]);
-
   return (
     <CarouselContext.Provider
       value={{

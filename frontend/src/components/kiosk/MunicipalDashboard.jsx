@@ -25,6 +25,7 @@ export function MunicipalDashboard() {
     const fetchAccountData = async () => {
       if (!user?.consumerId) {
         console.log('❌ No consumerId found:', user);
+        setLoading(false);
         return;
       }
 
@@ -67,13 +68,13 @@ export function MunicipalDashboard() {
   const annualTax = accountData?.annualTaxAmount || 0;
   const propertyType = accountData?.propertyType || 'Residential';
   const propertyArea = accountData?.propertyArea || 0;
-  const wardNumber = '12-A'; // This would come from address/location data
+  const wardNumber = accountData?.wardNumber || accountData?.ward || 'Not Available';
   const taxDueDate = accountData?.taxBills?.[0]?.dueDate
     ? new Date(accountData.taxBills[0].dueDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
     : 'Mar 31, 2026';
-  const garbageCollectionDay = accountData?.garbageCollection ? 'Monday, Wednesday, Friday' : 'Not Available';
+  const garbageCollectionDay = accountData?.garbageCollectionDay || accountData?.wasteCollectionSchedule || 'Monday, Wednesday, Friday';
 
-  console.log('📊 Municipal Dashboard values:', { propertyTaxDue, annualTax, propertyType, propertyArea, accountData });
+  console.log('📊 Municipal Dashboard values:', { propertyTaxDue, annualTax, propertyType, propertyArea, wardNumber, garbageCollectionDay, accountData });
 
 
   return (
@@ -114,7 +115,7 @@ export function MunicipalDashboard() {
             <Trash2 className="w-6 h-6 text-purple-600" />
             <span className="text-xs text-purple-700">Schedule</span>
           </div>
-          <p className="text-sm font-bold text-gray-900">Mon, Wed, Fri</p>
+          <p className="text-sm font-bold text-gray-900">{garbageCollectionDay}</p>
           <p className="text-xs text-gray-600 mt-1">Garbage Collection</p>
         </div>
       </div>

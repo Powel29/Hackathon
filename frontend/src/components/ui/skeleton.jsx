@@ -1,5 +1,4 @@
-import { cn } from "./utils";
-
+import { cn } from "../../lib/utils";
 function Skeleton({ className, ...props }) {
   return (
     <div

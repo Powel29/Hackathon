@@ -114,20 +114,17 @@ export function DepartmentVerification() {
 
       if (response.success) {
         // Update user with department-specific consumer ID and account info
-        if (user) {
-          setUser({
-            ...user,
-            consumerId: response.account.consumerNumber,
-            accountId: response.account.accountId,
-            ownerName: response.account.ownerName,
-            connectionType: response.account.connectionType
-          });
-        }
+        setUser({
+          ...(user || {}),
+          consumerId: response.account.consumerNumber,
+          accountId: response.account.accountId,
+          ownerName: response.account.ownerName,
+          connectionType: response.account.connectionType
+        });
 
         // Navigate to dashboard
         navigate('/kiosk/dashboard');
-      }
-    } catch (err) {
+      }    } catch (err) {
       console.error('Verification error:', err);
       setError(err.message || 'Failed to verify account. Please try again.');
     } finally {

@@ -13,6 +13,7 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
+      value={value}
       className={cn(
         "bg-primary/20 relative h-2 w-full overflow-hidden rounded-full",
         className,
@@ -25,7 +26,6 @@ function Progress({
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>
-  );
-}
+  );}
 
 export { Progress };

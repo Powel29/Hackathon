@@ -48,7 +48,14 @@
     "errorSendingOTP": "Failed to send OTP",
     "errorResendingOTP": "Failed to resend OTP",
     "errorVerifyingOTP": "Failed to verify OTP",
-    "sendingOTP": "Sending OTP"
+    "sendingOTP": "Sending OTP",
+    "registerOnceAccessServices": "Register once to access all services",
+    "otpSentSuccessfully": "OTP sent successfully",
+    "otpResentSuccessfully": "OTP resent successfully",
+    "registrationSuccessful": "Registration Successful",
+    "enterCredentials": "Enter Credentials",
+    "otpVerificationNote": "An OTP will be sent to your linked mobile number for verification.",
+    "otpSentTo": "OTP sent to"
   },
   "dashboard": {
     "welcome": "Welcome",
@@ -291,7 +298,9 @@
     "retry": "Retry",
     "goBack": "Go Back",
     "home": "Home",
-    "changeLanguage": "Change Language"
+    "changeLanguage": "Change Language",
+    "login": "Login",
+    "all": "All"
   },
   "session": {
     "sessionWarning": "Session Timeout Warning",
@@ -304,7 +313,41 @@
     "payElectricityBill": "Pay Electricity Bill",
     "checkCurrentBill": "Check Current Bill",
     "unitsConsumed": "Units Consumed",
-    "amountDue": "Amount Due"
+    "amountDue": "Amount Due",
+    "active": "Active",
+    "kwhThisMonth": "kWh This Month",
+    "avgPerDay": "Avg/Day",
+    "kwhDailyAverage": "kWh Daily Average",
+    "peakLoad": "Peak Load",
+    "kwMaximumLoad": "kW Maximum Load",
+    "alert": "Alert",
+    "lastBillAmount": "Last Bill Amount",
+    "consumptionTrend": "Consumption Trend",
+    "last7DaysPattern": "Last 7 Days Pattern",
+    "mondayShort": "Mon",
+    "tuesdayShort": "Tue",
+    "wednesdayShort": "Wed",
+    "thursdayShort": "Thu",
+    "fridayShort": "Fri",
+    "saturdayShort": "Sat",
+    "sundayShort": "Sun",
+    "weeklyAverage": "Weekly Average",
+    "weeklyAverageValue": "{{value}}",
+    "powerAlerts": "Power Alerts",
+    "outagesAndMaintenance": "Outages & Maintenance",
+    "scheduledMaintenance": "Scheduled Maintenance",
+    "scheduledMaintenanceTime": "{{date}}, {{time}}",
+    "maintenanceArea": "Area: {{area}}",
+    "systemStatus": "System Status",
+    "allSystemsOperational": "All systems operational",
+    "uptimeThisMonth": "Uptime this month: {{percent}}%",
+    "smartMeterInfo": "Smart Meter Info",
+    "connectionTypeLabel": "Connection Type",
+    "sanctionedLoad": "Sanctioned Load",
+    "lastReadingDate": "Last Reading Date",
+    "energySavingTip": "Energy Saving Tip",
+    "energySavingPractices": "Energy Saving Practices",
+    "ledBulbTip": "Replacing old bulbs with LED bulbs can save {{min}}-{{max}} rupees per year."
   },
   "gas": {
     "meterId": "Meter ID",
@@ -347,7 +390,10 @@
     "facilityRequired": "Please select a water tanker facility",
     "descriptionMinLength": "Description must be at least 20 characters",
     "descriptionMaxLength": "Description must not exceed 500 characters",
-    "emailRequired": "Valid email is required"
+    "emailRequired": "Valid email is required",
+    "dateOfBirthRequired": "Date of Birth is required",
+    "genderRequired": "Gender is required",
+    "addressRequired": "Address is required"
   },
   "trackNewConnection": {
     "pageTitle": "Track New Connection Application",
@@ -372,7 +418,21 @@
     "statusApprovedDesc": "Your application has been approved by the department",
     "statusActiveDesc": "Your connection is now active",
     "smsEmailNotification": "You will receive updates via SMS and Email",
-    "enterApplicationId": "Enter your Application ID to track..."
+    "enterApplicationId": "Enter your Application ID to track...",
+    "backToList": "Back to list",
+    "status": "Status",
+    "applicationIdLabel": "APPLICATION ID",
+    "quickSummary": "Quick Summary",
+    "recentApplications": "Your Recent Applications",
+    "loading": "Loading applications...",
+    "noApplications": "No applications found",
+    "noApplicationsDesc": "You haven't submitted any connection requests yet.",
+    "appliedOn": "Applied on",
+    "categoryElectricity": "Electricity Department",
+    "categoryGas": "Gas Department",
+    "categoryWater": "Water Department",
+    "categoryMunicipal": "Municipal Services",
+    "categoryDefault": "Department"
   },
   "trackComplaint": {
     "complaintNotFound": "Complaint not found. Please check the Complaint ID."

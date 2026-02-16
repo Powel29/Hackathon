@@ -9,105 +9,79 @@
 import { query, transaction } from '../../db/config';
 
 
-export
+/**
+ * Submit new connection application
+ */
+export async function submitConnectionApplication(request) {
+  try {
+    /* Database implementation (uncomment when ready)
+    // Generate application number
+    const applicationNumber = await generateApplicationNumber(request.serviceType);
 
-  export
+    // Insert application
+    const result = await client.query(
+      `INSERT INTO connection_applications (
+        application_number, user_id, service_type, full_name, mobile_number,
+        email_address, address, city, state, pincode, connection_type,
+        load_required, aadhaar_document_url, address_proof_url, photo_url,
+        signature_url, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'submitted')
+      RETURNING application_id`,
+      [
+        applicationNumber, request.userId, request.serviceType, request.fullName,
+        request.mobileNumber, request.emailAddress, request.address, request.city,
+        request.state, request.pincode, request.connectionType, request.loadRequired,
+        request.aadhaarDocumentUrl, request.addressProofUrl, request.photoUrl,
+        request.signatureUrl
+      ]
+    );
 
-  /**
-   * Submit new connection application
-   */
-  export async function submitConnectionApplication(request) { success: boolean; applicationNumber ?: string; error ?: string }> {
-    try {
-      // Database implementation (uncomment when ready) {
-      // Generate application number
-      const applicationNumber = await generateApplicationNumber(request.serviceType);
+    const applicationId = result.rows[0].application_id;
 
-      // Insert application
-      const result = await client.query(
-        `INSERT INTO connection_applications (
-          application_number, user_id, service_type, full_name, mobile_number,
-          email_address, address, city, state, pincode, connection_type,
-          load_required, aadhaar_document_url, address_proof_url, photo_url,
-          signature_url, status
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'submitted')
-        RETURNING application_id`,
-        [
-          applicationNumber, request.userId, request.serviceType, request.fullName,
-          request.mobileNumber, request.emailAddress, request.address, request.city,
-          request.state, request.pincode, request.connectionType, request.loadRequired,
-          request.aadhaarDocumentUrl, request.addressProofUrl, request.photoUrl,
-          request.signatureUrl
-        ]
-      );
+    // Create notification
+    await client.query(
+      `INSERT INTO notifications (user_id, notification_type, title, message)
+       VALUES ($1, 'application_submitted', 'Application Submitted', $2)`,
+      [request.userId, `Your ${request.serviceType} connection application ${applicationNumber} has been submitted successfully.`]
+    );
 
-      const applicationId = result.rows[0].application_id;
+    // Log audit
+    await client.query(
+      `INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id)
+       VALUES ($1, 'application_submitted', 'connection_application', $2)`,
+      [request.userId, applicationId]
+    );
 
-      // Create notification
-      await client.query(
-        `INSERT INTO notifications (user_id, notification_type, title, message)
-         VALUES ($1, 'application_submitted', 'Application Submitted', $2)`,
-        [request.userId, `Your ${request.serviceType} connection application ${applicationNumber} has been submitted successfully.`]
-      );
-
-      // Log audit
-      await client.query(
-        `INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id)
-         VALUES ($1, 'application_submitted', 'connection_application', $2)`,
-        [request.userId, applicationId]
-      );
-
-      return { success, applicationNumber };
-    });
+    return { success: true, applicationNumber };
     */
 
     // Mock implementation
     console.log('Submitting connection application:', request);
 
-// Simulate API delay
-await new Promise(resolve => setTimeout(resolve, 1500));
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-const applicationNumber = `APP-${request.serviceType.toUpperCase().substring(0, 3)}-${Date.now()}`;
+    const applicationNumber = `APP-${request.serviceType.toUpperCase().substring(0, 3)}-${Date.now()}`;
 
-return { success, applicationNumber };
+    return { success: true, applicationNumber };
   } catch (error) {
-  console.error('Submit connection application error:', error);
-  return { success, error: String(error) };
-}
+    console.error('Submit connection application error:', error);
+    return { success: false, error: String(error) };
+  }
 }
 
 /**
  * Get connection application by ID or number
  */
-export async function getConnectionApplication(applicationId?: string, applicationNumber?: string) {
+export async function getConnectionApplication(applicationId, applicationNumber) {
   try {
-    // Database implementation (uncomment when ready) {whereClause}`,
-    [param]
-    );
+    // Mock implementation for frontend use
+    // Replace with real API call when backend is available
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    const row = result.rows[0];
-    return {
-      applicationId: row.application_id,
-      applicationNumber: row.application_number,
-      userId: row.user_id,
-      serviceType: row.service_type,
-      status: row.status,
-      fullName: row.full_name,
-      mobileNumber: row.mobile_number,
-      emailAddress: row.email_address,
-      address: row.address,
-      city: row.city,
-      state: row.state,
-      pincode: row.pincode,
-      connectionType: row.connection_type,
-      loadRequired: row.load_required ? parseFloat(row.load_required) { applicationId, applicationNumber });
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const loadRequired = 0;
+    const reviewNotes = '';
 
     return {
       applicationId: applicationId || 'mock-app-id',
@@ -138,9 +112,15 @@ export async function getConnectionApplication(applicationId?: string, applicati
 /**
  * Get user's connection applications
  */
-export async function getUserApplications(userId, serviceType?: ServiceType) {
+export async function getUserApplications(userId, serviceType) {
   try {
-    // Database implementation (uncomment when ready) {whereClause}
+    /* Database implementation (uncomment when ready)
+    const whereClause = serviceType ? 'WHERE user_id = $1 AND service_type = $2' : 'WHERE user_id = $1';
+    const params = serviceType ? [userId, serviceType] : [userId];
+    
+    const result = await client.query(
+      `SELECT * FROM connection_applications 
+       ${whereClause}
        ORDER BY created_at DESC`,
       params
     );
@@ -159,7 +139,15 @@ export async function getUserApplications(userId, serviceType?: ServiceType) {
       state: row.state,
       pincode: row.pincode,
       connectionType: row.connection_type,
-      loadRequired: row.load_required ? parseFloat(row.load_required) {
+      loadRequired: row.load_required ? parseFloat(row.load_required) : 0,
+    }));
+    */
+
+    // Mock implementation
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return [];
+
+  } catch (error) {
     console.error('Get user applications error:', error);
     return [];
   }
@@ -171,12 +159,12 @@ export async function getUserApplications(userId, serviceType?: ServiceType) {
 export async function updateApplicationStatus(
   applicationId,
   status,
-  reviewNotes?: string
-) { success: boolean; error?: string }> {
+  reviewNotes
+) {
   try {
-    // Database implementation (uncomment when ready) {
+    /* Database implementation (uncomment when ready)
       const updates = ['status = $1'];
-      const params: any[] = [status];
+      const params = [status];
       let paramIndex = 2;
       
       if (reviewNotes) {
@@ -203,7 +191,7 @@ export async function updateApplicationStatus(
       );
       
       if (result.rows.length === 0) {
-        return { success, error: 'Application not found' };
+        return { success: false, error: 'Application not found' };
       }
       
       const app = result.rows[0];
@@ -234,19 +222,18 @@ export async function updateApplicationStatus(
       }
       
       return { success: true };
-    });
     */
 
     // Mock implementation
     console.log('Updating application status:', { applicationId, status, reviewNotes });
-    
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     return { success: true };
   } catch (error) {
     console.error('Update application status error:', error);
-    return { success, error: String(error) };
+    return { success: false, error: String(error) };
   }
 }
 
@@ -257,7 +244,7 @@ async function generateApplicationNumber(serviceType) {
   const prefix = serviceType.toUpperCase().substring(0, 3);
   const year = new Date().getFullYear();
   const random = Math.floor(10000 + Math.random() * 90000);
-  return `APP - ${ prefix } -${ year } -${ random } `;
+  return `APP-${prefix}-${year}-${random}`;
 }
 
 /**
@@ -266,5 +253,5 @@ async function generateApplicationNumber(serviceType) {
 async function generateConsumerId(serviceType) {
   const prefix = serviceType.charAt(0).toUpperCase();
   const random = Math.floor(100000000 + Math.random() * 900000000);
-  return `${ prefix }C${ random } `;
+  return `${prefix}C${random}`;
 }

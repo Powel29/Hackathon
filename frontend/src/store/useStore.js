@@ -85,6 +85,8 @@ export const useStore = create((set) => ({
         user: null,
         isAuthenticated: false,
         selectedService: null,
-        showSessionWarning: false
-    })
-}));
+        showSessionWarning: false,
+        registrationData: null,
+        bills: [],
+        complaints: []
+    })}));

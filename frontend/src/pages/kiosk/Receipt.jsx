@@ -158,12 +158,11 @@ export function Receipt() {
               <tbody>
                 <tr>
                   <td style={{ padding: '8px', fontSize: '13px', borderBottom: '1px solid #ddd' }}>Bill Amount</td>
-                  <td style={{ padding: '8px', textAlign: 'right', fontSize: '13px', borderBottom: '1px solid #ddd' }}>₹{bill.amount.toLocaleString()}</td>
+                  <td style={{ padding: '8px', textAlign: 'right', fontSize: '13px', borderBottom: '1px solid #ddd' }}>₹{(bill.amount ?? 0).toLocaleString()}</td>
                 </tr>
                 <tr style={{ backgroundColor: '#28A745', color: 'white' }}>
                   <td style={{ padding: '10px', fontSize: '14px', fontWeight: 'bold' }}>TOTAL PAID</td>
-                  <td style={{ padding: '10px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>₹{bill.amount.toLocaleString()}</td>
-                </tr>
+                  <td style={{ padding: '10px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>₹{bill.amount.toLocaleString()}</td>                </tr>
               </tbody>
             </table>
           </div>
@@ -330,14 +329,13 @@ export function Receipt() {
                   onClick={() => navigate('/kiosk/bills')}
                   className="w-full"
                 >
-                  {t('backToDashboard')}
+                  {t('viewBills')}
                 </TouchButton>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-xs text-center text-gray-700 leading-relaxed">
-                  ⓘ Keep this receipt for your records
-                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-xs text-center text-gray-700 leading-relaxed">
+                    ⓘ Keep this receipt for your records
+                  </p>
+                </div>
               </div>
             </div>
           </div>

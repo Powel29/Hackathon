@@ -189,9 +189,10 @@ class KioskDbService {
 
     addComplaint(complaintData) {
         const data = this.getData();
+        const sequence = data.complaints.length + 1;
         const newComplaint = {
             id: uuidv4(),
-            complaintId: `CMP-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
+            complaintId: `CMP-${new Date().getFullYear()}-${String(sequence).padStart(5, '0')}`,
             status: 'open',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -210,5 +211,4 @@ class KioskDbService {
         return newComplaint;
     }
 }
-
 export const kioskDb = new KioskDbService();

@@ -24,25 +24,25 @@ export function ServiceSelection() {
             id: 'electricity',
             icon: <Zap className="w-8 h-8" />,
             color: '#FFD700',
-            title: t('electricity')
+            title: t('dashboard.electricity')
         },
         {
             id: 'gas',
             icon: <Flame className="w-8 h-8" />,
             color: '#FF6347',
-            title: t('gas')
+            title: t('dashboard.gas')
         },
         {
             id: 'water',
             icon: <Droplets className="w-8 h-8" />,
             color: '#1E90FF',
-            title: t('water')
+            title: t('dashboard.water')
         },
         {
             id: 'municipal',
             icon: <Building2 className="w-8 h-8" />,
             color: '#32CD32',
-            title: t('municipal')
+            title: t('dashboard.municipal')
         }
     ];
 
@@ -60,15 +60,15 @@ export function ServiceSelection() {
                     className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    {t('back')}
+                    {t('common.back')}
                 </button>
 
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-[#212529] mb-2">
-                        {t('selectService')}
+                        {t('dashboard.selectService')}
                     </h2>
                     <p className="text-gray-600">
-                        Please select the utility service you want to access
+                        {t('serviceSelection.pleaseSelectService')}
                     </p>
                 </div>
 

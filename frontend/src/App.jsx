@@ -25,6 +25,9 @@ function App() {
             clearTimeout(inactivityTimer);
             clearTimeout(warningTimer);
 
+            // Hide any existing session warning when timers are reset
+            setShowSessionWarning(false);
+
             // Show warning at 15 minutes (900000ms)
             warningTimer = setTimeout(() => {
                 setShowSessionWarning(true);
@@ -33,9 +36,8 @@ function App() {
             // Auto logout at 16 minutes (960000ms)
             inactivityTimer = setTimeout(() => {
                 resetSession();
-                window.location.href = '/';
-            }, 960000);
-        };
+                window.location.href = '/kiosk';
+            }, 960000);        };
 
         // Reset timers on user activity
         const events = ['mousedown', 'touchstart', 'keypress', 'scroll'];

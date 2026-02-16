@@ -35,19 +35,24 @@ export const useKioskStore = create((set) => ({
     addBill: (bill) => set((state) => ({ bills: [...state.bills, bill] })),
 
     // Update local state AND persist to DB
-    updateBill: (id, updates) => {
-        // If it's a payment, update in DB
+    updateBill: async (id, updates) => {
+        // If it's a payment, persist first
         if (updates.status === 'paid') {
             try {
-                kioskDb.payBill(id);
+                await kioskDb.payBill(id);
             } catch (e) {
                 console.error("Failed to pay bill in DB", e);
+                return; // Do not update local state if DB fails
             }
+            set((state) => ({
+                bills: state.bills.map(b => b.id === id ? { ...b, ...updates } : b)
+            }));
+        } else {
+            // For non-payment updates, update local state as before
+            set((state) => ({
+                bills: state.bills.map(b => b.id === id ? { ...b, ...updates } : b)
+            }));
         }
-
-        set((state) => ({
-            bills: state.bills.map(b => b.id === id ? { ...b, ...updates } : b)
-        }));
     },
 
     addComplaint: (complaint) => {
