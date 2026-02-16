@@ -5,6 +5,7 @@ import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
 import * as authService from '../../services/api/auth.service';
+import { toast } from 'sonner';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 
 export function AadhaarLogin() {
@@ -33,7 +34,16 @@ export function AadhaarLogin() {
       const response = await authService.sendOTP({ aadhaarNumber: aadhaar });
 
       if (response.success) {
-        navigate('/kiosk/otp-verification', { state: { aadhaarNumber: aadhaar } });
+        console.log('API Response:', response);
+        if (import.meta.env.DEV && response._demoOTP) {
+          toast.success(`OTP sent! Demo OTP: ${response._demoOTP}`);
+        }
+        navigate('/kiosk/otp-verification', {
+          state: {
+            aadhaarNumber: aadhaar,
+            maskedMobile: response.maskedMobile
+          }
+        });
       } else {
         setError(response.message || t('errorSendingOTP'));
       }

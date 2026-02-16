@@ -1,7 +1,7 @@
 {
   "language": {
-    "selectLanguage": "Select Your Language",
-    "continue": "Continue",
+    "selectLanguage": "আপনার ভাষা নির্বাচন করুন",
+    "continue": "চালিয়ে যান",
     "english": "English",
     "hindi": "हिंदी",
     "kannada": "ಕನ್ನಡ",
@@ -62,7 +62,10 @@
     "electricityDepartment": "বিদ্যুৎ বিভাগ",
     "gasDepartment": "গ্যাস বিভাগ",
     "waterDepartment": "পানি সরবরাহ বিভাগ",
-    "municipalServices": "পৌর পরিষেবা"
+    "municipalServices": "পৌর পরিষেবা",
+    "changeDepartment": "বিভাগ পরিবর্তন",
+    "quickServices": "দ্রুত পরিষেবা",
+    "trackConnection": "সংযোগ অনুসরণ"
   },
   "bills": {
     "viewBills": "বিল দেখুন",

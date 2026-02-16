@@ -15,13 +15,21 @@ export function OTPVerification() {
   const { setUser } = useKioskStore();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
-  const [attempts] = useState(3);
+  const [attempts, setAttempts] = useState(3);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
   const aadhaarNumber = location.state?.aadhaarNumber || '';
+  const maskedMobile = location.state?.maskedMobile;
 
+  console.log('OTPVerification State:', location.state);
+
+  useEffect(() => {
+    if (!aadhaarNumber) {
+      navigate('/kiosk/login');
+    }
+  }, [aadhaarNumber, navigate]);
   useEffect(() => {
     if (resendTimer > 0) {
       const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
@@ -78,6 +86,10 @@ export function OTPVerification() {
 
   const handleVerify = useCallback(async () => {
     const otpValue = otp.join('');
+    if (attempts === 0) {
+      setError(t('noAttemptsRemaining') || 'No attempts remaining. Please try again later.');
+      return;
+    }
     if (otpValue.length !== 6) {
       setError(t('invalidOTP'));
       return;
@@ -97,10 +109,12 @@ export function OTPVerification() {
         navigate('/kiosk/dashboard');
       } else {
         setError(response.message || t('invalidOTP'));
+        setAttempts((prev) => Math.max(0, prev - 1));
       }
     } catch (err) {
       console.error(err);
       setError(t('errorVerifyingOTP'));
+      setAttempts((prev) => Math.max(0, prev - 1));
     } finally {
       setIsVerifying(false);
     }
@@ -148,7 +162,7 @@ export function OTPVerification() {
                   {t('otpVerification')}
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Sent to: ****{aadhaarNumber.slice(-4)}
+                  {maskedMobile ? `${t('otpSentTo')} ${maskedMobile}` : t('otpSentToRegisteredMobile')}
                 </p>
               </div>
             </div>
@@ -201,15 +215,24 @@ export function OTPVerification() {
                 )}
               </div>
 
-              <TouchButton
-                variant="success"
-                size="large"
-                onClick={handleVerify}
-                disabled={otp.join('').length !== 6}
-                className="w-full"
-              >
-                {t('verify')}
-              </TouchButton>
+              {attempts === 0 ? (
+                <div className="text-center">
+                  <p className="text-sm text-red-600 mb-2">{t('noAttemptsRemaining') || 'No attempts remaining. Please try again later.'}</p>
+                  <TouchButton variant="secondary" size="large" disabled className="w-full">
+                    {t('verify')}
+                  </TouchButton>
+                </div>
+              ) : (
+                <TouchButton
+                  variant="success"
+                  size="large"
+                  onClick={handleVerify}
+                  disabled={otp.join('').length !== 6}
+                  className="w-full"
+                >
+                  {t('verify')}
+                </TouchButton>
+              )}
             </div>
           </div>
         </div>

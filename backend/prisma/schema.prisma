@@ -7,32 +7,33 @@ datasource db {
 }
 
 model Citizen {
-  aadharNumber        String              @id @db.VarChar(12)
-  fullName            String              @db.VarChar(150)
-  mobileNumber        String              @unique @db.VarChar(10)
-  email               String?             @db.VarChar(150)
-  languagePref        String              @default("en") @db.VarChar(10)
-  createdAt           DateTime            @default(now())
-  aadharHash          String              @unique
-  address             String?
-  dateOfBirth         DateTime?           @db.Date
-  gender              String?             @db.VarChar(10)
-  isActive            Boolean             @default(true)
-  isVerified          Boolean             @default(false)
-  lastLoginAt         DateTime?
-  updatedAt           DateTime            @updatedAt
-  auditLogs           AuditLog[]
-  authSessions        AuthSession[]
-  complaints          Complaint[]
-  documents           Document[]
-  electricityAccounts ElectricityAccount?
-  gasAccounts         GasAccount?
-  kioskLogs           KioskLog[]
-  municipalAccounts   MunicipalAccount?
-  otpVerifications    OTPVerification[]
-  serviceAccounts     ServiceAccount[]
-  serviceRequests     ServiceRequest[]
-  waterAccounts       WaterAccount?
+  aadharNumber           String                  @id @db.VarChar(12)
+  fullName               String                  @db.VarChar(150)
+  mobileNumber           String                  @unique @db.VarChar(10)
+  email                  String?                 @db.VarChar(150)
+  languagePref           String                  @default("en") @db.VarChar(10)
+  createdAt              DateTime                @default(now())
+  aadharHash             String                  @unique
+  address                String?
+  dateOfBirth            DateTime?               @db.Date
+  gender                 String?                 @db.VarChar(10)
+  isActive               Boolean                 @default(true)
+  isVerified             Boolean                 @default(false)
+  lastLoginAt            DateTime?
+  updatedAt              DateTime                @updatedAt
+  auditLogs              AuditLog[]
+  authSessions           AuthSession[]
+  complaints             Complaint[]
+  connectionApplications ConnectionApplication[]
+  documents              Document[]
+  electricityAccounts    ElectricityAccount?
+  gasAccounts            GasAccount?
+  kioskLogs              KioskLog[]
+  municipalAccounts      MunicipalAccount?
+  otpVerifications       OTPVerification[]
+  serviceAccounts        ServiceAccount[]
+  serviceRequests        ServiceRequest[]
+  waterAccounts          WaterAccount?
 
   @@index([aadharHash])
   @@index([mobileNumber])
@@ -141,23 +142,24 @@ model Payment {
 }
 
 model Complaint {
-  complaintId    String                   @id @default(uuid()) @db.Uuid
-  citizenId      String                   @db.VarChar(12)
-  serviceType    String                   @db.VarChar(20)
-  description    String
-  status         String                   @db.VarChar(20)
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
-  assignedTo     String?                  @db.VarChar(12)
-  complaintType  String                   @db.VarChar(50)
-  kioskId        String?                  @db.VarChar(30)
-  location       String?                  @db.VarChar(255)
-  priority       String                   @db.VarChar(20)
-  resolutionNote String?
-  resolvedAt     DateTime?
-  title          String                   @db.VarChar(200)
-  statusHistory  ComplaintStatusHistory[]
-  citizen        Citizen                  @relation(fields: [citizenId], references: [aadharNumber])
+  complaintId     String                   @id @default(uuid()) @db.Uuid
+  complaintNumber String?                  @unique @db.VarChar(30)
+  citizenId       String                   @db.VarChar(12)
+  serviceType     String                   @db.VarChar(20)
+  description     String
+  status          String                   @db.VarChar(20)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  assignedTo      String?                  @db.VarChar(12)
+  complaintType   String                   @db.VarChar(50)
+  kioskId         String?                  @db.VarChar(30)
+  location        String?                  @db.VarChar(255)
+  priority        String                   @db.VarChar(20)
+  resolutionNote  String?
+  resolvedAt      DateTime?
+  title           String                   @db.VarChar(200)
+  statusHistory   ComplaintStatusHistory[]
+  citizen         Citizen                  @relation(fields: [citizenId], references: [aadharNumber])
 
   @@index([citizenId])
   @@index([status])
@@ -244,6 +246,34 @@ model KioskLog {
   citizen   Citizen? @relation(fields: [citizenId], references: [aadharNumber])
 
   @@map("kiosk_logs")
+}
+
+model ConnectionApplication {
+  id              String   @id @default(uuid()) @db.Uuid
+  applicationId   String   @unique @db.VarChar(30)
+  citizenId       String   @db.VarChar(12)
+  serviceType     String   @db.VarChar(20)
+  applicantName   String   @db.VarChar(150)
+  mobileNumber    String   @db.VarChar(10)
+  email           String   @db.VarChar(150)
+  address         String   @db.Text
+  city            String   @db.VarChar(100)
+  state           String   @db.VarChar(100)
+  pincode         String   @db.VarChar(10)
+  connectionType  String   @db.VarChar(50)
+  serviceDetails  Json?
+  status          String   @default("PENDING") @db.VarChar(20)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  reviewedBy      String?  @db.VarChar(12)
+  reviewNotes     String?
+  rejectionReason String?
+  citizen         Citizen  @relation(fields: [citizenId], references: [aadharNumber])
+
+  @@index([citizenId])
+  @@index([status])
+  @@index([applicationId])
+  @@map("connection_applications")
 }
 
 model ElectricityAccount {

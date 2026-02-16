@@ -20,7 +20,7 @@ export function PayBill() {
     return (
       <KioskLayout>
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <p className="text-gray-600 mb-4">Bill not found</p>
+          <p className="text-gray-600 mb-4">{t('payBill.billNotFound')}</p>
           <TouchButton
             variant="primary"
             size="medium"
@@ -32,7 +32,6 @@ export function PayBill() {
       </KioskLayout>
     );
   }
-
   const handlePayment = () => {
     setIsProcessing(true);
 
@@ -41,14 +40,12 @@ export function PayBill() {
       const transactionId = 'TXN' + Date.now();
 
       // Update bill status to paid
-      if (bill) {
-        updateBill(bill.id, { status: 'paid' });
-      }
+      updateBill(bill.id, { status: 'paid' });
 
       setIsProcessing(false);
       navigate(`/kiosk/receipt/${transactionId}`, {
         state: {
-          bill,
+          bill: { ...bill, status: 'paid' },
           transactionId,
           paymentDate: new Date().toISOString(),
           paymentMethod: 'Card'
@@ -56,11 +53,9 @@ export function PayBill() {
       });
     }, 2000);
   };
-
   if (isProcessing) {
-    return <LoadingScreen message="Processing Payment..." />;
+    return <LoadingScreen message={t('bills.processingPayment')} />;
   }
-
   return (
     <KioskLayout>
       <div className="max-w-2xl mx-auto">

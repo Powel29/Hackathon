@@ -9,6 +9,7 @@ import { Dashboard } from "./pages/kiosk/Dashboard";
 import { ViewBills } from "./pages/kiosk/ViewBills";
 import { PayBill } from "./pages/kiosk/PayBill";
 import { Receipt } from "./pages/kiosk/Receipt";
+import { ProtectedRoute } from "./components/kiosk/ProtectedRoute";
 import { RegisterComplaint } from "./pages/kiosk/RegisterComplaint";
 import { TrackComplaint } from "./pages/kiosk/TrackComplaint";
 import { NewConnection } from "./pages/kiosk/NewConnection";
@@ -47,19 +48,19 @@ export const router = createBrowserRouter([
     },
     {
         path: "/kiosk/dashboard",
-        Component: Dashboard,
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
     },
     {
         path: "/kiosk/bills",
-        Component: ViewBills,
+        element: <ProtectedRoute><ViewBills /></ProtectedRoute>,
     },
     {
         path: "/kiosk/pay-bill/:billId",
-        Component: PayBill,
+        element: <ProtectedRoute><PayBill /></ProtectedRoute>,
     },
     {
         path: "/kiosk/receipt/:transactionId",
-        Component: Receipt,
+        element: <ProtectedRoute><Receipt /></ProtectedRoute>,
     },
     {
         path: "/kiosk/register-complaint",

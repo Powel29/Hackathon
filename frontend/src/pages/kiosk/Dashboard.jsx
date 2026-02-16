@@ -54,15 +54,15 @@ export function Dashboard() {
   const getDepartmentName = () => {
     switch (selectedService) {
       case 'electricity':
-        return t('electricityDepartment');
+        return t('dashboard.electricityDepartment');
       case 'gas':
-        return t('gasDepartment');
+        return t('dashboard.gasDepartment');
       case 'water':
-        return t('waterDepartment');
+        return t('dashboard.waterDepartment');
       case 'municipal':
-        return t('municipal');
+        return t('dashboard.municipalServices');
       default:
-        return t('suvidhaPortal');
+        return t('authentication.portalSubtitle'); // Using portalSubtitle or common title as fallback
     }
   };
 
@@ -86,35 +86,35 @@ export function Dashboard() {
       id: 'pay-bills',
       icon: <CreditCard className="w-8 h-8" />,
       color: '#0066CC',
-      title: t('payBills'),
+      title: t('dashboard.payBills'),
       route: '/kiosk/bills'
     },
     {
       id: 'register-complaint',
       icon: <FileText className="w-8 h-8" />,
       color: '#DC3545',
-      title: t('registerComplaint'),
+      title: t('dashboard.registerComplaint'),
       route: '/kiosk/register-complaint'
     },
     {
       id: 'track-status',
       icon: <Search className="w-8 h-8" />,
       color: '#FF9800',
-      title: t('trackStatus'),
+      title: t('dashboard.trackStatus'),
       route: '/kiosk/track-complaint'
     },
     {
       id: 'new-connection',
       icon: <Plus className="w-8 h-8" />,
       color: '#28A745',
-      title: t('newConnection'),
+      title: t('dashboard.newConnection'),
       route: '/kiosk/new-connection'
     },
     {
       id: 'track-connection',
       icon: <Search className="w-8 h-8" />,
       color: '#17A2B8',
-      title: t('trackConnection'),
+      title: t('dashboard.trackConnection'),
       route: '/kiosk/track-new-connection'
     }
   ];
@@ -139,7 +139,7 @@ export function Dashboard() {
                 <h2 className="text-2xl font-bold text-[#212529]">{user.name}</h2>
                 <div className="flex items-center gap-4 mt-1">
                   <div className="bg-white bg-opacity-70 px-3 py-1 rounded-lg">
-                    <p className="text-xs text-gray-600">{t('consumerId')}</p>
+                    <p className="text-xs text-gray-600">{t('dashboard.consumerId')}</p>
                     <p className="text-sm font-semibold text-[#212529]">{user.consumerId}</p>
                   </div>
                 </div>
@@ -152,7 +152,7 @@ export function Dashboard() {
                 size="medium"
                 onClick={() => navigate('/kiosk/service-selection')}
               >
-                {t('changeDepartment')}
+                {t('dashboard.changeDepartment')}
               </TouchButton>
               <TouchButton
                 variant="secondary"
@@ -160,22 +160,17 @@ export function Dashboard() {
                 icon={<LogOut className="w-4 h-4" />}
                 onClick={handleLogout}
               >
-                {t('logout')}
+                {t('dashboard.logout')}
               </TouchButton>
             </div>
           </div>
         </div>
-
-        {/* Department-Specific Dashboard */}
-        {selectedService === 'electricity' && <ElectricityDashboard />}
-        {selectedService === 'gas' && <GasDashboard />}
-        {selectedService === 'water' && <WaterDashboard />}
-        {selectedService === 'municipal' && <MunicipalDashboard />}
+        {/* User Info Section ends here */}
 
         {/* Action Cards Section - Common for all departments */}
         <div>
           <h3 className="text-xl font-bold text-[#212529] mb-4">
-            {t('quickServices')}
+            {t('dashboard.quickServices')}
           </h3>
 
           <div className="grid grid-cols-5 gap-4">
@@ -190,7 +185,15 @@ export function Dashboard() {
             ))}
           </div>
         </div>
+
+        {/* Department-Specific Dashboard */}
+        {selectedService === 'electricity' && <ElectricityDashboard />}
+        {selectedService === 'gas' && <GasDashboard />}
+        {selectedService === 'water' && <WaterDashboard />}
+        {selectedService === 'municipal' && <MunicipalDashboard />}
+
+
       </div>
-    </KioskLayout>
+    </KioskLayout >
   );
 }

@@ -98,12 +98,19 @@ export function NewConnection() {
   const { selectedService } = useKioskStore();
   const canvasRef = useRef(null);
   const totalSteps = 5;
-  const stepTitles = ['Applicant Info', 'Address', 'Details', 'Documents', 'Review'];
+  const stepTitles = [
+    t('newConnection.applicantDetails'),
+    t('newConnection.addressDetails'),
+    t('newConnection.connectionDetails'),
+    t('newConnection.documentUpload'),
+    t('newConnection.reviewSubmit')
+  ];
 
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [applicationId, setApplicationId] = useState('');
   const [isDrawing, setIsDrawing] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [formData, setFormData] = useState({
     fullName: '',
@@ -167,10 +174,9 @@ export function NewConnection() {
     if (step === 1) {
       if (!formData.fullName.trim()) errors.fullName = 'Full name is required';
       if (!formData.mobileNumber.trim()) errors.mobileNumber = 'Mobile number is required';
-      if (formData.mobileNumber && !/^\d{10}$/.test(formData.mobileNumber)) {
-        errors.mobileNumber = 'Valid 10-digit mobile number is required';
-      }
-      if (!formData.emailAddress.trim()) errors.emailAddress = 'Email address is required';
+      if (formData.mobileNumber && !/^[6-9]\d{9}$/.test(formData.mobileNumber)) {
+        errors.mobileNumber = 'Valid 10-digit mobile number (starting 6–9) is required';
+      }      if (!formData.emailAddress.trim()) errors.emailAddress = 'Email address is required';
       if (formData.emailAddress && !/^\S+@\S+\.\S+$/.test(formData.emailAddress)) {
         errors.emailAddress = 'Valid email address is required';
       }
@@ -238,7 +244,7 @@ export function NewConnection() {
       if (formData.signatureType === 'photo' && !formData.signaturePhotoFile) {
         errors.signaturePhotoFile = 'Signature photo is required';
       }
-      if (formData.signatureType === 'digital' && !formData.signature) {
+      if (formData.signatureType === 'digital' && (!formData.signature || !hasDrawn)) {
         errors.signature = 'Digital signature is required';
       }
 
@@ -300,38 +306,66 @@ export function NewConnection() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
-    const newApplicationId = 'APP-2026-' + Math.floor(10000 + Math.random() * 90000);
+    try {
+      // Prepare service-specific details based on serviceType
+      const serviceDetails = {};
 
-    // Store new connection application
-    const newConnectionApp = {
-      id: Date.now().toString(),
-      applicationId: newApplicationId,
-      serviceType: selectedService,
-      applicantName: formData.fullName,
-      mobileNumber: formData.mobileNumber,
-      email: formData.emailAddress,
-      city: formData.city,
-      state: formData.state,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      if (selectedService === 'electricity') {
+        serviceDetails.purposeOfSupply = formData.purposeOfSupply;
+        serviceDetails.phaseRequired = formData.phaseRequired;
+        serviceDetails.connectedLoad = formData.connectedLoad;
+        serviceDetails.meterLocation = formData.meterLocation;
+      } else if (selectedService === 'gas') {
+        serviceDetails.gasType = formData.gasType;
+        serviceDetails.kitchenType = formData.kitchenType;
+        serviceDetails.numberOfBurners = formData.numberOfBurners;
+        serviceDetails.pipelineAvailability = formData.pipelineAvailability;
+        serviceDetails.existingGasConnection = formData.existingGasConnection;
+      } else if (selectedService === 'water') {
+        serviceDetails.waterPurpose = formData.waterPurpose;
+        serviceDetails.waterCapacity = formData.waterCapacity;
+        serviceDetails.sourceType = formData.sourceType;
+        serviceDetails.existingWaterConnection = formData.existingWaterConnection;
+      } else if (selectedService === 'municipal') {
+        serviceDetails.municipalServiceType = formData.municipalServiceType;
+        serviceDetails.propertyType = formData.propertyType;
+        serviceDetails.numberOfFloors = formData.numberOfFloors;
+        serviceDetails.propertyPID = formData.propertyPID;
+      }
 
-    // Store in localStorage for tracking
-    const existingApps = JSON.parse(localStorage.getItem('newConnections') || '[]');
-    existingApps.push(newConnectionApp);
-    localStorage.setItem('newConnections', JSON.stringify(existingApps));
+      const payload = {
+        serviceType: selectedService,
+        applicantName: formData.fullName,
+        mobileNumber: formData.mobileNumber,
+        email: formData.emailAddress,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+        connectionType: formData.connectionType,
+        serviceDetails
+      };
 
-    setApplicationId(newApplicationId);
-    setShowSuccess(true);
+      const apiModule = await import('../../services/api');
+      const response = await apiModule.connectionService.requestNew(payload);
+
+      if (response && response.success) {
+        setApplicationId(response.applicationId || response.id);
+        setShowSuccess(true);
+      }
+    } catch (error) {
+      console.error("New connection request failed", error);
+      alert("Failed to submit application. Please try again.");
+    }
   };
 
   // Canvas drawing functions
   const startDrawing = (e) => {
     setIsDrawing(true);
+    setHasDrawn(true);
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -387,6 +421,7 @@ export function NewConnection() {
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         setFormData({ ...formData, signature: '' });
+        setHasDrawn(false);
       }
     }
   };
@@ -422,6 +457,14 @@ export function NewConnection() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentStep, showSuccess, navigate, handleNext, handlePrevious, handleSubmit]);
 
+  // Escape HTML special characters to prevent XSS
+  const escapeHTML = (text) => {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
   // Print application function
   const handlePrintApplication = () => {
     // Get signature data
@@ -453,41 +496,41 @@ export function NewConnection() {
     // Electricity-specific fields
     if (selectedService === 'electricity') {
       departmentFields = `
-        <tr><td class="label">Purpose of Supply:</td><td class="value">${formData.purposeOfSupply.toUpperCase()}</td></tr>
+        <tr><td class="label">Purpose of Supply:</td><td class="value">${escapeHTML(formData.purposeOfSupply.toUpperCase())}</td></tr>
         <tr><td class="label">Phase Required:</td><td class="value">${formData.phaseRequired === 'single' ? 'Single Phase' : 'Three Phase'}</td></tr>
-        <tr><td class="label">Connected Load:</td><td class="value">${formData.connectedLoad} kW</td></tr>
-        <tr><td class="label">Meter Location:</td><td class="value">${formData.meterLocation.charAt(0).toUpperCase() + formData.meterLocation.slice(1)}</td></tr>
+        <tr><td class="label">Connected Load:</td><td class="value">${escapeHTML(formData.connectedLoad)} kW</td></tr>
+        <tr><td class="label">Meter Location:</td><td class="value">${escapeHTML(formData.meterLocation.charAt(0).toUpperCase() + formData.meterLocation.slice(1))}</td></tr>
       `;
     }
 
     // Gas-specific fields
     if (selectedService === 'gas') {
       departmentFields = `
-        <tr><td class="label">Gas Type:</td><td class="value">${formData.gasType}</td></tr>
-        <tr><td class="label">Kitchen Type:</td><td class="value">${formData.kitchenType.charAt(0).toUpperCase() + formData.kitchenType.slice(1)}</td></tr>
-        <tr><td class="label">Number of Burners:</td><td class="value">${formData.numberOfBurners}</td></tr>
-        <tr><td class="label">Pipeline Availability:</td><td class="value">${formData.pipelineAvailability.toUpperCase()}</td></tr>
-        <tr><td class="label">Existing Gas Connection:</td><td class="value">${formData.existingGasConnection.toUpperCase()}</td></tr>
+        <tr><td class="label">Gas Type:</td><td class="value">${escapeHTML(formData.gasType)}</td></tr>
+        <tr><td class="label">Kitchen Type:</td><td class="value">${escapeHTML(formData.kitchenType.charAt(0).toUpperCase() + formData.kitchenType.slice(1))}</td></tr>
+        <tr><td class="label">Number of Burners:</td><td class="value">${escapeHTML(formData.numberOfBurners)}</td></tr>
+        <tr><td class="label">Pipeline Availability:</td><td class="value">${escapeHTML(formData.pipelineAvailability.toUpperCase())}</td></tr>
+        <tr><td class="label">Existing Gas Connection:</td><td class="value">${escapeHTML(formData.existingGasConnection.toUpperCase())}</td></tr>
       `;
     }
 
     // Water-specific fields
     if (selectedService === 'water') {
       departmentFields = `
-        <tr><td class="label">Water Purpose:</td><td class="value">${formData.waterPurpose.charAt(0).toUpperCase() + formData.waterPurpose.slice(1)}</td></tr>
-        <tr><td class="label">Water Capacity:</td><td class="value">${formData.waterCapacity} Litres Per Day</td></tr>
-        <tr><td class="label">Source Type:</td><td class="value">${formData.sourceType.charAt(0).toUpperCase() + formData.sourceType.slice(1)}</td></tr>
-        <tr><td class="label">Existing Water Connection:</td><td class="value">${formData.existingWaterConnection.toUpperCase()}</td></tr>
+        <tr><td class="label">Water Purpose:</td><td class="value">${escapeHTML(formData.waterPurpose.charAt(0).toUpperCase() + formData.waterPurpose.slice(1))}</td></tr>
+        <tr><td class="label">Water Capacity:</td><td class="value">${escapeHTML(formData.waterCapacity)} Litres Per Day</td></tr>
+        <tr><td class="label">Source Type:</td><td class="value">${escapeHTML(formData.sourceType.charAt(0).toUpperCase() + formData.sourceType.slice(1))}</td></tr>
+        <tr><td class="label">Existing Water Connection:</td><td class="value">${escapeHTML(formData.existingWaterConnection.toUpperCase())}</td></tr>
       `;
     }
 
     // Municipal-specific fields
     if (selectedService === 'municipal') {
       departmentFields = `
-        <tr><td class="label">Service Type:</td><td class="value">${formData.municipalServiceType?.replace(/_/g, ' ').toUpperCase()}</td></tr>
-        <tr><td class="label">Property Type:</td><td class="value">${formData.propertyType.charAt(0).toUpperCase() + formData.propertyType.slice(1)}</td></tr>
-        <tr><td class="label">Number of Floors:</td><td class="value">${formData.numberOfFloors}</td></tr>
-        ${formData.propertyPID ? `<tr><td class="label">Property PID:</td><td class="value">${formData.propertyPID}</td></tr>` : ''}
+        <tr><td class="label">Service Type:</td><td class="value">${escapeHTML(formData.municipalServiceType?.replace(/_/g, ' ').toUpperCase())}</td></tr>
+        <tr><td class="label">Property Type:</td><td class="value">${escapeHTML(formData.propertyType.charAt(0).toUpperCase() + formData.propertyType.slice(1))}</td></tr>
+        <tr><td class="label">Number of Floors:</td><td class="value">${escapeHTML(formData.numberOfFloors)}</td></tr>
+        ${formData.propertyPID ? `<tr><td class="label">Property PID:</td><td class="value">${escapeHTML(formData.propertyPID)}</td></tr>` : ''}
       `;
     }
 
@@ -533,7 +576,7 @@ export function NewConnection() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>New Connection Application - ${applicationId}</title>
+          <title>New Connection Application - ${escapeHTML(applicationId)}</title>
           <style>
             * {
               margin: 0;
@@ -792,13 +835,13 @@ export function NewConnection() {
           <div class="govt-header">
             <img src="${govtLogo}" alt="Government of India" style="height: 60px; margin-bottom: 6px;" />
             <h1>Government of India</h1>
-            <div class="dept-name">${serviceName} Department</div>
+            <div class="dept-name">${escapeHTML(serviceName)} Department</div>
             <div class="form-title">Application for New Connection</div>
           </div>
           
           <div class="reference-box">
             <div class="left">
-              <strong>Application No.:</strong> <span class="app-number">${applicationId}</span>
+              <strong>Application No.:</strong> <span class="app-number">${escapeHTML(applicationId)}</span>
             </div>
             <div class="right">
               <strong>Date:</strong> ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} | 
@@ -814,15 +857,15 @@ export function NewConnection() {
                 <table>
                   <tr>
                     <td class="label">Full Name:</td>
-                    <td class="value">${formData.fullName.toUpperCase()}</td>
+                    <td class="value">${escapeHTML(formData.fullName.toUpperCase())}</td>
                   </tr>
                   <tr>
                     <td class="label">Mobile:</td>
-                    <td class="value">${formData.mobileNumber}</td>
+                    <td class="value">${escapeHTML(formData.mobileNumber)}</td>
                   </tr>
                   <tr>
                     <td class="label">Email:</td>
-                    <td class="value">${formData.emailAddress}</td>
+                    <td class="value">${escapeHTML(formData.emailAddress)}</td>
                   </tr>
                 </table>
               </div>
@@ -834,19 +877,19 @@ export function NewConnection() {
                 <table>
                   <tr>
                     <td class="label">Address:</td>
-                    <td class="value">${formData.address}</td>
+                    <td class="value">${escapeHTML(formData.address)}</td>
                   </tr>
                   <tr>
                     <td class="label">City:</td>
-                    <td class="value">${formData.city}</td>
+                    <td class="value">${escapeHTML(formData.city)}</td>
                   </tr>
                   <tr>
                     <td class="label">State:</td>
-                    <td class="value">${formData.state}</td>
+                    <td class="value">${escapeHTML(formData.state)}</td>
                   </tr>
                   <tr>
                     <td class="label">PIN:</td>
-                    <td class="value">${formData.pincode}</td>
+                    <td class="value">${escapeHTML(formData.pincode)}</td>
                   </tr>
                 </table>
               </div>
@@ -860,7 +903,7 @@ export function NewConnection() {
                 <table>
                   <tr>
                     <td class="label">Connection Type:</td>
-                    <td class="value">${formData.connectionType.toUpperCase()}</td>
+                    <td class="value">${escapeHTML(formData.connectionType.toUpperCase())}</td>
                   </tr>
                   ${departmentFields}
                 </table>
@@ -884,20 +927,20 @@ export function NewConnection() {
           <div class="declaration-box">
             <h3>DECLARATION</h3>
             <p>
-              I, <strong>${formData.fullName}</strong>, hereby declare that all information provided is true and correct. I understand that any false statement may result in rejection of this application. I agree to abide by all rules prescribed by the ${serviceName} Department.
+              I, <strong>${escapeHTML(formData.fullName)}</strong>, hereby declare that all information provided is true and correct. I understand that any false statement may result in rejection of this application. I agree to abide by all rules prescribed by the ${escapeHTML(serviceName)} Department.
             </p>
             
             <div class="signature-section">
               <div class="signature-box">
                 <div class="date-place">
-                  <p><strong>Place:</strong> ${formData.city}</p>
+                  <p><strong>Place:</strong> ${escapeHTML(formData.city)}</p>
                   <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
                 </div>
               </div>
               
               <div class="signature-box">
                 <div class="signature-image">
-                  ${signatureData ? `<img src="${signatureData}" alt="Signature" />` : '<span style="color: #999;">Signature</span>'}
+                  ${signatureData ? `<img src="${escapeHTML(signatureData)}" alt="Signature" />` : '<span style="color: #999;">Signature</span>'}
                 </div>
                 <div class="signature-label">Applicant's Signature</div>
               </div>
@@ -906,7 +949,7 @@ export function NewConnection() {
           
           <div class="footer">
             <p><strong>SUVIDHA - Unified Services Portal</strong> | Government of India</p>
-            <p style="font-size: 6pt;">Form Ref: SUVIDHA/${serviceName.toUpperCase()}/NC/2026 | This is a computer-generated form</p>
+            <p style="font-size: 6pt;">Form Ref: SUVIDHA/${escapeHTML(serviceName.toUpperCase())}/NC/2026 | This is a computer-generated form</p>
           </div>
           </div>
           </div>
@@ -990,12 +1033,12 @@ export function NewConnection() {
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t('back')}
+          {t('common.back')}
         </button>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-2xl font-bold text-[#212529] mb-6">
-            {t('newConnectionApplication')}
+            {t('newConnection.newConnectionApplication')}
           </h2>
 
           {/* Stepper */}
@@ -1025,7 +1068,7 @@ export function NewConnection() {
           </div>
 
           <p className="text-sm text-center text-gray-600">
-            {t('step')} {currentStep} {t('of')} {totalSteps}
+            {t('newConnection.step')} {currentStep} {t('newConnection.of')} {totalSteps}
           </p>
         </div>
 
@@ -1036,7 +1079,7 @@ export function NewConnection() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('fullName')} *
+                  {t('newConnection.fullName')} *
                 </label>
                 <input
                   type="text"
@@ -1050,7 +1093,7 @@ export function NewConnection() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('mobileNumber')} * (10 digits)
+                  {t('newConnection.mobileNumber')} * (10 digits)
                 </label>
                 <input
                   type="tel"
@@ -1066,7 +1109,7 @@ export function NewConnection() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('emailAddress')} *
+                  {t('newConnection.emailAddress')} *
                 </label>
                 <input
                   type="email"
@@ -1085,7 +1128,7 @@ export function NewConnection() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('address')} *
+                  {t('newConnection.address')} *
                 </label>
                 <textarea
                   value={formData.address}
@@ -1099,7 +1142,7 @@ export function NewConnection() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('state')} *
+                    {t('newConnection.state')} *
                   </label>
                   <select
                     value={formData.state}
@@ -1120,7 +1163,7 @@ export function NewConnection() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('city')} *
+                    {t('newConnection.city')} *
                   </label>
                   <select
                     value={formData.city}
@@ -1147,7 +1190,7 @@ export function NewConnection() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('pincode')} * (6 digits)
+                  {t('newConnection.pincode')} * (6 digits)
                 </label>
                 <input
                   type="text"
@@ -1168,7 +1211,7 @@ export function NewConnection() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {t('connectionType')} *
+                  {t('newConnection.connectionType')} *
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {(selectedService === 'electricity'
@@ -1961,7 +2004,7 @@ export function NewConnection() {
                         icon={<Edit3 className="w-4 h-4" />}
                         onClick={clearSignature}
                       >
-                        {t('clear')}
+                        {t('newConnection.clear')}
                       </TouchButton>
                     </div>
                   </div>
@@ -1981,7 +2024,7 @@ export function NewConnection() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                    {t('applicantDetails')}
+                    {t('newConnection.applicantDetails')}
                   </h4>
                   <div className="space-y-2 text-sm">
                     <p><span className="text-gray-600">Name:</span> <strong>{formData.fullName}</strong></p>
@@ -1992,7 +2035,7 @@ export function NewConnection() {
 
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                    {t('addressDetails')}
+                    {t('newConnection.addressDetails')}
                   </h4>
                   <div className="space-y-2 text-sm">
                     <p><span className="text-gray-600">Address:</span> <strong>{formData.address}</strong></p>
@@ -2004,7 +2047,7 @@ export function NewConnection() {
 
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                    {t('connectionDetails')}
+                    {t('newConnection.connectionDetails')}
                   </h4>
                   <div className="space-y-2 text-sm">
                     <p><span className="text-gray-600">Type:</span> <strong className="capitalize">{formData.connectionType}</strong></p>
@@ -2043,10 +2086,9 @@ export function NewConnection() {
                     {/* Municipal-Specific Fields */}
                     {selectedService === 'municipal' && (
                       <>
-                        <p><span className="text-gray-600">Service Type:</span> <strong className="capitalize">{formData.municipalServiceType?.replace('-', ' ')}</strong></p>
+                        <p><span className="text-gray-600">Service Type:</span> <strong className="capitalize">{formData.municipalServiceType?.replace(/_/g, ' ')}</strong></p>
                         <p><span className="text-gray-600">Property Type:</span> <strong className="capitalize">{formData.propertyType}</strong></p>
-                        <p><span className="text-gray-600">Number of Floors:</span> <strong>{formData.numberOfFloors}</strong></p>
-                        {formData.propertyPID && (
+                        <p><span className="text-gray-600">Number of Floors:</span> <strong>{formData.numberOfFloors}</strong></p>                        {formData.propertyPID && (
                           <p><span className="text-gray-600">Property PID:</span> <strong>{formData.propertyPID}</strong></p>
                         )}
                       </>
@@ -2171,7 +2213,7 @@ export function NewConnection() {
               onClick={handlePrevious}
               className="flex-1"
             >
-              {t('previous')}
+              {t('newConnection.previous')}
             </TouchButton>
           )}
 
@@ -2181,7 +2223,7 @@ export function NewConnection() {
             onClick={() => navigate('/kiosk/dashboard')}
             className="flex-1"
           >
-            {t('cancel')}
+            {t('common.cancel')}
           </TouchButton>
 
           {currentStep < totalSteps ? (
@@ -2191,7 +2233,7 @@ export function NewConnection() {
               onClick={handleNext}
               className="flex-1"
             >
-              {t('next')}
+              {t('newConnection.next')}
             </TouchButton>
           ) : (
             <TouchButton
@@ -2200,7 +2242,7 @@ export function NewConnection() {
               onClick={handleSubmit}
               className="flex-1"
             >
-              {t('submit')}
+              {t('newConnection.submit')}
             </TouchButton>
           )}
         </div>

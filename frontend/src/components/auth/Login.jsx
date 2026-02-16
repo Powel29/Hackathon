@@ -20,12 +20,11 @@ const Login = ({ utilityType, onLoginSuccess }) => {
             setShowOtpInput(true);
 
             // Show demo OTP if available (development mode)
-            if (response._demoOTP) {
+            if (response._demoOTP && import.meta.env.DEV) {
                 toast.success(`OTP sent! Demo OTP: ${response._demoOTP}`);
             } else {
                 toast.success('OTP sent successfully!');
-            }
-        } catch (error) {
+            }        } catch (error) {
             console.error(error);
             toast.error(error.message || 'Failed to send OTP');
         } finally {

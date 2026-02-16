@@ -40,61 +40,120 @@ export const authService = {
     },
     sendOTP: async (aadharNumber, mobileNumber) => {
         try {
-            console.log('🔍 API URL:', API_URL);
-            console.log('🔍 Sending OTP request:', { aadharNumber, mobileNumber });
+            // Use kioskDb mock for consistency with login in development
+            // Generate demo OTP and store it in localStorage so verifyOTP can validate it
+            const key = aadharNumber || mobileNumber;
+            const demoOTP = String(Math.floor(100000 + Math.random() * 900000));
 
-            // Only include mobileNumber if it's provided (not empty)
-            const payload = { aadharNumber };
-            if (mobileNumber && mobileNumber.trim()) {
-                payload.mobileNumber = mobileNumber;
-            }
+            const otpStore = JSON.parse(localStorage.getItem('kiosk_demo_otps') || '{}');
+            otpStore[key] = {
+                otp: demoOTP,
+                createdAt: Date.now()
+            };
+            localStorage.setItem('kiosk_demo_otps', JSON.stringify(otpStore));
 
-            const response = await api.post('/auth/initiate', payload);
-            console.log('✅ OTP Response:', response.data);
-            return response.data;
+            // Try to find user for masked mobile
+            const data = kioskDb.getData();
+            const user = data.users.find(u => u.aadhaarNumber === aadharNumber || u.mobile === mobileNumber);
+            const maskedMobile = user && user.mobile ? '******' + user.mobile.slice(-4) : undefined;
+
+            return {
+                success: true,
+                maskedMobile,
+                // Expose demo OTP only for development convenience
+                _demoOTP: demoOTP
+            };
         } catch (error) {
-            console.error("❌ API sendOTP error:", error);
-            console.error("❌ Error response:", error.response?.data);
-            const err = new Error(error.response?.data?.error?.message || 'Failed to send OTP');
-            err.code = error.response?.data?.error?.code;
+            console.error("❌ Mock sendOTP error:", error);
+            const err = new Error('Failed to send OTP');
             throw err;
         }
     },
     verifyOTP: async (aadharNumber, otp, userData = null) => {
         try {
-            console.log('🔍 Verifying OTP:', { aadharNumber, otp, hasUserData: !!userData });
-            const response = await api.post('/auth/verify-otp', {
-                aadharNumber,
-                otp,
-                userData // Optional: Only for registration
-            });
-            console.log('✅ Verify Response:', response.data);
-            return response.data;
+            // Validate against stored demo OTPs
+            const key = aadharNumber || (userData && userData.mobileNumber) || '';
+            const otpStore = JSON.parse(localStorage.getItem('kiosk_demo_otps') || '{}');
+            const record = otpStore[key];
+
+            if (!record || record.otp !== String(otp)) {
+                const err = new Error('Invalid OTP');
+                err.code = 'INVALID_OTP';
+                throw err;
+            }
+
+            // OTP matched - find or create user
+            let data = kioskDb.getData();
+            let user = data.users.find(u => u.aadhaarNumber === aadharNumber || u.mobile === (userData?.mobileNumber || ''));
+
+            if (!user && userData) {
+                // Create a new user via kioskDb.registerUser
+                const newUserPayload = {
+                    aadhaarNumber: userData.aadhaarNumber || aadharNumber,
+                    name: userData.fullName || userData.name || 'New User',
+                    mobile: userData.mobileNumber || '',
+                    email: userData.email || '' ,
+                    consumerId: userData.consumerId || '',
+                    serviceType: userData.serviceType || 'electricity'
+                };
+                try {
+                    user = kioskDb.registerUser(newUserPayload);
+                } catch (regErr) {
+                    console.error('User registration in mock DB failed', regErr);
+                }
+            }
+
+            if (!user) {
+                const err = new Error('User not found');
+                err.code = 'USER_NOT_FOUND';
+                throw err;
+            }
+            // generate a mock token and persist
+            const token = 'mock-jwt-token-' + (user ? user.id : 'anonymous');
+            localStorage.setItem('token', token);
+            if (user) localStorage.setItem('user', JSON.stringify(user));
+
+            // Clean up used OTP
+            delete otpStore[key];
+            localStorage.setItem('kiosk_demo_otps', JSON.stringify(otpStore));
+
+            return {
+                success: true,
+                token,
+                user
+            };
         } catch (error) {
-            console.error("❌ API verifyOTP error:", error);
-            console.error("❌ Error response:", error.response?.data);
-            const err = new Error(error.response?.data?.error?.message || 'OTP verification failed');
-            err.code = error.response?.data?.error?.code;
+            console.error("❌ Mock verifyOTP error:", error);
+            const err = new Error(error.message || 'OTP verification failed');
+            err.code = error.code || 'OTP_VERIFY_ERROR';
             throw err;
         }
     }
 };
 
-// Bill Service (Mock)
+// Bill Service
 export const billService = {
-    getUserBills: async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        // We need the current user to get their bills. 
-        // In a real app, the token auth handles this.
-        // Here we'll grab from localStorage or kioskDb if we had current user stored there too
-        const userStr = localStorage.getItem('user');
-        if (!userStr) return [];
-        const user = JSON.parse(userStr);
-        return kioskDb.getBills(user.consumerId);
+    getUserBills: async (filters = {}) => {
+        try {
+            console.log('🔍 Getting user bills...', filters);
+            const response = await api.get('/bills', { params: filters });
+            console.log('✅ User Bills Response:', response.data);
+            return response.data.bills || [];
+        } catch (error) {
+            console.error('❌ API getUserBills error:', error);
+            throw error;
+        }
     },
-    getBillByNumber: async (_billNumber) => {
-        // Not implemented in simple kioskDb yet, but could filter
-        return null;
+    getBillByNumber: async (billNumber) => {
+        try {
+            console.log(`🔍 Getting bill by number: ${billNumber}`);
+            const response = await api.get(`/bills/${billNumber}`);
+            console.log('✅ Bill Response:', response.data);
+            return response.data.bill;
+        } catch (error) {
+            console.error('❌ API getBillByNumber error:', error);
+            throw error;
+        }
     }
 };
 
@@ -114,34 +173,85 @@ export const paymentService = {
     }
 };
 
-// Complaint Service (Mock)
+// Complaint Service
 export const complaintService = {
     submit: async (complaintData) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const newComplaint = kioskDb.addComplaint(complaintData);
-        return { success: true, complaint: newComplaint };
+        try {
+            console.log('🔍 Submitting complaint:', complaintData);
+            // Construct payload matching backend expectation
+            const payload = {
+                serviceType: complaintData.serviceType,
+                complaintType: complaintData.complaintType,
+                title: complaintData.title,
+                description: complaintData.description,
+                // Add other fields if needed
+            };
+            const response = await api.post('/complaints', payload);
+            console.log('✅ Submit Complaint Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API submitComplaint error:', error);
+            throw error;
+        }
     },
-    track: async (_id) => {
-        // Not impl
-        return null;
+    track: async (id) => {
+        try {
+            console.log(`🔍 Tracking complaint: ${id}`);
+            const response = await api.get(`/complaints/track/${id}`);
+            console.log('✅ Track Complaint Response:', response.data);
+            return response.data.complaint;
+        } catch (error) {
+            console.error('❌ API trackComplaint error:', error);
+            throw error;
+        }
     },
-    getUserComplaints: async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const userStr = localStorage.getItem('user');
-        if (!userStr) return [];
-        const user = JSON.parse(userStr);
-        return kioskDb.getComplaints(user.consumerId);
+    getUserComplaints: async (filters = {}) => {
+        try {
+            console.log('🔍 Getting user complaints...', filters);
+            const response = await api.get('/complaints', { params: filters });
+            console.log('✅ User Complaints Response:', response.data);
+            return response.data.complaints || [];
+        } catch (error) {
+            console.error('❌ API getUserComplaints error:', error);
+            throw error;
+        }
     }
 };
 
-// Connection Service (Mock)
+// Connection Service
 export const connectionService = {
-    requestNew: async (_connectionData) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return { success: true, message: 'Request submitted' };
+    requestNew: async (connectionData) => {
+        try {
+            console.log('🔍 Requesting new connection:', connectionData);
+            const response = await api.post('/connections/new', connectionData);
+            console.log('✅ New Connection Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API requestNewConnection error:', error);
+            throw error;
+        }
     },
-    track: async (_id) => {
-        return null;
+    track: async (id) => {
+        try {
+            console.log(`🔍 Tracking connection application: ${id}`);
+            const response = await api.get(`/connections/track/${id}`);
+            console.log('✅ Track Connection Response:', response.data);
+            return response.data.application;
+        } catch (error) {
+            console.error('❌ API trackConnection error:', error);
+            throw error;
+        }
+    },
+    getMyApplications: async (filters = {}) => {
+        try {
+            console.log('🔍 Getting user connection applications...', filters);
+            const response = await api.get('/connections', { params: filters });
+            console.log('✅ User Applications Response:', response.data);
+            return response.data.applications || [];
+        } catch (error) {
+            console.error('❌ API getMyApplications error:', error);
+            throw error;
+        }
     }
 };
 

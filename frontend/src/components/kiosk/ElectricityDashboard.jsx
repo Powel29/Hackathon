@@ -70,44 +70,63 @@ export function ElectricityDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Meter Information */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="font-bold text-gray-900 mb-4">{t('electricity.smartMeterInfo')}</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-gray-600 mb-1">{t('electricity.connectionTypeLabel')}</p>
+            <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-600 mb-1">{t('electricity.sanctionedLoad')}</p>
+            <p className="text-sm font-semibold text-gray-900">{sanctionedLoad}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-600 mb-1">{t('electricity.lastReadingDate')}</p>
+            <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Electricity Stats Cards */}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <Zap className="w-6 h-6 text-yellow-600" />
             <span className="text-xs font-semibold text-yellow-700 bg-yellow-200 px-2 py-1 rounded-full">
-              {t('active')}
+              {t('electricity.active')}
             </span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{currentUsage}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('kwhThisMonth')}</p>
+          <p className="text-xs text-gray-600 mt-1">{t('electricity.kwhThisMonth')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="w-6 h-6 text-blue-600" />
-            <span className="text-xs text-blue-700">{t('avgPerDay')}</span>
+            <span className="text-xs text-blue-700">{t('electricity.avgPerDay')}</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{avgDailyUsage}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('kwhDailyAverage')}</p>
+          <p className="text-xs text-gray-600 mt-1">{t('electricity.kwhDailyAverage')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <BatteryCharging className="w-6 h-6 text-green-600" />
-            <span className="text-xs text-green-700">{t('peakLoad')}</span>
+            <span className="text-xs text-green-700">{t('electricity.peakLoad')}</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{peakLoad}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('kwMaximumLoad')}</p>
+          <p className="text-xs text-gray-600 mt-1">{t('electricity.kwMaximumLoad')}</p>
         </div>
 
         <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <AlertTriangle className="w-6 h-6 text-red-600" />
-            <span className="text-xs text-red-700">{t('alert')}</span>
+            <span className="text-xs text-red-700">{t('electricity.alert')}</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">₹{lastBillAmount}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('lastBillAmount')}</p>
+          <p className="text-xs text-gray-600 mt-1">{t('electricity.lastBillAmount')}</p>
         </div>
       </div>
 
@@ -120,8 +139,8 @@ export function ElectricityDashboard() {
               <BarChart3 className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">{t('consumptionTrend')}</h3>
-              <p className="text-xs text-gray-600">{t('last7DaysPattern')}</p>
+              <h3 className="font-bold text-gray-900">{t('electricity.consumptionTrend')}</h3>
+              <p className="text-xs text-gray-600">{t('electricity.last7DaysPattern')}</p>
             </div>
           </div>
 
@@ -134,7 +153,7 @@ export function ElectricityDashboard() {
                   style={{ height: `${(value / 10) * 100}%` }}
                 ></div>
                 <span className="text-xs text-gray-600">
-                  {[t('mondayShort'), t('tuesdayShort'), t('wednesdayShort'), t('thursdayShort'), t('fridayShort'), t('saturdayShort'), t('sundayShort')][index]}
+                  {[t('electricity.mondayShort'), t('electricity.tuesdayShort'), t('electricity.wednesdayShort'), t('electricity.thursdayShort'), t('electricity.fridayShort'), t('electricity.saturdayShort'), t('electricity.sundayShort')][index]}
                 </span>
               </div>
             ))}
@@ -142,8 +161,8 @@ export function ElectricityDashboard() {
 
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">{t('weeklyAverage')}</span>
-              <span className="font-bold text-gray-900">{t('weeklyAverageValue', { value: '7.9 kWh/day' })}</span>
+              <span className="text-gray-600">{t('electricity.weeklyAverage')}</span>
+              <span className="font-bold text-gray-900">{t('electricity.weeklyAverageValue', { value: '7.9 kWh/day' })}</span>
             </div>
           </div>
         </div>
@@ -155,8 +174,8 @@ export function ElectricityDashboard() {
               <AlertTriangle className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">{t('powerAlerts')}</h3>
-              <p className="text-xs text-gray-600">{t('outagesAndMaintenance')}</p>
+              <h3 className="font-bold text-gray-900">{t('electricity.powerAlerts')}</h3>
+              <p className="text-xs text-gray-600">{t('electricity.outagesAndMaintenance')}</p>
             </div>
           </div>
 
@@ -165,12 +184,12 @@ export function ElectricityDashboard() {
               <div className="flex items-start gap-3">
                 <Clock className="w-4 h-4 text-yellow-600 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{t('scheduledMaintenance')}</p>
+                  <p className="text-sm font-semibold text-gray-900">{t('electricity.scheduledMaintenance')}</p>
                   <p className="text-xs text-gray-600 mt-1">
-                    {t('scheduledMaintenanceTime', { date: 'Feb 2, 2026', time: '10:00 AM - 2:00 PM' })}
+                    {t('electricity.scheduledMaintenanceTime', { date: 'Feb 2, 2026', time: '10:00 AM - 2:00 PM' })}
                   </p>
                   <p className="text-xs text-gray-600 mt-1">
-                    {t('maintenanceArea', { area: 'Sector 5, 6, 7' })}
+                    {t('electricity.maintenanceArea', { area: 'Sector 5, 6, 7' })}
                   </p>
                 </div>
               </div>
@@ -180,35 +199,16 @@ export function ElectricityDashboard() {
               <div className="flex items-start gap-3">
                 <Activity className="w-4 h-4 text-green-600 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{t('systemStatus')}</p>
+                  <p className="text-sm font-semibold text-gray-900">{t('electricity.systemStatus')}</p>
                   <p className="text-xs text-gray-600 mt-1">
-                    {t('allSystemsOperational')}
+                    {t('electricity.allSystemsOperational')}
                   </p>
                   <p className="text-xs text-green-600 mt-1 font-semibold">
-                    {t('uptimeThisMonth', { percent: 99.8 })}
+                    {t('electricity.uptimeThisMonth', { percent: 99.8 })}
                   </p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Meter Information */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">{t('smartMeterInfo')}</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-xs text-gray-600 mb-1">{t('connectionTypeLabel')}</p>
-            <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">{t('sanctionedLoad')}</p>
-            <p className="text-sm font-semibold text-gray-900">{sanctionedLoad}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">{t('lastReadingDate')}</p>
-            <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
           </div>
         </div>
       </div>
@@ -220,12 +220,12 @@ export function ElectricityDashboard() {
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-900">{t('energySavingTip')}</h3>
-            <p className="text-xs text-gray-600">{t('energySavingPractices')}</p>
+            <h3 className="font-bold text-gray-900">{t('electricity.energySavingTip')}</h3>
+            <p className="text-xs text-gray-600">{t('electricity.energySavingPractices')}</p>
           </div>
         </div>
         <p className="text-sm text-gray-700">
-          💡 {t('ledBulbTip', { min: 300, max: 400 })}
+          💡 {t('electricity.ledBulbTip', { min: 300, max: 400 })}
         </p>
       </div>
     </div>

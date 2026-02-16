@@ -2081,10 +2081,8 @@ html {
     a {
         color: inherit;
         -webkit-text-decoration: inherit;
-        -webkit-text-decoration: inherit;
         text-decoration: inherit;
     }
-
     b,
     strong {
         font-weight: bolder;

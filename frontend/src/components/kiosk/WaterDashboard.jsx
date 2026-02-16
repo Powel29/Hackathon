@@ -22,13 +22,16 @@ export function WaterDashboard() {
 
   useEffect(() => {
     const fetchAccountData = async () => {
+      // Ensure loading state is set and always cleared on every path
+      setLoading(true);
+
       if (!user?.consumerId) {
         console.log('❌ No consumerId found:', user);
+        setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
         console.log('🔍 Fetching water account for:', user.consumerId);
         const response = await departmentService.getAccountDetails('WATER', user.consumerId);
         console.log('✅ Water account response:', response);

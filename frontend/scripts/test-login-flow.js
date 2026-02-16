@@ -40,7 +40,8 @@ async function testLoginFlow() {
                 console.log('-----------------------------------');
                 console.log('🎉 LOGIN SUCCESSFUL');
                 console.log('Token:', verifyResponse.data.token ? '(Present)' : '(Missing)');
-                console.log('User:', verifyResponse.data.user.name);
+                const userName = verifyResponse.data.user?.name ?? '<no user>';
+                console.log('User:', userName);
             } else {
                 console.error('❌ OTP Verification Failed');
             }

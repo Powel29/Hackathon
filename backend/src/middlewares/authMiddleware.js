@@ -33,6 +33,7 @@ exports.verifyToken = async (req, res, next) => {
         });
 
         if (!session) {
+            console.log('❌ Session not found or expired for citizen:', decoded.citizenId);
             return res.status(401).json({
                 success: false,
                 error: {

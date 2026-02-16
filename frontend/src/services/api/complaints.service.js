@@ -6,8 +6,8 @@
  * Currently using mock data - replace with actual database calls when ready
  */
 
-import { query, transaction } from '../../db/config';
-
+// Database imports commented out - using mock implementations
+// import { query, transaction } from '../../db/config';
 
 
 /**
@@ -123,8 +123,7 @@ export async function createComplaint(request) {
       [request.userId, complaintId]
     );
 
-    return { success, complaintNumber };
-  });
+    return { success: true, complaintNumber };  });
     */
 
     // Mock implementation
@@ -138,8 +137,7 @@ export async function createComplaint(request) {
     return { success, complaintNumber };
   } catch (error) {
     console.error('Create complaint error:', error);
-    return { success, error: String(error) };
-  }
+    return { success: false, error: String(error) };  }
 }
 
 /**
@@ -400,8 +398,7 @@ export async function updateComplaint(request) {
     return { success: true };
   } catch (error) {
     console.error('Update complaint error:', error);
-    return { success, error: String(error) };
-  }
+    return { success: false, error: String(error) };  }
 }
 
 /**
@@ -411,5 +408,5 @@ async function generateComplaintNumber(serviceType) {
   const prefix = serviceType.toUpperCase().substring(0, 3);
   const year = new Date().getFullYear();
   const random = Math.floor(10000 + Math.random() * 90000);
-  return `CMP - ${prefix} -${year} -${random} `;
+  return `CMP-${prefix}-${year}-${random}`;
 }

@@ -21,14 +21,16 @@ export function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const stats = {
-    totalComplaints: complaints.length + 147,
-    openComplaints: complaints.filter(c => c.status === 'open').length + 23,
-    resolvedToday: 18,
-    activeUsers: 1247,
+    totalComplaints: complaints.length,
+    openComplaints: complaints.filter(c => c.status === 'open').length,
+    resolvedToday: complaints.filter(c => 
+      c.status === 'resolved' && 
+      new Date(c.updatedAt).toDateString() === new Date().toDateString()
+    ).length,
+    activeUsers: 0, // TODO: Fetch from API
     activeKiosks: 45,
     offlineKiosks: 3
   };
-
   const mockKiosks = [
     { id: 'K001', location: 'Municipal Office - Zone A', status: 'online', uptime: '99.2%' },
     { id: 'K002', location: 'District Collectorate', status: 'online', uptime: '98.7%' },
@@ -183,8 +185,7 @@ export function AdminDashboard() {
                     <tr key={complaint.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-4 py-3 text-sm font-mono text-[#0066CC]">{complaint.complaintId}</td>
                       <td className="px-4 py-3 text-sm capitalize">{complaint.serviceType}</td>
-                      <td className="px-4 py-3 text-sm">{complaint.description.substring(0, 40)}...</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-sm">{(complaint.description || '').substring(0, 40)}...</td>                      <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${complaint.status === 'open' ? 'bg-orange-100 text-orange-700' :
                             complaint.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                               complaint.status === 'resolved' ? 'bg-green-100 text-green-700' :

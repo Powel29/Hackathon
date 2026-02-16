@@ -45,7 +45,7 @@ export function LanguageSelection() {
                     <div className="border-t-2 border-[#0066CC] my-6"></div>
 
                     <h2 className="text-2xl font-bold text-center text-[#212529] mb-8">
-                        {t('selectLanguage')}
+                        {t('language.selectLanguage')}
                     </h2>
 
                     <div className="grid grid-cols-5 gap-4 mb-8">
@@ -86,7 +86,7 @@ export function LanguageSelection() {
                         onClick={handleContinue}
                         className="w-full"
                     >
-                        {t('continue')}
+                        {t('language.continue')}
                     </TouchButton>
 
                     <p className="text-center text-xs text-gray-500 mt-6 leading-relaxed">

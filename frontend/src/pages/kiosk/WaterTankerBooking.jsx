@@ -141,9 +141,10 @@ export function WaterTankerBooking() {
         break;
 
       case 5: // Delivery Scheduling
-        if (!formData.deliveryDate) errors.deliveryDate = 'Delivery date is required';
+        if (formData.deliveryType === 'scheduled' && !formData.deliveryDate) {
+          errors.deliveryDate = 'Delivery date is required for scheduled deliveries';
+        }
         break;
-
       case 6: // Facility Selection
         if (!selectedFacility) errors.facility = 'Please select a water tanker facility';
         break;

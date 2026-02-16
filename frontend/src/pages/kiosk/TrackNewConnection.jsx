@@ -14,6 +14,7 @@ import {
   Droplets,
   Building2
 } from 'lucide-react';
+import { connectionService } from '../../services/api';
 
 
 
@@ -24,17 +25,26 @@ export function TrackNewConnection() {
   const [applicationId, setApplicationId] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [error, setError] = useState('');
+  const [recentApps, setRecentApps] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = () => {
-    const apps = JSON.parse(localStorage.getItem('newConnections') || '[]');
-    const found = apps.find((app) => app.applicationId === applicationId.toUpperCase());
+  const handleSearch = async () => {
+    if (!applicationId) return;
 
-    if (found) {
-      setSelectedApp(found);
+    try {
       setError('');
-    } else {
       setSelectedApp(null);
-      setError('Application not found. Please check the Application ID.');
+
+      const app = await connectionService.track(applicationId);
+
+      if (app) {
+        setSelectedApp(app);
+      } else {
+        setError(t('trackNewConnection.errorNotFound') || 'Application not found. Please check the Application ID.');
+      }
+    } catch (e) {
+      console.error("Track connection failed", e);
+      setError(t('trackNewConnection.errorSystem') || 'Application not found or system error. Please try again.');
     }
   };
 
@@ -53,6 +63,33 @@ export function TrackNewConnection() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [applicationId, navigate]);
+
+  const [selectedDepartment, setSelectedDepartment] = useState('ALL');
+
+  useEffect(() => {
+    fetchUserApplications();
+  }, [selectedDepartment]);
+
+  const fetchUserApplications = async () => {
+    try {
+      setLoading(true);
+      const filters = selectedDepartment !== 'ALL' ? { serviceType: selectedDepartment } : {};
+      const data = await connectionService.getMyApplications(filters);
+      setRecentApps(data);
+    } catch (error) {
+      console.error("Failed to fetch user applications", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const departments = [
+    { id: 'ALL', label: t('common.all') || 'All' },
+    { id: 'ELECTRICITY', label: t('dashboard.electricity') || 'Electricity' },
+    { id: 'WATER', label: t('dashboard.water') || 'Water' },
+    { id: 'GAS', label: t('dashboard.gas') || 'Gas' },
+    { id: 'MUNICIPAL', label: t('dashboard.municipal') || 'Municipal' }
+  ];
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -102,15 +139,15 @@ export function TrackNewConnection() {
   const getCategoryName = (serviceType) => {
     switch (serviceType) {
       case 'electricity':
-        return 'Electricity Department';
+        return t('trackNewConnection.categoryElectricity') || 'Electricity Department';
       case 'gas':
-        return 'Gas Department';
+        return t('trackNewConnection.categoryGas') || 'Gas Department';
       case 'water':
-        return 'Water Department';
+        return t('trackNewConnection.categoryWater') || 'Water Department';
       case 'municipal':
-        return 'Municipal Services';
+        return t('trackNewConnection.categoryMunicipal') || 'Municipal Services';
       default:
-        return 'Department';
+        return t('trackNewConnection.categoryDefault') || 'Department';
     }
   };
 
@@ -118,24 +155,40 @@ export function TrackNewConnection() {
     <KioskLayout>
       <div className="max-w-4xl mx-auto">
         <button
-          onClick={() => navigate('/kiosk/dashboard')}
+          onClick={() => selectedApp ? setSelectedApp(null) : navigate('/kiosk/dashboard')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t('back')}
+          {selectedApp ? t('trackNewConnection.backToList') : t('common.back')}
         </button>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-[#0066CC] bg-opacity-10 rounded-lg flex items-center justify-center">
-              <Search className="w-5 h-5 text-[#0066CC]" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#0066CC] bg-opacity-10 rounded-lg flex items-center justify-center">
+                <Search className="w-5 h-5 text-[#0066CC]" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#212529]">
+                {t('trackNewConnection.pageTitle') || 'Track Application'}
+              </h2>            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+              {departments.map((dept) => (
+                <button
+                  key={dept.id}
+                  onClick={() => setSelectedDepartment(dept.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${selectedDepartment === dept.id
+                    ? 'bg-[#0066CC] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                >
+                  {dept.label}
+                </button>
+              ))}
             </div>
-            <h2 className="text-2xl font-bold text-[#212529]">
-              Track New Connection Application
-            </h2>
           </div>
 
-          <div className="flex gap-3">
+              <div className="flex gap-3">
             <input
               type="text"
               value={applicationId}
@@ -143,7 +196,7 @@ export function TrackNewConnection() {
                 setApplicationId(e.target.value.toUpperCase());
                 setError('');
               }}
-              placeholder="Enter Application ID (e.g., APP-2026-12345)"
+              placeholder={t('trackNewConnection.placeholder') || 'Enter Application ID (e.g., APP-2026-12345)'}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-base font-mono focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent"
               maxLength={20}
             />
@@ -154,7 +207,7 @@ export function TrackNewConnection() {
               onClick={handleSearch}
               disabled={!applicationId}
             >
-              Search
+              {t('trackNewConnection.searchButton') || 'Search'}
             </TouchButton>
           </div>
 
@@ -167,37 +220,37 @@ export function TrackNewConnection() {
           )}
         </div>
 
-        {selectedApp && (
+        {selectedApp ? (
           <div className="grid grid-cols-3 gap-6">
             {/* Application Details */}
             <div className="col-span-2 space-y-4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    {getCategoryIcon(selectedApp.serviceType)}
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                    {getCategoryIcon(selectedApp.serviceType?.toLowerCase())}
                   </div>
                   <div>
-                    <p className="text-xs text-gray-600 font-semibold">APPLICATION CATEGORY</p>
+                    <p className="text-xs text-gray-600 font-semibold">{t('trackNewConnection.applicationCategory')}</p>
                     <h3 className="text-lg font-bold text-[#212529]">
-                      {getCategoryName(selectedApp.serviceType)}
+                      {getCategoryName(selectedApp.serviceType?.toLowerCase())}
                     </h3>
                   </div>
                 </div>
 
                 <h3 className="text-lg font-bold text-[#212529] mb-4">
-                  Application Details
+                  {t('trackNewConnection.applicationDetails')}
                 </h3>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-sm text-gray-700">Application ID:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.applicationId')}:</span>
                     <span className="text-sm font-bold text-[#0066CC] font-mono">
                       {selectedApp.applicationId}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-sm text-gray-700">Status:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.status')}:</span>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(selectedApp.status)}
                       <span className={`${getStatusColor(selectedApp.status)} text-white px-3 py-1 rounded-lg text-sm font-bold capitalize`}>
@@ -207,52 +260,52 @@ export function TrackNewConnection() {
                   </div>
 
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-sm text-gray-700">Applicant Name:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.applicantName')}:</span>
                     <span className="text-sm font-bold text-[#212529]">
                       {selectedApp.applicantName}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-sm text-gray-700">Mobile Number:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.mobileNumber')}:</span>
                     <span className="text-sm font-bold text-[#212529]">
                       {selectedApp.mobileNumber}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-sm text-gray-700">Email:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.email')}:</span>
                     <span className="text-sm font-bold text-[#212529]">
                       {selectedApp.email}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-sm text-gray-700">Location:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.location')}:</span>
                     <span className="text-sm font-bold text-[#212529]">
                       {selectedApp.city}, {selectedApp.state}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                    <span className="text-sm text-gray-700">Application Date:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.applicationDate')}:</span>
                     <span className="text-sm font-bold text-[#212529]">
-                      {new Date(selectedApp.createdAt).toLocaleDateString('en-IN', {
+                      {selectedApp.createdAt ? new Date(selectedApp.createdAt).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'long',
                         year: 'numeric'
-                      })}
+                      }) : 'N/A'}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">Last Updated:</span>
+                    <span className="text-sm text-gray-700">{t('trackNewConnection.lastUpdated')}:</span>
                     <span className="text-sm font-bold text-[#212529]">
-                      {new Date(selectedApp.updatedAt).toLocaleDateString('en-IN', {
+                      {selectedApp.updatedAt ? new Date(selectedApp.updatedAt).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'long',
                         year: 'numeric'
-                      })}
+                      }) : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -261,7 +314,7 @@ export function TrackNewConnection() {
               {/* Status Timeline */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-bold text-[#212529] mb-4">
-                  Processing Status
+                  {t('trackNewConnection.processingStatus')}
                 </h3>
 
                 <div className="relative">
@@ -273,20 +326,20 @@ export function TrackNewConnection() {
 
                       <div className="flex gap-3">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${selectedApp.status === statusStep || (
-                            selectedApp.status === 'active' && statusStep !== 'pending'
-                          ) ? getStatusColor(statusStep) : 'bg-gray-200'
+                          selectedApp.status === 'active' && statusStep !== 'pending'
+                        ) ? getStatusColor(statusStep) : 'bg-gray-200'
                           }`}>
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         </div>
 
                         <div className="flex-1">
                           <p className="text-sm font-bold text-[#212529] capitalize mb-1">
-                            {statusStep === 'pending' ? 'Application Received' : statusStep === 'approved' ? 'Approved' : 'Active Connection'}
+                            {statusStep === 'pending' ? t('trackNewConnection.statusReceived') : statusStep === 'approved' ? t('trackNewConnection.statusApproved') : t('trackNewConnection.statusActive')}
                           </p>
                           <p className="text-xs text-gray-600">
-                            {statusStep === 'pending' && 'Your application has been received and is under review'}
-                            {statusStep === 'approved' && 'Your application has been approved by the department'}
-                            {statusStep === 'active' && 'Your connection is now active'}
+                            {statusStep === 'pending' && t('trackNewConnection.statusReceivedDesc')}
+                            {statusStep === 'approved' && t('trackNewConnection.statusApprovedDesc')}
+                            {statusStep === 'active' && t('trackNewConnection.statusActiveDesc')}
                           </p>
                         </div>
                       </div>
@@ -299,19 +352,19 @@ export function TrackNewConnection() {
             {/* Summary Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit">
               <h3 className="text-lg font-bold text-[#212529] mb-4">
-                Quick Summary
+                {t('trackNewConnection.quickSummary')}
               </h3>
 
               <div className="space-y-3">
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-600 font-semibold">APPLICATION ID</p>
+                  <p className="text-xs text-gray-600 font-semibold">{t('trackNewConnection.applicationIdLabel')}</p>
                   <p className="text-lg font-bold text-[#0066CC] font-mono mt-1">
                     {selectedApp.applicationId}
                   </p>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-600 font-semibold">CURRENT STATUS</p>
+                  <p className="text-xs text-gray-600 font-semibold">{t('trackNewConnection.currentStatus')}</p>
                   <div className="flex items-center gap-2 mt-1">
                     {getStatusIcon(selectedApp.status)}
                     <span className={`${getStatusColor(selectedApp.status)} text-white px-3 py-1 rounded-lg text-sm font-bold capitalize`}>
@@ -321,28 +374,73 @@ export function TrackNewConnection() {
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-600 font-semibold">DEPARTMENT</p>
+                  <p className="text-xs text-gray-600 font-semibold">{t('trackNewConnection.department')}</p>
                   <p className="text-sm font-bold text-[#212529] mt-1">
-                    {getCategoryName(selectedApp.serviceType)}
+                    {getCategoryName(selectedApp.serviceType?.toLowerCase())}
                   </p>
                 </div>
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <p className="text-xs text-gray-600 text-center">
-                  You will receive updates via SMS and Email
+                  {t('trackNewConnection.smsEmailNotification')}
                 </p>
               </div>
             </div>
           </div>
-        )}
+        ) : (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-700">{t('trackNewConnection.recentApplications')}</h3>
 
-        {!selectedApp && !error && (
-          <div className="bg-gray-50 rounded-xl p-12 text-center">
-            <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">
-              Enter your Application ID to track the status of your new connection request
-            </p>
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">{t('trackNewConnection.loading')}</div>
+            ) : recentApps.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {recentApps.map(app => (
+                  <div
+                    key={app.applicationId}
+                    onClick={async () => {
+                      // We need full details, so we call handleSearch logic or just set it if we have details?
+                      // `recentApps` only has summary. We should probably fetch details or use search logic.
+                      // I'll reuse handleSearch logic but with ID.
+                      setApplicationId(app.applicationId);
+                      // Trigger search manually or just call api directly
+                      try {
+                        const details = await connectionService.track(app.applicationId);
+                        setSelectedApp(details);
+                      } catch (e) { console.error(e); }
+                    }}
+                    className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm active:scale-95 transition-all cursor-pointer hover:border-[#0066CC]"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="font-mono text-sm text-[#0066CC] bg-blue-50 px-2 py-1 rounded">
+                        {app.applicationId}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full border capitalize ${getStatusColor(app.status)} text-white`}>
+                        {app.status}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-2">
+                      {getCategoryIcon(app.serviceType.toLowerCase())}
+                      <span className="font-semibold text-gray-900">{getCategoryName(app.serviceType.toLowerCase())}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs text-gray-400 pt-3 border-t mt-2">
+                      <span>{t('trackNewConnection.appliedOn')} {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : (t('trackNewConnection.na') || 'N/A')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-300" />
+                </div>
+                <h4 className="text-lg font-medium text-gray-900">{t('trackNewConnection.noApplications')}</h4>
+                <p className="text-gray-500 mt-1">{t('trackNewConnection.noApplicationsDesc')}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

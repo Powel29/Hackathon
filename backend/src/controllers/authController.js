@@ -89,6 +89,8 @@ exports.initiateAuth = async (req, res) => {
             targetMobile = existingCitizen.mobileNumber;
         }
 
+        console.log(`[AUTH] User Lookup: Aadhaar=${aadharNumber}, Found=${!!existingCitizen}, Mobile=${targetMobile}`);
+
         // Rate Limiting: Max 3 OTPs per hour per Aadhaar (Skip in development)
         if (process.env.NODE_ENV !== 'development') {
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -148,7 +150,7 @@ exports.initiateAuth = async (req, res) => {
         res.json({
             success: true,
             isNewUser,
-            maskedMobile: targetMobile.replace(/(\d{6})(\d{4})/, '******$2'),
+            maskedMobile: targetMobile ? targetMobile.replace(/\d(?=\d{4})/g, '*') : undefined,
             mobileNumber: targetMobile, // Full number for Firebase (Hackathon mode)
             maskedAadhaar: maskAadhaar(aadharNumber),
             expiresIn: 300, // seconds

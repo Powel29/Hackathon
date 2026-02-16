@@ -15,6 +15,7 @@ const authRoutes = require('./routes/authRoutes');
 const serviceAccountRoutes = require('./routes/serviceAccountRoutes');
 const complaintRoutes = require('./routes/complaintRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
+const billRoutes = require('./routes/billRoutes');
 
 const app = express();
 
@@ -54,6 +55,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/service-accounts', serviceAccountRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/departments', departmentRoutes);
+app.use('/api/bills', billRoutes);
+app.use('/api/connections', require('./routes/connectionRoutes'));
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
@@ -101,3 +104,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+// Force restart for connectionController update
