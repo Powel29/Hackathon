@@ -107,6 +107,12 @@ export function LoginRegister() {
         aadhaarNumber: formData.aadhaarNumber,
         mobileNumber: formData.mobileNumber
       });
+      console.log('✅ Register OTP Response:', response);
+
+      if (!response.success) {
+        toast.error(response.message || t('authentication.errorSendingOTP'));
+        return;
+      }
 
       // Show debugging toast if demo OTP is available (only in dev)
       if (import.meta.env.DEV && response._demoOTP) {
@@ -128,7 +134,6 @@ export function LoginRegister() {
 
     } catch (error) {
       console.error('❌ Registration OTP Error:', error);
-      alert("Error: " + (error.message || "Failed to send OTP"));
       toast.error(error.message || t('authentication.errorSendingOTP'));
     }
   };
@@ -169,7 +174,20 @@ export function LoginRegister() {
         aadhaarNumber: aadhar,
         mobileNumber: mobile
       });
-      console.log('✅ OTP Sent successfully:', response);
+      console.log('✅ OTP API Response:', response);
+
+      if (!response.success) {
+        // specific handling for new users who need to register
+        if (response.code === 'MOBILE_REQUIRED' || (response.message && response.message.toLowerCase().includes('mobile number'))) {
+          if (confirm(t('authentication.accountNotFoundRegister', 'Account not found. Would you like to register now?'))) {
+            setMode('register');
+            setLoginType(null);
+          }
+        } else {
+          toast.error(response.message || t('authentication.errorSendingOTP'));
+        }
+        return;
+      }
 
       if (response.maskedMobile) {
         setMaskedPhone(response.maskedMobile);
@@ -187,16 +205,7 @@ export function LoginRegister() {
 
     } catch (error) {
       console.error("❌ Login OTP Error:", error);
-
-      // Check for "mobile number" error which indicates user not found
-      if (error.code === 'MOBILE_REQUIRED' || (error.message && error.message.toLowerCase().includes('mobile number'))) {
-        if (confirm("Account not found. Would you like to register now?")) {
-          setMode('register');
-          setLoginType(null);
-        }
-      } else {
-        toast.error(error.message || t('authentication.errorSendingOTP'));
-      }
+      toast.error(error.message || t('authentication.errorSendingOTP'));
     }
   };
 

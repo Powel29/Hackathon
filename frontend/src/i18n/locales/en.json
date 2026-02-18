@@ -76,7 +76,8 @@
     "municipalServices": "Municipal Services",
     "changeDepartment": "Change Department",
     "quickServices": "Quick Services",
-    "trackConnection": "Track Connection"
+    "trackConnection": "Track Connection",
+    "trackRequests": "Track Requests"
   },
   "bills": {
     "viewBills": "View Bills",

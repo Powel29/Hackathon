@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
+import { serviceRequestService } from '../../services/api/serviceRequest.service';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, MapPin, Home, Droplets, Truck, CheckCircle, Printer } from 'lucide-react';
@@ -166,32 +167,29 @@ export function WaterTankerBooking() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
-    const bookingNumber = 'WTB-2026-' + Math.floor(100000 + Math.random() * 900000);
-    setBookingId(bookingNumber);
+    try {
+      const payload = {
+        serviceType: 'WATER',
+        requestType: 'WATER_TANKER',
+        details: {
+          ...formData,
+          facility: WATER_TANKER_FACILITIES.find(f => f.id === selectedFacility)?.name,
+          facilityId: selectedFacility,
+        }
+      };
 
-    // Store booking in localStorage
-    const bookingsData = {
-      id: Date.now().toString(),
-      bookingId: bookingNumber,
-      customerName: formData.fullName,
-      mobileNumber: formData.mobileNumber,
-      deliveryAddress: `${formData.houseNumber}, ${formData.buildingSocietyName}, ${formData.street}, ${formData.city}`,
-      waterQuantity: formData.waterQuantity,
-      facility: WATER_TANKER_FACILITIES.find(f => f.id === selectedFacility)?.name || 'Selected Facility',
-      deliveryDate: formData.deliveryDate,
-      deliveryTime: formData.deliveryTime,
-      status: 'confirmed',
-      createdAt: new Date().toISOString(),
-    };
+      const response = await serviceRequestService.create(payload);
 
-    const existingBookings = JSON.parse(localStorage.getItem('waterTankerBookings') || '[]');
-    existingBookings.push(bookingsData);
-    localStorage.setItem('waterTankerBookings', JSON.stringify(existingBookings));
-
-    setBookingSuccess(true);
+      setBookingId(response.requestId || response.request?.requestId || 'WTB-' + Date.now());
+      setBookingSuccess(true);
+    } catch (error) {
+      console.error('Booking failed:', error);
+      const errorMessage = error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Failed to book tanker. Please try again.';
+      alert(`Booking Failed: ${errorMessage}`);
+    }
   };
 
   const handlePrintReceipt = () => {

@@ -56,6 +56,7 @@ app.use('/api/service-accounts', serviceAccountRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/bills', billRoutes);
+app.use('/api/service-requests', require('./routes/serviceRequestRoutes'));
 app.use('/api/connections', require('./routes/connectionRoutes'));
 
 // Serve uploaded files

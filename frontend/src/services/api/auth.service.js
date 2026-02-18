@@ -12,19 +12,29 @@ import api from '../api.js';
  */
 export async function sendOTP(request) {
     try {
-        console.log('Sending OTP for Aadhaar: [REDACTED]');
+        console.log('Sending OTP for Aadhaar:', request.aadhaarNumber);
+        const payload = {
+            aadharNumber: request.aadhaarNumber
+        };
+
+        if (request.mobileNumber) {
+            payload.mobileNumber = request.mobileNumber;
+        }
+
         // Call backend API
-        const response = await api.post('/auth/initiate', {
-            aadharNumber: request.aadhaarNumber,
-            mobileNumber: request.mobileNumber
-        });
+        const response = await api.post('/auth/initiate', payload);
 
         return response.data;
     } catch (error) {
         console.error('Send OTP error:', error);
+
+        // Extract specific error details from backend response
+        const errorData = error.response?.data?.error || {};
+
         return {
             success: false,
-            message: error.response?.data?.message || 'Failed to send OTP',
+            message: errorData.message || 'Failed to send OTP',
+            code: errorData.code || 'UNKNOWN_ERROR',
             error: String(error)
         };
     }

@@ -176,7 +176,10 @@ export function TrackNewConnection() {
               {departments.map((dept) => (
                 <button
                   key={dept.id}
-                  onClick={() => setSelectedDepartment(dept.id)}
+                  onClick={() => {
+                    setSelectedDepartment(dept.id);
+                    setSelectedApp(null);
+                  }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${selectedDepartment === dept.id
                     ? 'bg-[#0066CC] text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -188,7 +191,7 @@ export function TrackNewConnection() {
             </div>
           </div>
 
-              <div className="flex gap-3">
+          <div className="flex gap-3">
             <input
               type="text"
               value={applicationId}
@@ -226,7 +229,7 @@ export function TrackNewConnection() {
             <div className="col-span-2 space-y-4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                     {getCategoryIcon(selectedApp.serviceType?.toLowerCase())}
                   </div>
                   <div>

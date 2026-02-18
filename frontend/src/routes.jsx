@@ -15,7 +15,9 @@ import { TrackComplaint } from "./pages/kiosk/TrackComplaint";
 import { NewConnection } from "./pages/kiosk/NewConnection";
 import { TrackNewConnection } from "./pages/kiosk/TrackNewConnection";
 import { WaterTankerBooking } from "./pages/kiosk/WaterTankerBooking";
+import { TrackRequest } from "./pages/kiosk/TrackRequest";
 import { AdminDashboard } from "./pages/kiosk/AdminDashboard";
+import { PropertyTaxPayment } from "./pages/kiosk/PropertyTaxPayment";
 
 export const router = createBrowserRouter([
     {
@@ -80,7 +82,35 @@ export const router = createBrowserRouter([
     },
     {
         path: "/kiosk/water-tanker-booking",
-        Component: WaterTankerBooking,
+        element: (
+            <ProtectedRoute>
+                <WaterTankerBooking />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/kiosk/track-request",
+        element: (
+            <ProtectedRoute>
+                <TrackRequest />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/kiosk/pay-property-tax",
+        element: (
+            <ProtectedRoute>
+                <PropertyTaxPayment />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/kiosk/pay-property-tax/:billId",
+        element: (
+            <ProtectedRoute>
+                <PropertyTaxPayment />
+            </ProtectedRoute>
+        ),
     },
     {
         path: "/kiosk/admin",

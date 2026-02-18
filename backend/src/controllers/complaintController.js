@@ -9,33 +9,43 @@ const COMPLAINT_TYPES = {
         'METER_MALFUNCTION',
         'STREET_LIGHT',
         'WIRE_DAMAGE',
+        'TRANSFORMER_ISSUE',
+        'NEW_METER_INSTALLATION',
         'OTHER'
     ],
     GAS: [
         'GAS_LEAK',
-        'LOW_PRESSURE',
+        'NO_GAS_SUPPLY', // Updated from SUPPLY_DISRUPTION check
+        'LOW_PRESSURE', // Kept for backward compatibility
+        'CYLINDER_NOT_DELIVERED',
         'BILLING_ISSUE',
         'METER_PROBLEM',
-        'SUPPLY_DISRUPTION',
-        'PIPE_DAMAGE',
+        'PIPELINE_DAMAGE', // Updated from PIPE_DAMAGE
+        'REGULATOR_MALFUNCTION',
+        'SAFETY_INSPECTION',
         'OTHER'
     ],
     WATER: [
         'NO_WATER_SUPPLY',
-        'LOW_PRESSURE',
-        'WATER_CONTAMINATION',
+        'LOW_WATER_PRESSURE', // Updated from LOW_PRESSURE
+        'CONTAMINATED_WATER', // Updated from WATER_CONTAMINATION
         'BILLING_ISSUE',
-        'PIPE_LEAKAGE',
+        'PIPELINE_LEAKAGE', // Updated from PIPE_LEAKAGE
         'DRAINAGE_BLOCKAGE',
+        'IRREGULAR_SUPPLY',
+        'SEWAGE_OVERFLOW',
+        'WATER_TANKER_REQUEST',
         'OTHER'
     ],
     MUNICIPAL: [
-        'GARBAGE_COLLECTION',
+        'GARBAGE_NOT_COLLECTED', // Updated from GARBAGE_COLLECTION
         'STREET_LIGHT',
         'ROAD_DAMAGE',
-        'DRAINAGE_ISSUE',
+        'DRAINAGE_BLOCKAGE', // Updated from DRAINAGE_ISSUE
+        'ILLEGAL_DUMPING',
         'PARK_MAINTENANCE',
-        'STRAY_ANIMALS',
+        'STRAY_ANIMAL', // Updated from STRAY_ANIMALS
+        'PROPERTY_TAX_QUERY',
         'OTHER'
     ]
 };
@@ -95,11 +105,12 @@ exports.registerComplaint = async (req, res) => {
 
         // Validate service type and complaint type
         if (!COMPLAINT_TYPES[serviceType]?.includes(complaintType)) {
+            console.error(`Invalid complaint type: ${complaintType} for service: ${serviceType}`);
             return res.status(400).json({
                 success: false,
                 error: {
                     code: 'INVALID_COMPLAINT_TYPE',
-                    message: 'Invalid complaint type for this service'
+                    message: `Invalid complaint type: ${complaintType}`
                 }
             });
         }
@@ -107,10 +118,14 @@ exports.registerComplaint = async (req, res) => {
         // Auto-determine priority based on complaint type
         const urgentTypes = [
             'GAS_LEAK',
-            'WATER_CONTAMINATION',
+            'CONTAMINATED_WATER',
             'POWER_OUTAGE',
             'WIRE_DAMAGE',
-            'PIPE_LEAKAGE'
+            'PIPELINE_LEAKAGE',
+            'REGULATOR_MALFUNCTION',
+            'SEWAGE_OVERFLOW',
+            'TRANSFORMER_ISSUE',
+            'NO_WATER_SUPPLY'
         ];
 
         const priority = urgentTypes.includes(complaintType) ? 'URGENT' : 'MEDIUM';

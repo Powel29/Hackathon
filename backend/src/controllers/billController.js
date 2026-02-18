@@ -31,8 +31,33 @@ exports.getUserBills = async (req, res) => {
             });
         }
 
-        // 3. Fetch OTHER Bills (Gas, Water, Municipal) - Placeholder for now
-        // const gasBills = ...
+        // 3. Fetch OTHER Bills
+        let gasBills = [];
+        if (!serviceType || serviceType === 'GAS') {
+            gasBills = await prisma.gasBill.findMany({
+                where: { account: { citizenId: userId } },
+                include: { payments: true },
+                orderBy: { dueDate: 'desc' }
+            });
+        }
+
+        let waterBills = [];
+        if (!serviceType || serviceType === 'WATER') {
+            waterBills = await prisma.waterBill.findMany({
+                where: { account: { citizenId: userId } },
+                include: { payments: true },
+                orderBy: { dueDate: 'desc' }
+            });
+        }
+
+        let municipalBills = [];
+        if (!serviceType || serviceType === 'MUNICIPAL') {
+            municipalBills = await prisma.municipalBill.findMany({
+                where: { account: { citizenId: userId } },
+                include: { payments: true },
+                orderBy: { dueDate: 'desc' }
+            });
+        }
 
         // 4. Normalize and Merge
         const formatBill = (bill, type) => ({
@@ -47,23 +72,29 @@ exports.getUserBills = async (req, res) => {
             details: type === 'ELECTRICITY' ? {
                 units: bill.unitsConsumed,
                 readings: { current: bill.currentReading, previous: bill.previousReading }
+            } : type === 'GAS' ? {
+                units: bill.unitsConsumed,
+                readings: { current: bill.currentReading, previous: bill.previousReading }
+            } : type === 'WATER' ? {
+                units: bill.unitsConsumed,
+                readings: { current: bill.currentReading, previous: bill.previousReading }
+            } : type === 'MUNICIPAL' ? {
+                taxYear: bill.financialYear,
+                propertyTax: bill.propertyTax
             } : {}
         });
 
         let allBills = [
             ...genericBills.map(b => formatBill(b, 'SERVICE')),
-            ...electricityBills.map(b => formatBill(b, 'ELECTRICITY'))
+            ...electricityBills.map(b => formatBill(b, 'ELECTRICITY')),
+            ...gasBills.map(b => formatBill(b, 'GAS')),
+            ...waterBills.map(b => formatBill(b, 'WATER')),
+            ...municipalBills.map(b => formatBill(b, 'MUNICIPAL'))
         ];
 
-        // Filter by serviceType if provided
+        // Filter by serviceType if provided - redundant if we fetched correctly but good for safety
         if (serviceType) {
-            allBills = allBills.filter(bill => {
-                if (serviceType === 'ELECTRICITY') return bill.type === 'ELECTRICITY';
-                if (serviceType === 'GAS') return bill.type === 'GAS' || bill.type === 'SERVICE';
-                if (serviceType === 'WATER') return bill.type === 'WATER' || bill.type === 'SERVICE';
-                if (serviceType === 'MUNICIPAL') return bill.type === 'MUNICIPAL' || bill.type === 'SERVICE';
-                return bill.type === serviceType || bill.type === 'SERVICE';
-            });
+            allBills = allBills.filter(bill => bill.type === serviceType || bill.type === 'SERVICE');
         }
         // Sort combined list by due date
         allBills.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
