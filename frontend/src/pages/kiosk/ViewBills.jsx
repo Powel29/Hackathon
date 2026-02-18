@@ -188,7 +188,13 @@ export function ViewBills() {
                       <TouchButton
                         variant="primary"
                         size="medium"
-                        onClick={() => navigate(`/kiosk/pay-bill/${bill.id}`)}
+                        onClick={() => {
+                          if (bill.serviceType === 'MUNICIPAL' || bill.serviceType === 'municipal') {
+                            navigate(`/kiosk/pay-property-tax/${bill.billId || bill.id}`);
+                          } else {
+                            navigate(`/kiosk/pay-bill/${bill.id}`);
+                          }
+                        }}
                       >
                         {t('bills.payNow')}
                       </TouchButton>
