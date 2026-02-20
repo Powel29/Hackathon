@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { billService } from '../../services/api';
+import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock } from 'lucide-react';
@@ -9,17 +10,18 @@ import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock } from 'lucide-rea
 export function ViewBills() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { selectedService } = useKioskStore();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [selectedDepartment, setSelectedDepartment] = useState('ALL');
+  const targetDepartment = selectedService ? selectedService.toUpperCase() : 'ALL';
 
   useEffect(() => {
     const fetchBills = async () => {
       try {
         setLoading(true);
-        const filters = selectedDepartment !== 'ALL' ? { serviceType: selectedDepartment } : {};
+        const filters = targetDepartment !== 'ALL' ? { serviceType: targetDepartment } : {};
         const fetchedBills = await billService.getUserBills(filters);
         console.log('📋 Fetched bills:', fetchedBills);
         setBills(fetchedBills || []);
@@ -32,8 +34,7 @@ export function ViewBills() {
     };
 
     fetchBills();
-  }, [selectedDepartment]);
-
+  }, [targetDepartment]);
   const getStatusIcon = (status) => {
     const statusLower = status?.toLowerCase();
     switch (statusLower) {
@@ -61,14 +62,6 @@ export function ViewBills() {
         return 'bg-gray-50 border-gray-200';
     }
   };
-
-  const departments = [
-    { id: 'ALL', label: t('dashboard.selectService') || 'All' }, // Using selectService as 'All' fallback or similar? Actually 'All' is missing in en.json properly. I'll use common.all if I add it, or keep literal 'All' for now and fix later. Wait, for now I will try to use `t('common.all')` but it's not in en.json? I saw 'all' usage in ViewBills. Let me check en.json again. 'all' is NOT in en.json. I will use 'All' literal or add it. I will use 'All' literal for now to be safe, or 'common.all' if I feel lucky. I'll stick to 'All' literal and add 'common.all' to en.json if I edit it. I will use 'dashboard.selectService' for ALL? No. I'll check `en.json` again. `dashboard: { selectService: "Select Service" }`. I'll leave 'All' as fallback or add it.
-    { id: 'ELECTRICITY', label: t('dashboard.electricity') || 'Electricity' },
-    { id: 'WATER', label: t('dashboard.water') || 'Water' },
-    { id: 'GAS', label: t('dashboard.gas') || 'Gas' },
-    { id: 'MUNICIPAL', label: t('dashboard.municipal') || 'Municipal' }
-  ];
 
   if (loading) {
     return (
@@ -100,21 +93,6 @@ export function ViewBills() {
               <h2 className="text-2xl font-bold text-[#212529]">
                 {t('bills.viewBills')}
               </h2>
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-              {departments.map((dept) => (
-                <button
-                  key={dept.id}
-                  onClick={() => setSelectedDepartment(dept.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${selectedDepartment === dept.id
-                    ? 'bg-[#0066CC] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                >
-                  {dept.label}
-                </button>
-              ))}
             </div>
           </div>
         </div>

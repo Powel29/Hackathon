@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useKioskStore } from '../../store/useKioskStore';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { ArrowLeft, Clock, CheckCircle, AlertCircle, FileText, Droplets } from 'lucide-react';
@@ -8,19 +9,28 @@ import { ArrowLeft, Clock, CheckCircle, AlertCircle, FileText, Droplets } from '
 export function TrackRequest() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { selectedService } = useKioskStore();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState(null);
 
+    const targetDepartment = selectedService ? selectedService.toUpperCase() : 'ALL';
+
     useEffect(() => {
         fetchRequests();
-    }, []);
+    }, [targetDepartment]);
 
     const fetchRequests = async () => {
         try {
             setLoading(true);
             const data = await serviceRequestService.getAll();
-            setRequests(data.requests || []);
+            let allRequests = data.requests || [];
+
+            if (targetDepartment !== 'ALL') {
+                allRequests = allRequests.filter(req => req.serviceType?.toUpperCase() === targetDepartment);
+            }
+
+            setRequests(allRequests);
         } catch (error) {
             console.error("Failed to fetch service requests", error);
         } finally {
@@ -100,8 +110,8 @@ export function TrackRequest() {
                                     key={request.requestId}
                                     onClick={() => setSelectedRequest(request)}
                                     className={`bg-white p-4 rounded-xl shadow-sm border cursor-pointer transition-all ${selectedRequest?.requestId === request.requestId
-                                            ? 'border-blue-500 ring-2 ring-blue-100'
-                                            : 'border-gray-200 hover:border-blue-300'
+                                        ? 'border-blue-500 ring-2 ring-blue-100'
+                                        : 'border-gray-200 hover:border-blue-300'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-2">

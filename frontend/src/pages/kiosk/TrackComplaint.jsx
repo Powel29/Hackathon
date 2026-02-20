@@ -18,12 +18,14 @@ import { complaintService } from '../../services/api';
 export function TrackComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { complaints } = useKioskStore();
+  const { complaints, selectedService } = useKioskStore();
   const [complaintId, setComplaintId] = useState('');
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [error, setError] = useState('');
   const [recentComplaints, setRecentComplaints] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const targetDepartment = selectedService ? selectedService.toUpperCase() : 'ALL';
 
   const handleSearch = useCallback(async () => {
     if (!complaintId) return;
@@ -61,16 +63,14 @@ export function TrackComplaint() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [complaintId, navigate, handleSearch]);
 
-  const [selectedDepartment, setSelectedDepartment] = useState('ALL');
-
   useEffect(() => {
     fetchUserComplaints();
-  }, [selectedDepartment]);
+  }, [targetDepartment]);
 
   const fetchUserComplaints = async () => {
     try {
       setLoading(true);
-      const filters = selectedDepartment !== 'ALL' ? { serviceType: selectedDepartment } : {};
+      const filters = targetDepartment !== 'ALL' ? { serviceType: targetDepartment } : {};
       const data = await complaintService.getUserComplaints(filters);
       setRecentComplaints(data);
     } catch (error) {
@@ -79,14 +79,6 @@ export function TrackComplaint() {
       setLoading(false);
     }
   };
-
-  const departments = [
-    { id: 'ALL', label: t('common.all') || 'All' },
-    { id: 'ELECTRICITY', label: t('dashboard.electricity') || 'Electricity' },
-    { id: 'WATER', label: t('dashboard.water') || 'Water' },
-    { id: 'GAS', label: t('dashboard.gas') || 'Gas' },
-    { id: 'MUNICIPAL', label: t('dashboard.municipal') || 'Municipal' }
-  ];
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -151,21 +143,6 @@ export function TrackComplaint() {
               <h2 className="text-2xl font-bold text-[#212529]">
                 {t('complaints.trackComplaint')}
               </h2>
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-              {departments.map((dept) => (
-                <button
-                  key={dept.id}
-                  onClick={() => setSelectedDepartment(dept.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${selectedDepartment === dept.id
-                    ? 'bg-[#FF9800] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                >
-                  {dept.label}
-                </button>
-              ))}
             </div>
           </div>
 

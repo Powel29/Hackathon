@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import {
@@ -22,11 +23,14 @@ import { connectionService } from '../../services/api';
 export function TrackNewConnection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { selectedService } = useKioskStore();
   const [applicationId, setApplicationId] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [error, setError] = useState('');
   const [recentApps, setRecentApps] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const targetDepartment = selectedService ? selectedService.toUpperCase() : 'ALL';
 
   const handleSearch = async () => {
     if (!applicationId) return;
@@ -64,16 +68,14 @@ export function TrackNewConnection() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [applicationId, navigate]);
 
-  const [selectedDepartment, setSelectedDepartment] = useState('ALL');
-
   useEffect(() => {
     fetchUserApplications();
-  }, [selectedDepartment]);
+  }, [targetDepartment]);
 
   const fetchUserApplications = async () => {
     try {
       setLoading(true);
-      const filters = selectedDepartment !== 'ALL' ? { serviceType: selectedDepartment } : {};
+      const filters = targetDepartment !== 'ALL' ? { serviceType: targetDepartment } : {};
       const data = await connectionService.getMyApplications(filters);
       setRecentApps(data);
     } catch (error) {
@@ -82,14 +84,6 @@ export function TrackNewConnection() {
       setLoading(false);
     }
   };
-
-  const departments = [
-    { id: 'ALL', label: t('common.all') || 'All' },
-    { id: 'ELECTRICITY', label: t('dashboard.electricity') || 'Electricity' },
-    { id: 'WATER', label: t('dashboard.water') || 'Water' },
-    { id: 'GAS', label: t('dashboard.gas') || 'Gas' },
-    { id: 'MUNICIPAL', label: t('dashboard.municipal') || 'Municipal' }
-  ];
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -171,24 +165,6 @@ export function TrackNewConnection() {
               <h2 className="text-2xl font-bold text-[#212529]">
                 {t('trackNewConnection.pageTitle') || 'Track Application'}
               </h2>            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-              {departments.map((dept) => (
-                <button
-                  key={dept.id}
-                  onClick={() => {
-                    setSelectedDepartment(dept.id);
-                    setSelectedApp(null);
-                  }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${selectedDepartment === dept.id
-                    ? 'bg-[#0066CC] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                >
-                  {dept.label}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="flex gap-3">
