@@ -12,7 +12,7 @@ export function PropertyTaxPayment() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { billId } = useParams();
-    const { user } = useKioskStore();
+    const { user, updateBill } = useKioskStore();
 
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -53,6 +53,7 @@ export function PropertyTaxPayment() {
                     } else {
                         // Fallback mock if no API data
                         setBillDetails({
+                            id: 'b55b5555-5555-4555-8555-555555555555',
                             billNumber: 'PT-2026-1001',
                             amount: 4550,
                             billingPeriod: '2025-2026',
@@ -86,6 +87,10 @@ export function PropertyTaxPayment() {
         setTimeout(() => {
             const transactionId = 'TXN' + Date.now();
             const paymentDate = new Date().toISOString();
+
+            if (billDetails?.id) {
+                updateBill(billDetails.id, { status: 'paid' });
+            }
 
             setProcessing(false);
 

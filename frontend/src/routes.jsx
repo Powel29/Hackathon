@@ -18,6 +18,7 @@ import { WaterTankerBooking } from "./pages/kiosk/WaterTankerBooking";
 import { TrackRequest } from "./pages/kiosk/TrackRequest";
 import { AdminDashboard } from "./pages/kiosk/AdminDashboard";
 import { PropertyTaxPayment } from "./pages/kiosk/PropertyTaxPayment";
+import { MyDocuments } from "./pages/kiosk/MyDocuments";
 
 export const router = createBrowserRouter([
     {
@@ -115,5 +116,13 @@ export const router = createBrowserRouter([
     {
         path: "/kiosk/admin",
         Component: AdminDashboard,
+    },
+    {
+        path: "/kiosk/my-documents",
+        element: (
+            <ProtectedRoute>
+                <MyDocuments />
+            </ProtectedRoute>
+        ),
     },
 ]);

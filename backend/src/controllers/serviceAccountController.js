@@ -15,7 +15,8 @@ exports.getServiceAccounts = async (req, res) => {
                     where: { status: 'UNPAID' },
                     orderBy: { dueDate: 'asc' },
                     take: 3 // 3 most urgent unpaid bills (earliest due dates)
-                }            }
+                }
+            }
         });
 
         res.json({

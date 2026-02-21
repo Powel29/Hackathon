@@ -7,6 +7,8 @@ import { TouchButton } from '../../components/kiosk/TouchButton';
 import { SuccessScreen } from '../../components/kiosk/SuccessScreen';
 import { ArrowLeft, CheckCircle, Upload, Edit3, Zap, Flame, Droplets, Building2 } from 'lucide-react';
 import govtLogo from '../../assets/kiosk/Government_of_India_logo.svg';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 
 
@@ -109,6 +111,7 @@ export function NewConnection() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [applicationId, setApplicationId] = useState('');
+  const printContainerRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -176,7 +179,7 @@ export function NewConnection() {
       if (!formData.mobileNumber.trim()) errors.mobileNumber = 'Mobile number is required';
       if (formData.mobileNumber && !/^[6-9]\d{9}$/.test(formData.mobileNumber)) {
         errors.mobileNumber = 'Valid 10-digit mobile number (starting 6–9) is required';
-      }      if (!formData.emailAddress.trim()) errors.emailAddress = 'Email address is required';
+      } if (!formData.emailAddress.trim()) errors.emailAddress = 'Email address is required';
       if (formData.emailAddress && !/^\S+@\S+\.\S+$/.test(formData.emailAddress)) {
         errors.emailAddress = 'Valid email address is required';
       }
@@ -353,8 +356,108 @@ export function NewConnection() {
       const response = await apiModule.connectionService.requestNew(payload);
 
       if (response && response.success) {
-        setApplicationId(response.applicationId || response.id);
+        const newAppId = response.applicationId || response.id;
+        const internalId = response.id; // Usually internal ID for links
+        setApplicationId(newAppId);
+
+        // Upload Documents
+        try {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          const citizenId = user.aadhaarNumber || '111122223333';
+
+          const uploadConfig = [
+            { file: formData.aadhaarFile, type: 'AADHAAR' },
+            { file: formData.addressProofFile, type: 'ADDRESS_PROOF' },
+            { file: formData.photoFile, type: 'APPLICANT_PHOTO' },
+            { file: formData.wiringCertificateFile, type: 'WIRING_CERTIFICATE' },
+            { file: formData.ownershipProofFile, type: 'OWNERSHIP_PROOF' },
+            { file: formData.buildingCertificateFile, type: 'BUILDING_CERTIFICATE' },
+            { file: formData.ownerNOCFile, type: 'OWNER_NOC' },
+            { file: formData.kitchenLayoutFile, type: 'KITCHEN_LAYOUT' },
+            { file: formData.safetyDeclarationFile, type: 'SAFETY_DECLARATION' },
+            { file: formData.plumbingCertificateFile, type: 'PLUMBING_CERTIFICATE' },
+            { file: formData.propertyTaxReceiptFile, type: 'PROPERTY_TAX_RECEIPT' },
+            { file: formData.approvedBuildingPlanFile, type: 'APPROVED_BUILDING_PLAN' },
+            { file: formData.completionCertificateFile, type: 'COMPLETION_CERTIFICATE' },
+            { file: formData.builderHandoverFile, type: 'BUILDER_HANDOVER' },
+            { file: formData.propertyTaxProofFile, type: 'PROPERTY_TAX_PROOF' },
+            { file: formData.signaturePhotoFile, type: 'SIGNATURE_PHOTO' },
+          ];
+
+          for (const item of uploadConfig) {
+            if (item.file) {
+              await apiModule.documentService.uploadDocument(item.file, {
+                citizenId,
+                department: selectedService,
+                relatedEntity: 'CONNECTION_APPLICATION',
+                relatedId: internalId || newAppId,
+                documentType: item.type
+              });
+            }
+          }
+
+          // Handle Digital Signature separately
+          if (formData.signatureType === 'digital' && formData.signature) {
+            // Convert Base64 to Blob to File
+            const borderData = formData.signature;
+            const res = await fetch(borderData);
+            const blob = await res.blob();
+            const sigFile = new File([blob], 'digital_signature.png', { type: 'image/png' });
+
+            await apiModule.documentService.uploadDocument(sigFile, {
+              citizenId,
+              department: selectedService,
+              relatedEntity: 'CONNECTION_APPLICATION',
+              relatedId: internalId || newAppId,
+              documentType: 'SIGNATURE_DIGITAL'
+            });
+          }
+
+        } catch (uploadError) {
+          console.error("Failed to upload some documents. Error:", uploadError);
+        }
+
         setShowSuccess(true);
+
+        // Auto-generate Application receipt and upload
+        setTimeout(async () => {
+          if (!printContainerRef.current) return;
+          try {
+            const originalDisplay = printContainerRef.current.style.display;
+            printContainerRef.current.style.display = 'block';
+
+            const canvas = await html2canvas(printContainerRef.current, {
+              scale: 2,
+              useCORS: true,
+              logging: false
+            });
+
+            printContainerRef.current.style.display = originalDisplay;
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            const pdfBlob = pdf.output('blob');
+
+            const file = new File([pdfBlob], `Application_${newAppId}.pdf`, { type: 'application/pdf' });
+
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            await apiModule.documentService.uploadDocument(file, {
+              citizenId: user.aadhaarNumber || '111122223333',
+              department: selectedService,
+              relatedEntity: 'CONNECTION_APPLICATION',
+              relatedId: internalId || newAppId,
+              documentType: 'APPLICATION_RECEIPT'
+            });
+            console.log("Successfully uploaded Application PDF!");
+          } catch (pdfErr) {
+            console.error("Failed to snapshot application PDF:", pdfErr);
+          }
+        }, 1500);
+
       }
     } catch (error) {
       console.error("New connection request failed", error);
@@ -2245,6 +2348,49 @@ export function NewConnection() {
               {t('newConnection.submit')}
             </TouchButton>
           )}
+        </div>
+      </div>
+
+      {/* Hidden application rendering block for html2canvas generation */}
+      <div ref={printContainerRef} style={{ display: 'none', position: 'absolute', left: '-9999px', top: 0, width: '210mm', minHeight: '297mm', padding: '8mm', background: '#fff', color: '#000', fontFamily: 'serif', fontSize: '11pt', zIndex: -1 }}>
+        <div style={{ textAlign: 'center', border: '3px double #000', padding: '12px', marginBottom: '14px' }}>
+          <img src={govtLogo} alt="Gov Logo" style={{ height: '60px', marginBottom: '6px' }} />
+          <h1 style={{ fontSize: '18pt', fontWeight: 'bold', textTransform: 'uppercase', margin: '4px 0' }}>Government of India</h1>
+          <p style={{ fontSize: '13pt', fontWeight: 'bold', textTransform: 'uppercase' }}>{selectedService?.charAt(0).toUpperCase() + selectedService?.slice(1)} Department</p>
+          <p style={{ fontSize: '12pt', fontWeight: 'bold', textDecoration: 'underline' }}>Application for New Connection</p>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', border: '2px solid #000', padding: '8px 12px', marginBottom: '12px' }}>
+          <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+          <p><strong>Application No:</strong> <span style={{ fontSize: '13pt', fontWeight: 'bold' }}>{applicationId || 'PENDING'}</span></p>
+        </div>
+
+        <div style={{ marginBottom: '12px' }}>
+          <h2 style={{ background: '#000', color: '#fff', padding: '8px 12px', fontSize: '11pt', fontWeight: 'bold' }}>1. Applicant Details</h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000' }}>
+            <tbody>
+              <tr><td style={{ width: '40%', fontWeight: 'bold', padding: '7px 10px', borderBottom: '1px solid #ccc' }}>Full Name:</td><td style={{ padding: '7px 10px', borderBottom: '1px solid #ccc' }}>{formData.fullName}</td></tr>
+              <tr><td style={{ fontWeight: 'bold', padding: '7px 10px', borderBottom: '1px solid #ccc' }}>Mobile Number:</td><td style={{ padding: '7px 10px', borderBottom: '1px solid #ccc' }}>{formData.mobileNumber}</td></tr>
+              <tr><td style={{ fontWeight: 'bold', padding: '7px 10px', borderBottom: '1px solid #ccc' }}>Email Address:</td><td style={{ padding: '7px 10px', borderBottom: '1px solid #ccc' }}>{formData.emailAddress}</td></tr>
+              <tr><td style={{ fontWeight: 'bold', padding: '7px 10px' }}>Address:</td><td style={{ padding: '7px 10px' }}>{formData.address}, {formData.city}, {formData.state} - {formData.pincode}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginBottom: '14px' }}>
+          <h3 style={{ textAlign: 'center', fontWeight: 'bold', textDecoration: 'underline', marginBottom: '8px' }}>Declaration</h3>
+          <p style={{ textAlign: 'justify', fontSize: '10pt', marginBottom: '12px' }}>I hereby declare that the information provided above is true and correct. I understand that any false statement or omission of material facts may result in the rejection of this application.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '14px' }}>
+            <div><p>Date: {new Date().toLocaleDateString('en-IN')}</p><p>Place: {formData.city}</p></div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ height: '60px', borderBottom: '1px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {(formData.signatureType === 'digital' && formData.signature) ?
+                  <img src={formData.signature} alt="Signature" style={{ maxHeight: '56px', maxWidth: '180px' }} />
+                  : <span style={{ color: '#999', fontStyle: 'italic' }}>Signature Image Uploaded</span>}
+              </div>
+              <div style={{ fontWeight: 'bold', marginTop: '6px' }}>Applicant Signature</div>
+            </div>
+          </div>
         </div>
       </div>
     </KioskLayout>

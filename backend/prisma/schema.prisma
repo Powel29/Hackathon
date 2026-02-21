@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Citizen {
@@ -210,6 +211,7 @@ model Document {
   relatedEntity String   @db.VarChar(30)
   relatedId     String   @db.Uuid
   documentType  String   @db.VarChar(30)
+  department    String?  @db.VarChar(20)
   fileName      String?  @db.VarChar(255)
   filePath      String
   uploadedAt    DateTime @default(now())
