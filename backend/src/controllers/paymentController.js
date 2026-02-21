@@ -1,6 +1,10 @@
 const Razorpay = require('razorpay');
+<<<<<<< Updated upstream
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+=======
+const prisma = require('../config/prisma');
+>>>>>>> Stashed changes
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,

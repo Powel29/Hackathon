@@ -1,5 +1,9 @@
+<<<<<<< Updated upstream
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+=======
+const prisma = require('../config/prisma');
+>>>>>>> Stashed changes
 
 // Get user bills
 exports.getUserBills = async (req, res) => {

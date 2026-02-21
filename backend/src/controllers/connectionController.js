@@ -1,3 +1,9 @@
+<<<<<<< Updated upstream
+=======
+const prisma = require('../config/prisma');
+const crypto = require('crypto');
+
+>>>>>>> Stashed changes
 // Similar structure for new connections, transfers, etc.
 exports.requestNewConnection = async (req, res) => {
     // Implementation

@@ -1,4 +1,8 @@
 const jwt = require('jsonwebtoken');
+<<<<<<< Updated upstream
+=======
+const prisma = require('../config/prisma');
+>>>>>>> Stashed changes
 
 exports.verifyToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];

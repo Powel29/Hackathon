@@ -2,7 +2,11 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
 
+<<<<<<< Updated upstream
 const prisma = new PrismaClient();
+=======
+const prisma = require('../config/prisma');
+>>>>>>> Stashed changes
 
 // Authenticate user by Consumer ID or Mobile
 exports.login = async (req, res) => {
