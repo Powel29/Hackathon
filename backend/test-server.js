@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+require('dotenv').config({ path: 'backend.env' });
 
 // Strict NODE_ENV validation: require explicit environment
 const VALID_ENVS = ['development', 'production', 'test', 'staging'];
@@ -16,10 +16,7 @@ const serviceAccountRoutes = require('./routes/serviceAccountRoutes');
 const complaintRoutes = require('./routes/complaintRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const billRoutes = require('./routes/billRoutes');
-const connectionRoutes = require('./routes/connectionRoutes');
 const uploadRoutes = require('./routes/upload.routes');
-const downloadRoutes = require('./routes/download.routes');
-const documentRoutes = require('./routes/document.routes');
 
 const app = express();
 
@@ -60,11 +57,8 @@ app.use('/api/service-accounts', serviceAccountRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/bills', billRoutes);
-app.use('/api/service-requests', require('./routes/serviceRequestRoutes'));
 app.use('/api/connections', require('./routes/connectionRoutes'));
 app.use('/api/upload', uploadRoutes);
-app.use('/api/download', downloadRoutes);
-app.use('/api/documents', documentRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
@@ -104,12 +98,26 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`🚀 SUVIDHA Backend running on port ${PORT}`);
-        console.log(`📝 Environment: ${process.env.NODE_ENV}`);
-    });
-}
+// if (require.main === module) {
+//     app.listen(PORT, () => {
+//         console.log(`🚀 SUVIDHA Backend running on port ${PORT}`);
+//         console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+//     });
+// }
 
-module.exports = app;
+//temp
+console.log("About to start server...");
+
+app.listen(PORT, () => {
+    console.log(`🚀 SUVIDHA Backend running on port ${PORT}`);
+    console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+});
+
+
+//module.exports = app;
 // Force restart for connectionController update
+
+//temp
+setInterval(() => {
+    console.log("Server still alive...");
+}, 5000);

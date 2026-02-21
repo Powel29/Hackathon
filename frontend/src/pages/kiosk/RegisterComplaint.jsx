@@ -5,7 +5,7 @@ import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, FileText, Upload, Zap, Flame, Droplets, Building2 } from 'lucide-react';
-import { complaintService } from '../../services/api';
+import { complaintService, documentService } from '../../services/api';
 
 export function RegisterComplaint() {
   const { t } = useTranslation();
@@ -255,8 +255,27 @@ export function RegisterComplaint() {
 
       if (response && response.success) {
         const newComplaintId = response.complaint.complaintId;
+        const internalId = response.complaintInternalId; // Internal UUID
         setComplaintId(newComplaintId);
-        // Upload files if any (skipped for now)
+
+        // Upload files if any
+        if (files.length > 0) {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+          for (const fileObj of files) {
+            try {
+              await documentService.uploadDocument(fileObj.file, {
+                citizenId: response.complaint.citizenId || user.aadhaarNumber || '111122223333',
+                department: selectedService,
+                relatedEntity: 'COMPLAINT',
+                relatedId: internalId, // Must be UUID
+                documentType: 'SUPPORTING_DOCUMENT'
+              });
+            } catch (fileErr) {
+              console.error(`Failed to upload ${fileObj.file.name}:`, fileErr);
+            }
+          }
+        }
 
         setShowSuccess(true);
       }

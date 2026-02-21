@@ -119,10 +119,17 @@ export function Dashboard() {
     },
     {
       id: 'track-request',
-      icon: <FileText className="w-8 h-8" />,
+      icon: <Search className="w-8 h-8" />,
       color: '#6f42c1',
       title: t('dashboard.trackRequests') || 'Track Requests',
       route: '/kiosk/track-request'
+    },
+    {
+      id: 'my-documents',
+      icon: <FileText className="w-8 h-8" />,
+      color: '#E83E8C',
+      title: t('dashboard.myDocuments', 'My Documents'),
+      route: '/kiosk/my-documents'
     }
   ];
 

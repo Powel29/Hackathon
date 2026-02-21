@@ -1,6 +1,5 @@
 const prisma = require('../utils/prismaClient');
 const crypto = require('crypto');
-
 // Similar structure for new connections, transfers, etc.
 // Request new connection
 exports.requestNewConnection = async (req, res) => {

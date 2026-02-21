@@ -247,7 +247,8 @@ export function LoginRegister() {
       const verifyResponse = await authService.verifyOTP({
         aadhaarNumber: loginCredential,
         otp: otpValue,
-        userData: userData
+        userData: userData,
+        mobileNumber: isRegistration ? formData.mobileNumber : undefined
       });
 
       if (verifyResponse.success) {
@@ -272,6 +273,8 @@ export function LoginRegister() {
           // Direct login success
           navigate('/kiosk/service-selection');
         }
+      } else {
+        toast.error(verifyResponse.message || t('authentication.invalidOTP'));
       }
     } catch (error) {
       console.error("❌ OTP Verify Error:", error);

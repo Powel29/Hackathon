@@ -5,15 +5,75 @@ import { TouchButton } from '../../components/kiosk/TouchButton';
 import { CheckCircle, Printer, Mail, MessageSquare, QrCode, Home } from 'lucide-react';
 import { useKioskStore } from '../../store/useKioskStore';
 import govtLogo from '../../assets/kiosk/Government_of_India_logo.svg';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { documentService } from '../../services/api';
+import { useRef, useEffect } from 'react';
 
 export function Receipt() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { transactionId } = useParams();
   const location = useLocation();
-  const { user } = useKioskStore();
+  const { user, selectedService } = useKioskStore();
+  const receiptDocRef = useRef(null);
 
   const { bill, paymentDate } = location.state || {};
+
+  useEffect(() => {
+    if (bill && transactionId) {
+      // Auto generate and save receipt after a short delay to ensure rendering
+      const uploadReceipt = async () => {
+        try {
+          // Check if already uploaded in this session to prevent dupes
+          const cacheKey = `receipt_uploaded_${transactionId}`;
+          if (sessionStorage.getItem(cacheKey)) return;
+
+          if (!receiptDocRef.current) return;
+
+          // Make the print area temporarily visible for canvas capturing
+          const originalDisplay = receiptDocRef.current.style.display;
+          receiptDocRef.current.style.display = 'block';
+
+          const canvas = await html2canvas(receiptDocRef.current, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+          });
+
+          receiptDocRef.current.style.display = originalDisplay;
+
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          const pdfBlob = pdf.output('blob');
+
+          const file = new File([pdfBlob], `Receipt_${transactionId}.pdf`, { type: 'application/pdf' });
+
+          const citizenId = user?.aadhaarNumber || '111122223333';
+
+          console.log("Uploading generated PDF receipt...");
+          await documentService.uploadDocument(file, {
+            citizenId,
+            department: selectedService || location.state?.department || 'municipal',
+            relatedEntity: 'BILL',
+            relatedId: bill.id || bill.billId,
+            documentType: 'PAYMENT_RECEIPT'
+          });
+
+          sessionStorage.setItem(cacheKey, 'true');
+        } catch (error) {
+          console.error("Failed to generate and upload receipt automatically:", error);
+        }
+      };
+
+      setTimeout(uploadReceipt, 1000);
+    }
+  }, [bill, transactionId, user]);
 
   if (!bill) {
     return (
@@ -70,17 +130,23 @@ export function Receipt() {
             }
           }
           .print-receipt {
-            display: none;
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            z-index: -1;
           }
           @media print {
             .print-receipt {
+              position: absolute;
+              left: 0;
+              top: 0;
               display: block;
               font-family: 'Arial', sans-serif;
             }
           }
         `}</style>
 
-        <div style={{ maxWidth: '750px', margin: '0 auto', padding: '15px', border: '2px solid #000' }}>
+        <div ref={receiptDocRef} style={{ maxWidth: '750px', margin: '0 auto', padding: '15px', border: '2px solid #000', backgroundColor: 'white' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', borderBottom: '3px double #000', paddingBottom: '10px', marginBottom: '12px' }}>
             <div style={{ marginBottom: '8px' }}>
@@ -162,7 +228,8 @@ export function Receipt() {
                 </tr>
                 <tr style={{ backgroundColor: '#28A745', color: 'white' }}>
                   <td style={{ padding: '10px', fontSize: '14px', fontWeight: 'bold' }}>TOTAL PAID</td>
-                  <td style={{ padding: '10px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>₹{bill.amount.toLocaleString()}</td>                </tr>
+                  <td style={{ padding: '10px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>₹{(bill.amount ?? 0).toLocaleString()}</td>
+                </tr>
               </tbody>
             </table>
           </div>

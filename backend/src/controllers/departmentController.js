@@ -11,7 +11,8 @@ exports.verifyDepartmentAccount = async (req, res) => {
         // Validate service type
         const validServices = ['ELECTRICITY', 'GAS', 'WATER', 'MUNICIPAL'];
         if (!serviceType || typeof serviceType !== 'string' || !validServices.includes(serviceType.toUpperCase())) {
-            return res.status(400).json({                success: false,
+            return res.status(400).json({
+                success: false,
                 error: {
                     code: 'INVALID_SERVICE_TYPE',
                     message: 'Invalid service type. Must be ELECTRICITY, GAS, WATER, or MUNICIPAL'

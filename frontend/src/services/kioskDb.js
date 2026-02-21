@@ -40,7 +40,7 @@ const INITIAL_DATA = {
     ],
     bills: [
         {
-            id: '1',
+            id: 'b11b1111-1111-4111-8111-111111111111',
             billNumber: 'ELEC-2026-001',
             amount: 2450,
             dueDate: '2026-02-10',
@@ -51,7 +51,7 @@ const INITIAL_DATA = {
             userId: 'u1'
         },
         {
-            id: '2',
+            id: 'b22b2222-2222-4222-8222-222222222222',
             billNumber: 'ELEC-2025-012',
             amount: 2100,
             dueDate: '2026-01-10',
@@ -62,7 +62,7 @@ const INITIAL_DATA = {
             userId: 'u1'
         },
         {
-            id: '3',
+            id: 'b33b3333-3333-4333-8333-333333333333',
             billNumber: 'GAS-2026-001',
             amount: 1550,
             dueDate: '2026-02-10',
@@ -73,7 +73,7 @@ const INITIAL_DATA = {
             userId: 'u2'
         },
         {
-            id: '4',
+            id: 'b44b4444-4444-4444-8444-444444444444',
             billNumber: 'WATER-2026-001',
             amount: 850,
             dueDate: '2026-01-25',
@@ -82,11 +82,22 @@ const INITIAL_DATA = {
             consumerNumber: 'WC987654321',
             billingPeriod: 'January 2026',
             userId: 'u3'
+        },
+        {
+            id: 'b55b5555-5555-4555-8555-555555555555',
+            billNumber: 'PT-2026-1001',
+            amount: 4550,
+            dueDate: '2026-03-31',
+            status: 'pending',
+            serviceType: 'municipal',
+            consumerNumber: 'MC987654321',
+            billingPeriod: '2025-2026',
+            userId: 'u1'
         }
     ],
     complaints: [
         {
-            id: '1',
+            id: 'c11c1111-1111-4111-8111-111111111111',
             complaintId: 'CMP-2026-12345',
             serviceType: 'electricity',
             description: 'Frequent power cuts in the area',
@@ -123,7 +134,18 @@ class KioskDbService {
     }
 
     getData() {
-        return JSON.parse(localStorage.getItem(DB_KEY) || JSON.stringify(INITIAL_DATA));
+        const raw = localStorage.getItem(DB_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            // Auto migrate old non-UUID data
+            if (parsed.bills?.[0]?.id === '1') {
+                console.log('Migrating old kiosk data to UUIDs...');
+                localStorage.setItem(DB_KEY, JSON.stringify(INITIAL_DATA));
+                return INITIAL_DATA;
+            }
+            return parsed;
+        }
+        return JSON.parse(JSON.stringify(INITIAL_DATA));
     }
 
     saveData(data) {

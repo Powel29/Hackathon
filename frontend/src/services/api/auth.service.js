@@ -49,7 +49,9 @@ export async function verifyOTP(request) {
         // Call backend API
         const response = await api.post('/auth/verify-otp', {
             aadharNumber: request.aadhaarNumber,
-            otp: request.otp
+            otp: request.otp,
+            userData: request.userData,
+            mobileNumber: request.mobileNumber || request.userData?.mobileNumber
         });
 
         if (response.data.success) {

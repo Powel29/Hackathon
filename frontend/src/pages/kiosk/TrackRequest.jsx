@@ -194,6 +194,35 @@ export function TrackRequest() {
                                             </pre>
                                         </div>
                                     )}
+
+                                    <div className="pt-4 border-t border-gray-100 flex justify-end">
+                                        <button
+                                            className="px-6 py-2 bg-blue-50 text-[#0066CC] font-semibold rounded-lg hover:bg-blue-100 transition-colors shadow-sm"
+                                            onClick={async () => {
+                                                try {
+                                                    const apiModule = await import('../../services/api');
+                                                    const res = await apiModule.documentService.getRelatedDocuments(selectedRequest.requestId || selectedRequest.id);
+                                                    if (res.success && res.documents?.length > 0) {
+                                                        const receipt = res.documents.find(d =>
+                                                            d.documentType === 'APPLICATION_RECEIPT' || d.documentType === 'PAYMENT_RECEIPT'
+                                                        );
+                                                        if (receipt && receipt.url) {
+                                                            window.open(receipt.url, '_blank');
+                                                        } else {
+                                                            alert("Document might still be generating. Please try again later.");
+                                                        }
+                                                    } else {
+                                                        alert("No attached documents found for this request.");
+                                                    }
+                                                } catch (err) {
+                                                    console.error("Failed to fetch receipt:", err);
+                                                    alert("Failed to load receipt.");
+                                                }
+                                            }}
+                                        >
+                                            View Attached Documents
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ) : (

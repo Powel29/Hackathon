@@ -196,6 +196,7 @@ exports.registerComplaint = async (req, res) => {
             complaintInternalId: complaint.complaintId, // Keep internal ID safe
             complaint: {
                 complaintId: complaint.complaintNumber || complaint.complaintId,
+                citizenId: complaint.citizenId,
                 serviceType: complaint.serviceType,
                 complaintType: complaint.complaintType,
                 title: complaint.title,

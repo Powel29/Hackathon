@@ -247,6 +247,60 @@ export const complaintService = {
     }
 };
 
+// Document Service
+export const documentService = {
+    uploadDocument: async (file, documentData) => {
+        try {
+            console.log('🔍 Uploading document:', file.name);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Append all metadata fields
+            Object.keys(documentData).forEach(key => {
+                if (documentData[key]) {
+                    formData.append(key, documentData[key]);
+                }
+            });
+
+            // Need to set multipart content type
+            const response = await api.post('/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            console.log('✅ Document Upload Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API uploadDocument error:', error);
+            throw error;
+        }
+    },
+    getRelatedDocuments: async (relatedId) => {
+        try {
+            console.log('🔍 Fetching related documents for ID:', relatedId);
+            const response = await api.get(`/documents/related/${relatedId}`);
+            console.log('✅ Fetched Documents:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API getRelatedDocuments error:', error);
+            throw error;
+        }
+    },
+    getUserDocuments: async (citizenId, department) => {
+        try {
+            console.log('🔍 Fetching all documents for citizen:', citizenId, ' in department:', department);
+            const response = await api.get(`/documents/citizen/${citizenId}`, {
+                params: { department }
+            });
+            console.log('✅ Fetched Citizen Documents:', response.data);
+            return response.data.documents || [];
+        } catch (error) {
+            console.error('❌ API getUserDocuments error:', error);
+            throw error;
+        }
+    }
+};
+
 // Connection Service
 export const connectionService = {
     requestNew: async (connectionData) => {

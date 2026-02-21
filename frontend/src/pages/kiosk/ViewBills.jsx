@@ -161,13 +161,13 @@ export function ViewBills() {
                     </div>
                   </div>
 
-                  {bill.status?.toLowerCase() !== 'paid' && (
+                  {bill.status?.toLowerCase() !== 'paid' ? (
                     <div className="flex justify-end">
                       <TouchButton
                         variant="primary"
                         size="medium"
                         onClick={() => {
-                          if (bill.serviceType === 'MUNICIPAL' || bill.serviceType === 'municipal') {
+                          if (bill.serviceType === 'MUNICIPAL') {
                             navigate(`/kiosk/pay-property-tax/${bill.billId || bill.id}`);
                           } else {
                             navigate(`/kiosk/pay-bill/${bill.id}`);
@@ -175,6 +175,34 @@ export function ViewBills() {
                         }}
                       >
                         {t('bills.payNow')}
+                      </TouchButton>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end">
+                      <TouchButton
+                        variant="secondary"
+                        size="medium"
+                        onClick={async () => {
+                          try {
+                            const apiModule = await import('../../services/api');
+                            const res = await apiModule.documentService.getRelatedDocuments(bill.billId || bill.id);
+                            if (res.success && res.documents?.length > 0) {
+                              const receipt = res.documents.find(d => d.documentType === 'PAYMENT_RECEIPT');
+                              if (receipt && receipt.url) {
+                                window.open(receipt.url, '_blank');
+                              } else {
+                                alert("Receipt document is still processing. Please try again later.");
+                              }
+                            } else {
+                              alert("Receipt document not found.");
+                            }
+                          } catch (err) {
+                            console.error("Failed to fetch receipt:", err);
+                            alert("Failed to load receipt.");
+                          }
+                        }}
+                      >
+                        Download Receipt
                       </TouchButton>
                     </div>
                   )}
