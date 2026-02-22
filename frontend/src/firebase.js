@@ -1,14 +1,16 @@
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import 'firebase/auth'
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyAn4X1Eut8Nri6MUmOguo8tiKM_rGnVPu8",
-    authDomain: "suvidha-otp.firebaseapp.com",
-    projectId: "suvidha-otp",
-    storageBucket: "suvidha-otp.firebasestorage.app",
-    messagingSenderId: "128158601168",
-    appId: "1:128158601168:web:c15f4cc1175cb4ca18b3d5"
+    apiKey: "AIzaSyB-Ggwq_66MWvG_Eyo6Zl7_tDezIWNOvmk",
+    authDomain: "hackathon-2a737.firebaseapp.com",
+    projectId: "hackathon-2a737",
+    storageBucket: "hackathon-2a737.firebasestorage.app",
+    messagingSenderId: "64960951729",
+    appId: "1:64960951729:web:93d89e2bdc482e62d53990"
 };
 
 // Initialize Firebase

@@ -2,6 +2,13 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const accountRequestController = require('../controllers/accountRequestController');
+const { login, verifyToken } = require('../controllers/adminAuthController');
+
+// ─── Auth (public) ────────────────────────────────────────────────────────────
+router.post('/login', login);
+
+// ─── All routes below require a valid admin JWT ───────────────────────────────
+router.use(verifyToken);
 
 // Complaints routes
 router.get('/complaints', adminController.getComplaints);
@@ -23,11 +30,5 @@ router.put('/requests/:id', adminController.updateRequest);
 router.get('/account-requests', accountRequestController.getPendingRequests);
 router.post('/account-requests/:id/approve', accountRequestController.approveRequest);
 router.post('/account-requests/:id/reject', accountRequestController.rejectRequest);
-
-// Login route (mock simple auth if needed, but here we just return success since frontend checks ADMIN_CREDENTIALS)
-router.post('/login', (req, res) => {
-    // Real auth could check against db
-    res.json({ success: true, token: 'fake-admin-token' });
-});
 
 module.exports = router;

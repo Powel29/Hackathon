@@ -23,7 +23,7 @@ exports.getComplaints = async (req, res) => {
             complaintType: c.complaintType,
             description: c.description,
             priority: c.priority.toLowerCase(),
-            status: c.status.toLowerCase().replace(' ', '_'),
+            status: c.status.toLowerCase().replace(/\s+/g, '_'),
             location: c.location || '',
             assignedTo: c.assignedTo || '',
             adminNotes: c.resolutionNote || '',
@@ -100,11 +100,17 @@ exports.getConnections = async (req, res) => {
                 .filter(doc => doc.relatedId === c.id)
                 .map(async doc => {
                     const isPdf = doc.mimeType === 'application/pdf' || (doc.fileName && doc.fileName.toLowerCase().endsWith('.pdf'));
+                    let signedUrl = null;
+                    try {
+                        signedUrl = await generateSignedUrl(doc.filePath, doc.fileName);
+                    } catch (err) {
+                        console.error(`Failed to generate signed URL for document ${doc.documentId}:`, err.message);
+                    }
                     return {
                         id: doc.documentId,
                         name: doc.documentType.replace(/_/g, ' '),
                         type: isPdf ? 'pdf' : 'image',
-                        dataUrl: await generateSignedUrl(doc.filePath, doc.fileName),
+                        dataUrl: signedUrl,
                         verified: true // Can be added to DB schema later
                     };
                 }));
@@ -118,7 +124,9 @@ exports.getConnections = async (req, res) => {
                 serviceType: c.serviceType.toLowerCase(),
                 connectionType: c.connectionType.toLowerCase(),
                 propertyAddress: `${c.address}, ${c.city}, ${c.state} - ${c.pincode}`,
-                status: c.status.toLowerCase(),
+                latitude: c.serviceDetails?.latitude || null,
+                longitude: c.serviceDetails?.longitude || null,
+                status: c.status.toLowerCase().replace(/\s+/g, '_'),
                 documents: connectionDocs,
                 adminNotes: c.reviewNotes || '',
                 rejectionReason: c.rejectionReason || '',
@@ -283,6 +291,6 @@ exports.getBills = async (req, res) => {
 };
 
 exports.updateBill = async (req, res) => {
-    // Placeholder to allow mock update or marking as paid from admin side
-    res.json({ success: true });
+    // Placeholder - not yet implemented
+    res.status(501).json({ success: false, message: 'Bill updates not yet implemented' });
 };

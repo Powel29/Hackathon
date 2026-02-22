@@ -18,10 +18,21 @@ exports.requestNewConnection = async (req, res) => {
         } = req.body;
 
         // Basic validation
-        if (!serviceType || !applicantName || !mobileNumber || !address || !city || !state || !pincode || !connectionType) {
+        const missingFields = [];
+        if (!serviceType) missingFields.push('serviceType');
+        if (!applicantName) missingFields.push('applicantName');
+        if (!mobileNumber) missingFields.push('mobileNumber');
+        if (!address) missingFields.push('address');
+        if (!city) missingFields.push('city');
+        if (!state) missingFields.push('state');
+        if (!pincode) missingFields.push('pincode');
+        if (!connectionType) missingFields.push('connectionType');
+
+        if (missingFields.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required fields'
+                message: `Missing required fields: ${missingFields.join(', ')}`,
+                missingFields
             });
         }
 

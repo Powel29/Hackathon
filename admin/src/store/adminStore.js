@@ -16,29 +16,16 @@ const INITIAL_DEPT_ALERTS = {
 const INITIAL_KIOSKS = [
     { id: 'K001', location: 'Municipal Office', status: 'online', lastTransaction: '2 mins ago', todayCount: 145, uptime: '99.2%', printer: 'ok', network: 'excellent' }
 ];
-export const ADMIN_CREDENTIALS = {
-    'SUPER-ADMIN-000': {
-        password: 'admin@123',
-        user: { id: 'sa', name: 'Super Admin', email: 'admin@suvidha.gov.in', departmentId: 'SUPER-ADMIN-000', department: 'all', role: 'super_admin', avatar: 'SA' }
-    },
-    'ELEC-ADMIN-001': {
-        password: 'admin@123',
-        user: { id: 'elec', name: 'Electricity Admin', email: 'elec@suvidha.gov.in', departmentId: 'ELEC-ADMIN-001', department: 'electricity', role: 'dept_admin', avatar: 'EA' }
-    },
-    'WATER-ADMIN-002': {
-        password: 'admin@123',
-        user: { id: 'water', name: 'Water Admin', email: 'water@suvidha.gov.in', departmentId: 'WATER-ADMIN-002', department: 'water', role: 'dept_admin', avatar: 'WA' }
-    },
-    'GAS-ADMIN-003': {
-        password: 'admin@123',
-        user: { id: 'gas', name: 'Gas Admin', email: 'gas@suvidha.gov.in', departmentId: 'GAS-ADMIN-003', department: 'gas', role: 'dept_admin', avatar: 'GA' }
-    },
-    'MUNI-ADMIN-004': {
-        password: 'admin@123',
-        user: { id: 'muni', name: 'Municipal Admin', email: 'muni@suvidha.gov.in', departmentId: 'MUNI-ADMIN-004', department: 'municipal', role: 'dept_admin', avatar: 'MA' }
-    }
-};
+
 export const useAdminStore = create()(persist((set, get) => {
+    // Restore JWT from localStorage on page load / hot-reload
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('suvidha_admin_token');
+        if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
+    }
+
     // Listen for storage events across tabs (native Zustand persist doesn't auto-sync other tabs without this)
     if (typeof window !== 'undefined') {
         window.addEventListener('storage', (e) => {
@@ -85,19 +72,36 @@ export const useAdminStore = create()(persist((set, get) => {
                 console.error("Failed to fetch admin data", err);
             }
         },
-        loginAdmin: (deptId, password) => {
-            const cred = ADMIN_CREDENTIALS[deptId];
-            if (cred && cred.password === password) {
-                set({ adminUser: cred.user, isLoggedIn: true, activeDept: cred.user.department });
-                localStorage.setItem('suvidha_dept_alerts', JSON.stringify(get().deptAlerts));
-                get().fetchAllData();
-                return true;
+
+        logoutAdmin: () => {
+            localStorage.removeItem('suvidha_admin_token');
+            delete axios.defaults.headers.common['Authorization'];
+            set({ adminUser: null, isLoggedIn: false });
+        },
+        // Secure login via backend API
+        loginAdmin: async (deptId, password) => {
+            try {
+                const resp = await axios.post('/api/admin/login', { deptId, password });
+                if (resp.data && resp.data.success && resp.data.user) {
+                    const { user, token } = resp.data;
+                    // Attach JWT to all future axios requests
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    localStorage.setItem('suvidha_admin_token', token);
+                    set({ adminUser: user, isLoggedIn: true, activeDept: user.department });
+                    localStorage.setItem('suvidha_dept_alerts', JSON.stringify(get().deptAlerts));
+                    await get().fetchAllData();
+                    return true;
+                } else {
+                    console.error('Admin login: unexpected response', resp.data);
+                }
+            } catch (err) {
+                const msg = err?.response?.data?.message || err.message;
+                console.error('Admin login failed:', msg);
             }
             return false;
         },
-        logoutAdmin: () => set({ adminUser: null, isLoggedIn: false }),
         setActiveDept: (dept) => set({ activeDept: dept }),
-        updateComplaintStatus: async (id, status, adminNotes, citizenMessage, by) => {
+        updateComplaintStatus: async (id, status, adminNotes, citizenMessage, by, assignedTo) => {
             set((state) => {
                 const updated = state.complaints.map(c => {
                     if (c.id !== id)
@@ -105,12 +109,12 @@ export const useAdminStore = create()(persist((set, get) => {
                     const newHistory = {
                         status, timestamp: new Date().toISOString(), note: adminNotes || `Status updated to ${status}`, by
                     };
-                    return { ...c, status, adminNotes, citizenUpdateMessage: citizenMessage, updatedAt: new Date().toISOString(), statusHistory: [...c.statusHistory, newHistory] };
+                    return { ...c, status, adminNotes, citizenUpdateMessage: citizenMessage, assignedTo, updatedAt: new Date().toISOString(), statusHistory: [...c.statusHistory, newHistory] };
                 });
                 localStorage.setItem('suvidha_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
-            try { await axios.put(`/api/admin/complaints/${id}`, { status, adminNotes, citizenMessage, by }); } catch (e) { console.error(e); }
+            try { await axios.put(`/api/admin/complaints/${id}`, { status, adminNotes, citizenMessage, by, assignedTo }); } catch (e) { console.error(e); }
         },
         bulkUpdateComplaintStatus: (ids, status, by) => {
             set((state) => {

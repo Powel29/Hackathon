@@ -41,10 +41,11 @@ export function KioskMonitor() {
 
             {/* Kiosk grid */}
             <div className="grid-2 grid">
+                const DEFAULT_STATUS = { bg: '#F5F5F5', color: '#757575', dot: 'var(--neutral)', label: '● Unknown' };
+
                 {kiosks.map(k => {
-            const sc = STATUS_COLORS[k.status];
-            return (<div key={k.id} className="card" style={{ border: `1px solid ${k.status === 'offline' ? '#FFCDD2' : k.status === 'maintenance' ? '#FFE082' : 'var(--border)'}` }}>
-                            <div className="card-header">
+            const sc = STATUS_COLORS[k.status] || DEFAULT_STATUS;
+            return (<div key={k.id} className="card" style={{ border: `1px solid ${k.status === 'offline' ? '#FFCDD2' : k.status === 'maintenance' ? '#FFE082' : 'var(--border)'}` }}>                            <div className="card-header">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                     <div style={{ width: 44, height: 44, background: sc.bg, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Monitor size={22} color={sc.color}/>
@@ -73,12 +74,11 @@ export function KioskMonitor() {
                                 <div style={{ display: 'flex', gap: 16 }}>
                                     <div>
                                         <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Printer: </span>
-                                        <span style={{ fontSize: 12, fontWeight: 600 }}>{PRINTER_LABELS[k.printer]}</span>
+                                        <span style={{ fontSize: 12, fontWeight: 600 }}>{PRINTER_LABELS[k.printer] || 'Unknown'}</span>
                                     </div>
                                     <div>
                                         <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Network: </span>
-                                        <span style={{ fontSize: 12, fontWeight: 600 }}>{NETWORK_LABELS[k.network]}</span>
-                                    </div>
+                                        <span style={{ fontSize: 12, fontWeight: 600 }}>{NETWORK_LABELS[k.network] || 'Unknown'}</span>                                    </div>
                                 </div>
                                 {k.status === 'offline' && (<div className="alert alert-danger" style={{ marginTop: 10 }}>
                                         <span>🔴</span><span>Kiosk is offline. Check network connectivity or dispatch technician.</span>

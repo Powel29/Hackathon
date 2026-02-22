@@ -542,3 +542,20 @@ model AccountRequest {
   @@index([status])
   @@map("account_requests")
 }
+
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  departmentId String   @unique @db.VarChar(30)
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @db.VarChar(100)
+  department   String   @db.VarChar(30)
+  role         String   @db.VarChar(30)
+  avatar       String?  @db.VarChar(10)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([departmentId])
+  @@map("admins")
+}

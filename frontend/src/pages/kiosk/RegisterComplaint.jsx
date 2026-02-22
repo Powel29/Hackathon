@@ -261,22 +261,31 @@ export function RegisterComplaint() {
         // Upload files if any
         if (files.length > 0) {
           const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-          for (const fileObj of files) {
-            try {
-              await documentService.uploadDocument(fileObj.file, {
-                citizenId: response.complaint.citizenId || user.aadhaarNumber || '111122223333',
-                department: selectedService,
-                relatedEntity: 'COMPLAINT',
-                relatedId: internalId, // Must be UUID
-                documentType: 'SUPPORTING_DOCUMENT'
-              });
-            } catch (fileErr) {
-              console.error(`Failed to upload ${fileObj.file.name}:`, fileErr);
+          const citizenId = response.complaint.citizenId || user.aadhaarNumber;
+          if (!citizenId) {
+            console.error('Cannot upload documents: citizenId unavailable');
+          } else {
+            const uploadErrors = [];
+            for (const fileObj of files) {
+              try {
+                await documentService.uploadDocument(fileObj.file, {
+                  citizenId,
+                  department: selectedService,
+                  relatedEntity: 'COMPLAINT',
+                  relatedId: internalId, // Must be UUID
+                  documentType: 'SUPPORTING_DOCUMENT'
+                });
+              } catch (fileErr) {
+                console.error(`Failed to upload ${fileObj.file.name}:`, fileErr);
+                uploadErrors.push(fileObj.file.name);
+              }
+            }
+            if (uploadErrors.length > 0) {
+              // Could set state to show partial success message
+              console.warn(`Failed to upload: ${uploadErrors.join(', ')}`);
             }
           }
         }
-
         setShowSuccess(true);
       }
     } catch (error) {
