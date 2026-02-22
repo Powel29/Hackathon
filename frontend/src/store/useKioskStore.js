@@ -21,12 +21,9 @@ export const useKioskStore = create((set) => ({
     setSelectedService: (service) => set({ selectedService: service }),
 
     setUser: (user) => {
-        set({ user, isAuthenticated: true });
-        // Fetch user specific data
-        const bills = kioskDb.getBills(user.consumerId);
-        // complaints...
-        const complaints = kioskDb.getComplaints(user.consumerId);
-        set({ bills, complaints });
+        const bills = kioskDb.getBills(user?.consumerId);
+        const complaints = kioskDb.getComplaints(user?.consumerId);
+        set({ user, isAuthenticated: true, bills, complaints });
     },
 
     setIsAuthenticated: (isAuth) => set({ isAuthenticated: isAuth }),

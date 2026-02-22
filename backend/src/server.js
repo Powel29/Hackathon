@@ -56,6 +56,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/service-accounts', serviceAccountRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/departments', departmentRoutes);

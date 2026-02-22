@@ -39,11 +39,11 @@ export function MyDocuments() {
     };
 
     const openDocument = (url) => {
-        if (url) {
-            window.open(url, '_blank');
-        } else {
+        if (!url) {
             toast.error('Document link not available');
+            return;
         }
+        window.open(url, '_blank');
     };
 
     const getEntityLabel = (entity) => {

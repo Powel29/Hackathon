@@ -4,16 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
-import { ArrowLeft, Shield, Zap, Flame, Droplets, Building2 } from 'lucide-react';
+import { ArrowLeft, Shield, Zap, Flame, Droplets, Building2, Bell } from 'lucide-react';
 import { departmentService } from '../../services/api';
+import { toast } from 'sonner';
 
 export function DepartmentVerification() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedService, setUser, user } = useKioskStore();
+  const selectedService = useKioskStore((state) => state.selectedService);
+  const setUser = useKioskStore((state) => state.setUser);
+  const user = useKioskStore((state) => state.user);
   const [departmentId, setDepartmentId] = useState('');
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
 
   useEffect(() => {
     if (!selectedService) {
@@ -90,30 +96,28 @@ export function DepartmentVerification() {
 
   const handleVerify = async () => {
     setError('');
+    setNotFound(false);
+    setRequestSubmitted(false);
     setIsVerifying(true);
 
     try {
-      // Validation
       if (!departmentId.trim()) {
         setError('Please enter your department ID number');
         setIsVerifying(false);
         return;
       }
-
       if (departmentId.trim().length < 8) {
         setError('Department ID must be at least 8 characters');
         setIsVerifying(false);
         return;
       }
 
-      // Call backend API to verify account
       const response = await departmentService.verifyAccount(
         selectedService,
         departmentId.trim()
       );
 
       if (response.success) {
-        // Update user with department-specific consumer ID and account info
         setUser({
           ...(user || {}),
           consumerId: response.account.consumerNumber,
@@ -121,20 +125,48 @@ export function DepartmentVerification() {
           ownerName: response.account.ownerName,
           connectionType: response.account.connectionType
         });
-
-        // Navigate to dashboard
         navigate('/kiosk/dashboard');
-      }    } catch (err) {
+      }
+    } catch (err) {
       console.error('Verification error:', err);
-      setError(err.message || 'Failed to verify account. Please try again.');
+      const msg = err.message || 'Failed to verify account. Please try again.';
+      // If account not found, show the request-approval button
+      if (
+        msg.toLowerCase().includes('not found') ||
+        msg.toLowerCase().includes('no water') ||
+        msg.toLowerCase().includes('no electricity') ||
+        msg.toLowerCase().includes('no gas') ||
+        msg.toLowerCase().includes('no municipal') ||
+        err.code === 'NOT_FOUND'
+      ) {
+        setNotFound(true);
+        setError(msg);
+      } else {
+        setError(msg);
+      }
     } finally {
       setIsVerifying(false);
     }
   };
 
+  const handleRequestApproval = async () => {
+    setIsRequesting(true);
+    try {
+      await departmentService.requestApproval(selectedService, departmentId.trim());
+      setRequestSubmitted(true);
+      toast.success('Request submitted! Admin will review and create your account shortly.');
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit request. Please try again.');
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
   const handleInputChange = (value) => {
     setDepartmentId(value);
-    setError(''); // Clear error when user types
+    setError('');
+    setNotFound(false);
+    setRequestSubmitted(false);
   };
 
   return (
@@ -185,13 +217,10 @@ export function DepartmentVerification() {
                   onChange={(e) => handleInputChange(e.target.value)}
                   placeholder={deptInfo.idPlaceholder}
                   maxLength={deptInfo.maxLength}
-                  className={`w-full px-4 py-3 border-2 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent transition-all ${error ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`w-full px-4 py-3 border-2 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent transition-all ${error ? 'border-red-500' : 'border-gray-300'}`}
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleVerify();
-                    }
+                    if (e.key === 'Enter') handleVerify();
                   }}
                 />
                 {error && (
@@ -200,6 +229,45 @@ export function DepartmentVerification() {
                   </p>
                 )}
               </div>
+
+              {/* "Account not found" — Request Admin Approval section */}
+              {notFound && !requestSubmitted && (
+                <div className="bg-amber-50 border border-amber-300 rounded-xl p-5">
+                  <div className="flex items-start gap-3 mb-4">
+                    <Bell className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-amber-800">No account found for this consumer number</p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        If you believe your consumer number is correct, you can request the admin to verify
+                        and create your account. Enter your consumer number above and click the button below.
+                      </p>
+                    </div>
+                  </div>
+                  <TouchButton
+                    variant="outline"
+                    size="medium"
+                    onClick={handleRequestApproval}
+                    disabled={isRequesting}
+                    className="w-full border-amber-500 text-amber-700 hover:bg-amber-100"
+                  >
+                    {isRequesting ? 'Submitting Request...' : '📋 Request Admin Approval'}
+                  </TouchButton>
+                </div>
+              )}
+
+              {/* Request submitted success state */}
+              {requestSubmitted && (
+                <div className="bg-green-50 border border-green-300 rounded-xl p-5 flex items-start gap-3">
+                  <span className="text-2xl">✅</span>
+                  <div>
+                    <p className="font-semibold text-green-800">Request Submitted Successfully!</p>
+                    <p className="text-sm text-green-700 mt-1">
+                      Your request for <strong>{departmentId}</strong> has been sent to the admin.
+                      Once approved, you can log in and access your department account.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Info Box */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -225,7 +293,7 @@ export function DepartmentVerification() {
                   size="medium"
                   onClick={handleVerify}
                   className="flex-1"
-                  disabled={isVerifying}
+                  disabled={isVerifying || requestSubmitted}
                 >
                   {isVerifying ? 'Verifying...' : 'Verify & Continue'}
                 </TouchButton>

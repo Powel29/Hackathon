@@ -1,6 +1,5 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 const generateSignedUrl = require("../services/s3Download.service");
 
 const router = express.Router();
@@ -8,10 +7,28 @@ const router = express.Router();
 // GET /api/documents/related/:relatedId
 router.get("/related/:relatedId", async (req, res, next) => {
     try {
-        const { relatedId } = req.params;
+        let searchId = req.params.relatedId;
+
+        // Check if the provided ID is a public Application ID format (e.g. APP-2026-...)
+        if (searchId.startsWith('APP-')) {
+            const connection = await prisma.connectionApplication.findUnique({
+                where: { applicationId: searchId },
+                select: { id: true }
+            });
+            if (connection) searchId = connection.id;
+        }
+        // Check if it's a public Complaint ID format (e.g. CMP-...)
+        else if (searchId.startsWith('CMP-')) {
+            const complaint = await prisma.complaint.findUnique({
+                where: { complaintNumber: searchId }, // Assuming complaintNumber is unique
+                select: { complaintId: true }
+            });
+            // Also try by complaintId if complaintNumber fails, or handle differently if needed
+            if (complaint) searchId = complaint.complaintId;
+        }
 
         const documents = await prisma.document.findMany({
-            where: { relatedId }
+            where: { relatedId: searchId }
         });
 
         if (!documents || documents.length === 0) {
@@ -24,7 +41,7 @@ router.get("/related/:relatedId", async (req, res, next) => {
                 documentId: doc.documentId,
                 documentType: doc.documentType,
                 fileName: doc.fileName,
-                url: await generateSignedUrl(doc.filePath)
+                url: await generateSignedUrl(doc.filePath, doc.fileName)
             }))
         );
 
@@ -70,7 +87,7 @@ router.get("/citizen/:citizenId", async (req, res, next) => {
                 relatedId: doc.relatedId,
                 fileName: doc.fileName,
                 createdAt: doc.uploadedAt,
-                url: await generateSignedUrl(doc.filePath)
+                url: await generateSignedUrl(doc.filePath, doc.fileName)
             }))
         );
 
@@ -106,7 +123,7 @@ router.get("/:documentId", async (req, res, next) => {
             });
         }
 
-        const signedUrl = await generateSignedUrl(document.filePath);
+        const signedUrl = await generateSignedUrl(document.filePath, document.fileName);
 
         res.json({
             success: true,

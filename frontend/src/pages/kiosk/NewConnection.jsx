@@ -421,27 +421,27 @@ export function NewConnection() {
 
         // Auto-generate Application receipt and upload
         setTimeout(async () => {
-          if (!printContainerRef.current) return;
           try {
-            const originalDisplay = printContainerRef.current.style.display;
-            printContainerRef.current.style.display = 'block';
-
-            const canvas = await html2canvas(printContainerRef.current, {
-              scale: 2,
-              useCORS: true,
-              logging: false
-            });
-
-            printContainerRef.current.style.display = originalDisplay;
-
-            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = await import('jspdf');
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.setFontSize(22);
+            pdf.text('Application Receipt', 20, 20);
+
+            pdf.setFontSize(12);
+            pdf.text(`Application ID: ${newAppId}`, 20, 35);
+            pdf.text(`Service Type: ${selectedService.toUpperCase()}`, 20, 45);
+            pdf.text(`Applicant Name: ${formData.fullName}`, 20, 55);
+            pdf.text(`Mobile Number: ${formData.mobileNumber}`, 20, 65);
+            pdf.text(`Connection Type: ${formData.connectionType}`, 20, 75);
+            pdf.text(`Status: PENDING`, 20, 85);
+            pdf.text(`Date: ${new Date().toLocaleString()}`, 20, 95);
+
+            pdf.setFontSize(10);
+            pdf.setTextColor(100);
+            pdf.text('This is a computer generated receipt.', 20, 115);
+
             const pdfBlob = pdf.output('blob');
-
             const file = new File([pdfBlob], `Application_${newAppId}.pdf`, { type: 'application/pdf' });
 
             const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -454,7 +454,7 @@ export function NewConnection() {
             });
             console.log("Successfully uploaded Application PDF!");
           } catch (pdfErr) {
-            console.error("Failed to snapshot application PDF:", pdfErr);
+            console.error("Failed to generate application PDF:", pdfErr);
           }
         }, 1500);
 

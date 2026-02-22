@@ -18,115 +18,93 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-import { kioskDb } from './kioskDb';
+// Handle 401 - clear session and redirect to login
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            const currentPath = window.location.pathname;
+            // Only redirect if not already on login page to avoid redirect loops
+            if (!currentPath.includes('/login') && !currentPath.includes('/auth')) {
+                console.warn('Session expired or invalid. Redirecting to login...');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/kiosk/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
 
 // Auth Service
 export const authService = {
     login: async (credentials) => {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const user = kioskDb.login(credentials.consumerId, credentials.mobile);
-
-        if (user) {
-            return {
-                success: true,
-                token: 'mock-jwt-token-' + user.id,
-                user: user
-            };
-        } else {
-            throw new Error('Invalid credentials');
-        }
+        // Fallback for any UI components still trying a direct pure login
+        console.warn("Direct login used instead of OTP flow. Forwarding to Auth Initiate.");
+        return authService.sendOTP(credentials.consumerId || credentials.aadharNumber, credentials.mobile);
     },
     sendOTP: async (aadharNumber, mobileNumber) => {
         try {
-            // Use kioskDb mock for consistency with login in development
-            // Generate demo OTP and store it in localStorage so verifyOTP can validate it
-            const key = aadharNumber || mobileNumber;
-            const demoOTP = String(Math.floor(100000 + Math.random() * 900000));
-
-            const otpStore = JSON.parse(localStorage.getItem('kiosk_demo_otps') || '{}');
-            otpStore[key] = {
-                otp: demoOTP,
-                createdAt: Date.now()
-            };
-            localStorage.setItem('kiosk_demo_otps', JSON.stringify(otpStore));
-
-            // Try to find user for masked mobile
-            const data = kioskDb.getData();
-            const user = data.users.find(u => u.aadhaarNumber === aadharNumber || u.mobile === mobileNumber);
-            const maskedMobile = user && user.mobile ? '******' + user.mobile.slice(-4) : undefined;
-
-            return {
-                success: true,
-                maskedMobile,
-                // Expose demo OTP only for development convenience
-                _demoOTP: demoOTP
-            };
+            console.log('🔍 Initiating Auth (OTP Send):', { aadharNumber });
+            const response = await api.post('/auth/initiate', {
+                aadharNumber,
+                mobileNumber
+            });
+            console.log('✅ Auth Initiate Response:', response.data);
+            return response.data;
         } catch (error) {
-            console.error("❌ Mock sendOTP error:", error);
-            const err = new Error('Failed to send OTP');
-            throw err;
+            console.error('❌ API sendOTP error:', error);
+            if (error.response && error.response.data && error.response.data.error) {
+                const err = new Error(error.response.data.error.message);
+                err.code = error.response.data.error.code;
+                throw err;
+            }
+            throw new Error('Failed to send OTP. Please try again later.');
         }
     },
     verifyOTP: async (aadharNumber, otp, userData = null) => {
         try {
-            // Validate against stored demo OTPs
-            const key = aadharNumber || (userData && userData.mobileNumber) || '';
-            const otpStore = JSON.parse(localStorage.getItem('kiosk_demo_otps') || '{}');
-            const record = otpStore[key];
+            console.log('🔍 Verifying OTP for:', aadharNumber);
 
-            if (!record || record.otp !== String(otp)) {
-                const err = new Error('Invalid OTP');
-                err.code = 'INVALID_OTP';
-                throw err;
-            }
+            const payload = { aadharNumber, otp };
 
-            // OTP matched - find or create user
-            let data = kioskDb.getData();
-            let user = data.users.find(u => u.aadhaarNumber === aadharNumber || u.mobile === (userData?.mobileNumber || ''));
-
-            if (!user && userData) {
-                // Create a new user via kioskDb.registerUser
-                const newUserPayload = {
-                    aadhaarNumber: userData.aadhaarNumber || aadharNumber,
-                    name: userData.fullName || userData.name || 'New User',
-                    mobile: userData.mobileNumber || '',
-                    email: userData.email || '',
-                    consumerId: userData.consumerId || '',
-                    serviceType: userData.serviceType || 'electricity'
-                };
-                try {
-                    user = kioskDb.registerUser(newUserPayload);
-                } catch (regErr) {
-                    console.error('User registration in mock DB failed', regErr);
+            // If new user registration, include userData details
+            if (userData) {
+                payload.userData = userData;
+                if (userData.mobileNumber) {
+                    payload.mobileNumber = userData.mobileNumber;
                 }
             }
 
-            if (!user) {
-                const err = new Error('User not found');
-                err.code = 'USER_NOT_FOUND';
+            const response = await api.post('/auth/verify-otp', payload);
+            console.log('✅ OTP Verify Response:', response.data);
+
+            if (response.data.success && response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                if (response.data.user) {
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                }
+            }
+
+            return response.data;
+        } catch (error) {
+            console.error('❌ API verifyOTP error:', error);
+            if (error.response && error.response.data && error.response.data.error) {
+                const err = new Error(error.response.data.error.message);
+                err.code = error.response.data.error.code;
                 throw err;
             }
-            // generate a mock token and persist
-            const token = 'mock-jwt-token-' + (user ? user.id : 'anonymous');
-            localStorage.setItem('token', token);
-            if (user) localStorage.setItem('user', JSON.stringify(user));
-
-            // Clean up used OTP
-            delete otpStore[key];
-            localStorage.setItem('kiosk_demo_otps', JSON.stringify(otpStore));
-
-            return {
-                success: true,
-                token,
-                user
-            };
+            throw new Error('OTP verification failed');
+        }
+    },
+    logout: async () => {
+        try {
+            await api.post('/auth/logout');
         } catch (error) {
-            console.error("❌ Mock verifyOTP error:", error);
-            const err = new Error(error.message || 'OTP verification failed');
-            err.code = error.code || 'OTP_VERIFY_ERROR';
-            throw err;
+            console.error('Logout error (ignoring):', error);
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
         }
     }
 };
@@ -368,6 +346,18 @@ export const departmentService = {
             console.error('❌ Error response:', error.response?.data);
             const err = new Error(error.response?.data?.error?.message || 'Failed to get account details');
             err.code = error.response?.data?.error?.code;
+            throw err;
+        }
+    },
+    requestApproval: async (serviceType, consumerNumber) => {
+        try {
+            const response = await api.post('/departments/request-approval', {
+                serviceType: serviceType.toUpperCase(),
+                consumerNumber
+            });
+            return response.data;
+        } catch (error) {
+            const err = new Error(error.response?.data?.message || 'Failed to submit approval request');
             throw err;
         }
     }

@@ -370,12 +370,14 @@ export function TrackNewConnection() {
                       const apiModule = await import('../../services/api');
                       // Find docs related to this specific application ID
                       const res = await apiModule.documentService.getRelatedDocuments(selectedApp.applicationId || selectedApp.id);
+                      console.log("Documents fetched for download:", res.documents);
                       if (res.success && res.documents?.length > 0) {
                         // Look for the specific 'APPLICATION_RECEIPT' uploaded during checkout
                         const receipt = res.documents.find(d => d.documentType === 'APPLICATION_RECEIPT');
                         if (receipt && receipt.url) {
                           window.open(receipt.url, '_blank');
                         } else {
+                          console.log("Found documents but no APPLICATION_RECEIPT", res.documents);
                           alert("Application receipt is still processing. Please try again later.");
                         }
                       } else {
