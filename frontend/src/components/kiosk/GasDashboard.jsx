@@ -17,32 +17,43 @@ export function GasDashboard() {
   const { user, selectedService } = useKioskStore();
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
-    const fetchAccountData = async () => {
+    const fetchData = async () => {
       if (!user || !user.consumerId) {
         setLoading(false);
         return;
       }
 
       try {
-        const response = await departmentService.getAccountDetails(
-          selectedService,
-          user.consumerId
-        );
+        setLoading(true);
+        // Parallel fetch for account details and alerts
+        const [accountResponse, alertsResponse] = await Promise.all([
+          departmentService.getAccountDetails('GAS', user.consumerId),
+          departmentService.getAlerts('GAS')
+        ]);
 
-        if (response.success) {
-          setAccountData(response.account);
+        if (accountResponse.success) {
+          setAccountData(accountResponse.account);
+        }
+
+        if (alertsResponse.success) {
+          setAlerts(alertsResponse.alerts);
         }
       } catch (error) {
-        console.error('Failed to fetch gas account data:', error);
+        console.error('Failed to fetch gas data:', error);
+        if (error.code === 'ACCESS_DENIED' || error.message?.toLowerCase().includes('not belong')) {
+          setAccessDenied(true);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAccountData();
-  }, [user, selectedService]);
+    fetchData();
+  }, [user, user?.consumerId]);
 
   // Use real data from API or fallback to defaults
   const currentUsage = accountData?.currentMonthUsage || 0;
@@ -175,20 +186,40 @@ export function GasDashboard() {
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Emergency Contact</p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Gas Leak Helpline: <span className="font-semibold text-red-600">1906</span>
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Available 24/7 for emergencies
-                  </p>
+            {alerts.length > 0 ? (
+              alerts.map((alert) => (
+                <div key={alert.alertId} className={`border rounded-lg p-3 ${alert.severity === 'HIGH' ? 'bg-red-50 border-red-200' :
+                  alert.severity === 'MEDIUM' ? 'bg-yellow-50 border-yellow-200' :
+                    'bg-blue-50 border-blue-200'
+                  }`}>
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className={`w-4 h-4 mt-0.5 ${alert.severity === 'HIGH' ? 'text-red-600' :
+                      alert.severity === 'MEDIUM' ? 'text-yellow-600' :
+                        'text-blue-600'
+                      }`} />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">{alert.title}</p>
+                      <p className="text-xs text-gray-600 mt-1">{alert.message}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Emergency Contact</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Gas Leak Helpline: <span className="font-semibold text-red-600">1906</span>
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Available 24/7 for emergencies. No active service alerts.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -259,6 +290,31 @@ export function GasDashboard() {
           {safetyTips[currentTipIndex]}
         </p>
       </div>
+
+      {/* Access Denied Modal */}
+      {accessDenied && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="bg-red-600 p-6 flex justify-center">
+              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                <Shield className="w-12 h-12 text-white" />
+              </div>
+            </div>
+            <div className="p-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+              <p className="text-gray-600 mb-8">
+                This consumer number does not belong to your Aadhaar record. You are not authorized to view these details.
+              </p>
+              <button
+                onClick={() => window.location.href = '/kiosk/service-selection'}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
+              >
+                Go Back to Services
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

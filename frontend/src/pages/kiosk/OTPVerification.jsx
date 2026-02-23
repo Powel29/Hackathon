@@ -27,7 +27,7 @@ export function OTPVerification() {
 
   useEffect(() => {
     if (!aadhaarNumber) {
-      navigate('/kiosk/login');
+      navigate('/kiosk/login-register');
     }
   }, [aadhaarNumber, navigate]);
   useEffect(() => {
@@ -128,7 +128,7 @@ export function OTPVerification() {
         handleVerify();
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        navigate('/kiosk/login');
+        navigate('/kiosk/login-register');
       }
     };
 
@@ -145,7 +145,7 @@ export function OTPVerification() {
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
         <div className="w-full max-w-md">
           <button
-            onClick={() => navigate('/kiosk/login')}
+            onClick={() => navigate('/kiosk/login-register')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
           >
             <ArrowLeft className="w-4 h-4" />

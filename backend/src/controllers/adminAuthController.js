@@ -41,8 +41,8 @@ exports.login = async (req, res) => {
 
         return res.json({ success: true, token, user });
     } catch (err) {
-        console.error('Admin login error:', err);
-        return res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Admin login error details:', err);
+        return res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
 };
 

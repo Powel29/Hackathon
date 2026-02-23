@@ -209,9 +209,20 @@ exports.approveRequest = async (req, res) => {
             }
         });
 
+        // CRITICAL FIX: Link the newly created department account to the citizen's service_accounts
+        // so it appears in their main dashboard and they are authorized to view details.
+        await prisma.serviceAccount.create({
+            data: {
+                citizenId,
+                serviceType: serviceType.toUpperCase(),
+                accountNumber: consumerNumber,
+                status: 'ACTIVE'
+            }
+        });
+
         return res.json({
             success: true,
-            message: `${serviceType} account created successfully`,
+            message: `${serviceType} account created and linked successfully`,
             account: createdAccount
         });
     } catch (error) {
