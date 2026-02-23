@@ -4,10 +4,24 @@ const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { verifyToken, logout } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validateRequest');
+const rateLimit = require("express-rate-limit");
+
+const otpLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 3, // Limit each IP to 3 OTP requests per windowMs
+    message: {
+        success: false,
+        error: {
+            code: 'RATE_LIMIT',
+            message: 'Too many OTP requests from this IP, please try again after 10 minutes'
+        }
+    }
+});
 
 // Initiate Auth (Send OTP)
 router.post(
     '/initiate',
+    otpLimiter,
     [
         body('aadharNumber')
             .trim()
@@ -49,6 +63,7 @@ router.post(
 // Resend OTP
 router.post(
     '/resend-otp',
+    otpLimiter,
     [
         body('aadharNumber')
             .trim()
