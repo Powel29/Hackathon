@@ -328,7 +328,7 @@ exports.verifyOTP = async (req, res) => {
                 const attemptsLeft = latestOTP.maxAttempts - latestOTP.attempts - 1;
 
                 if (attemptsLeft <= 0) {
-                    await logAudit(citizenId, 'OTP_MAX_ATTEMPTS', req);
+                    await logAudit(citizen?.aadharNumber, 'OTP_MAX_ATTEMPTS', req);
 
                     return res.status(400).json({
                         success: false,
