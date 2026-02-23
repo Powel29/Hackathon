@@ -142,3 +142,46 @@ exports.getBillByNumber = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.payBill = async (req, res) => {
+    try {
+        const { billId, serviceType } = req.body;
+
+        if (!billId || !serviceType) {
+            return res.status(400).json({ success: false, message: 'billId and serviceType are required' });
+        }
+
+        let updated;
+        const type = serviceType.toUpperCase();
+
+        if (type === 'ELECTRICITY') {
+            updated = await prisma.electricityBill.update({ where: { billId }, data: { status: 'paid' } });
+        } else if (type === 'WATER') {
+            updated = await prisma.waterBill.update({ where: { billId }, data: { status: 'paid' } });
+        } else if (type === 'GAS') {
+            updated = await prisma.gasBill.update({ where: { billId }, data: { status: 'paid' } });
+        } else if (type === 'MUNICIPAL') {
+            updated = await prisma.municipalBill.update({ where: { billId }, data: { status: 'paid' } });
+        } else {
+            return res.status(400).json({ success: false, message: 'Invalid service type' });
+        }
+
+        // Create a payment record
+        await prisma.payment.create({
+            data: {
+                billId: null, // Unified bill table not used here currently
+                amount: updated.totalAmount || updated.propertyTax,
+                status: 'COMPLETED',
+                billType: type,
+                [type.toLowerCase() + 'BillId']: billId,
+                gateway: 'KIOSK_CASH',
+                transactionRef: `KIOSK-${Date.now()}`
+            }
+        });
+
+        res.json({ success: true, data: updated });
+    } catch (error) {
+        console.error('payBill error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

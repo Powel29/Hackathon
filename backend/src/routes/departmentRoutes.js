@@ -25,28 +25,25 @@ router.post(
             .isLength({ min: 8 })
             .withMessage('Consumer number must be at least 8 characters')
     ],
+    verifyToken,
     validate,
     departmentController.verifyDepartmentAccount
 );
 
 /**
- * GET /api/departments/:serviceType/:consumerNumber
- * Protected endpoint to get full account details
+ * GET /api/departments/:serviceType/alerts
+ * Get active alerts/notices for a specific department
  */
 router.get(
-    '/:serviceType/:consumerNumber',
+    '/:serviceType/alerts',
     verifyToken,
     [
         param('serviceType')
-            .isIn(['ELECTRICITY', 'GAS', 'WATER', 'MUNICIPAL', 'electricity', 'gas', 'water', 'municipal'])
-            .withMessage('Invalid service type'),
-        param('consumerNumber')
-            .trim()
-            .notEmpty()
-            .withMessage('Consumer number is required')
+            .isIn(['ELECTRICITY', 'GAS', 'WATER', 'MUNICIPAL', 'ALL', 'electricity', 'gas', 'water', 'municipal', 'all'])
+            .withMessage('Invalid service type')
     ],
     validate,
-    departmentController.getDepartmentAccountDetails
+    departmentController.getDepartmentAlerts
 );
 
 /**
@@ -69,6 +66,26 @@ router.post(
     ],
     validate,
     accountRequestController.createRequest
+);
+
+/**
+ * GET /api/departments/:serviceType/:consumerNumber
+ * Protected endpoint to get full account details
+ */
+router.get(
+    '/:serviceType/:consumerNumber',
+    verifyToken,
+    [
+        param('serviceType')
+            .isIn(['ELECTRICITY', 'GAS', 'WATER', 'MUNICIPAL', 'electricity', 'gas', 'water', 'municipal'])
+            .withMessage('Invalid service type'),
+        param('consumerNumber')
+            .trim()
+            .notEmpty()
+            .withMessage('Consumer number is required')
+    ],
+    validate,
+    departmentController.getDepartmentAccountDetails
 );
 
 module.exports = router;

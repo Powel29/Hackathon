@@ -6,7 +6,6 @@ import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { SuccessScreen } from '../../components/kiosk/SuccessScreen';
 import { ArrowLeft } from 'lucide-react';
-import { kioskDb } from '../../services/kioskDb';
 import * as authService from '../../services/api/auth.service';
 import { toast } from 'sonner';
 

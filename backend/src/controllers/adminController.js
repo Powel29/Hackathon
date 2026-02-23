@@ -290,7 +290,211 @@ exports.getBills = async (req, res) => {
     }
 };
 
+exports.createBill = async (req, res) => {
+    try {
+        const { citizenId, serviceType, amount, dueDate, billingPeriod, unitsConsumed, readings, details } = req.body;
+
+        if (!citizenId || !serviceType || !amount || !dueDate) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+
+        const billId = require('crypto').randomUUID();
+        const billNumber = `${serviceType.substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+
+        let newBill;
+
+        switch (serviceType.toUpperCase()) {
+            case 'ELECTRICITY': {
+                const account = await prisma.electricityAccount.findUnique({ where: { citizenId } });
+                if (!account) return res.status(404).json({ success: false, message: 'Electricity account not found' });
+                newBill = await prisma.electricityBill.create({
+                    data: {
+                        billId,
+                        accountId: account.accountId,
+                        billNumber,
+                        billingPeriod: billingPeriod || 'Current',
+                        billingStartDate: new Date(),
+                        billingEndDate: new Date(),
+                        unitsConsumed: parseFloat(unitsConsumed || 0),
+                        previousReading: parseFloat(readings?.previous || 0),
+                        currentReading: parseFloat(readings?.current || 0),
+                        energyCharges: parseFloat(amount) * 0.8,
+                        fixedCharges: parseFloat(amount) * 0.1,
+                        taxAmount: parseFloat(amount) * 0.1,
+                        totalAmount: parseFloat(amount),
+                        dueDate: new Date(dueDate),
+                        status: 'pending'
+                    }
+                });
+                break;
+            }
+            case 'WATER': {
+                const account = await prisma.waterAccount.findUnique({ where: { citizenId } });
+                if (!account) return res.status(404).json({ success: false, message: 'Water account not found' });
+                newBill = await prisma.waterBill.create({
+                    data: {
+                        billId,
+                        accountId: account.accountId,
+                        billNumber,
+                        billingPeriod: billingPeriod || 'Current',
+                        billingStartDate: new Date(),
+                        billingEndDate: new Date(),
+                        unitsConsumed: parseFloat(unitsConsumed || 0),
+                        previousReading: 0,
+                        currentReading: 0,
+                        waterCharges: parseFloat(amount) * 0.9,
+                        fixedCharges: parseFloat(amount) * 0.1,
+                        taxAmount: 0,
+                        totalAmount: parseFloat(amount),
+                        dueDate: new Date(dueDate),
+                        status: 'pending'
+                    }
+                });
+                break;
+            }
+            case 'GAS': {
+                const account = await prisma.gasAccount.findUnique({ where: { citizenId } });
+                if (!account) return res.status(404).json({ success: false, message: 'Gas account not found' });
+                newBill = await prisma.gasBill.create({
+                    data: {
+                        billId,
+                        accountId: account.accountId,
+                        billNumber,
+                        billingPeriod: billingPeriod || 'Current',
+                        billingStartDate: new Date(),
+                        billingEndDate: new Date(),
+                        unitsConsumed: parseFloat(unitsConsumed || 0),
+                        previousReading: 0,
+                        currentReading: 0,
+                        gasCharges: parseFloat(amount) * 0.9,
+                        fixedCharges: parseFloat(amount) * 0.1,
+                        taxAmount: 0,
+                        totalAmount: parseFloat(amount),
+                        dueDate: new Date(dueDate),
+                        status: 'pending'
+                    }
+                });
+                break;
+            }
+            case 'MUNICIPAL': {
+                const account = await prisma.municipalAccount.findUnique({ where: { citizenId } });
+                if (!account) return res.status(404).json({ success: false, message: 'Municipal account not found' });
+                newBill = await prisma.municipalBill.create({
+                    data: {
+                        billId,
+                        accountId: account.accountId,
+                        billNumber,
+                        billingPeriod: billingPeriod || 'Current',
+                        financialYear: details?.financialYear || '2025-26',
+                        propertyTax: parseFloat(amount),
+                        totalAmount: parseFloat(amount),
+                        dueDate: new Date(dueDate),
+                        status: 'pending'
+                    }
+                });
+                break;
+            }
+            default:
+                return res.status(400).json({ success: false, message: 'Invalid service type' });
+        }
+
+        res.status(201).json({ success: true, data: newBill });
+    } catch (error) {
+        console.error('createBill error:', error);
+        res.status(500).json({ success: false, message: 'Failed to create bill' });
+    }
+};
+
 exports.updateBill = async (req, res) => {
-    // Placeholder - not yet implemented
-    res.status(501).json({ success: false, message: 'Bill updates not yet implemented' });
+    const { id } = req.params;
+    const { status, serviceType } = req.body;
+
+    try {
+        if (!serviceType) return res.status(400).json({ success: false, message: 'Service type required' });
+
+        let updated;
+        const type = serviceType.toUpperCase();
+
+        if (type === 'ELECTRICITY') {
+            updated = await prisma.electricityBill.update({ where: { billId: id }, data: { status } });
+        } else if (type === 'WATER') {
+            updated = await prisma.waterBill.update({ where: { billId: id }, data: { status } });
+        } else if (type === 'GAS') {
+            updated = await prisma.gasBill.update({ where: { billId: id }, data: { status } });
+        } else if (type === 'MUNICIPAL') {
+            updated = await prisma.municipalBill.update({ where: { billId: id }, data: { status } });
+        }
+
+        res.json({ success: true, data: updated });
+    } catch (error) {
+        console.error('updateBill error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update bill' });
+    }
+};
+
+// Alert Management
+exports.getAlerts = async (req, res) => {
+    try {
+        const alerts = await prisma.alert.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json({ success: true, data: alerts });
+    } catch (error) {
+        console.error('getAlerts error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch alerts' });
+    }
+};
+
+exports.createAlert = async (req, res) => {
+    try {
+        const { title, content, type, serviceType, alertType, active } = req.body;
+        const alert = await prisma.alert.create({
+            data: {
+                title,
+                message: content,
+                severity: type,
+                serviceType: serviceType.toUpperCase(),
+                alertType: alertType || 'GENERAL',
+                isActive: active !== undefined ? active : true,
+                startsAt: new Date()
+            }
+        });
+        res.status(201).json({ success: true, data: alert });
+    } catch (error) {
+        console.error('createAlert error:', error);
+        res.status(500).json({ success: false, message: 'Failed to create alert' });
+    }
+};
+
+exports.updateAlert = async (req, res) => {
+    const { id } = req.params;
+    const { title, content, type, active } = req.body;
+    try {
+        const alert = await prisma.alert.update({
+            where: { alertId: id },
+            data: {
+                ...(title && { title }),
+                ...(content && { message: content }),
+                ...(type && { severity: type }),
+                ...(active !== undefined && { isActive: active })
+            }
+        });
+        res.json({ success: true, data: alert });
+    } catch (error) {
+        console.error('updateAlert error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update alert' });
+    }
+};
+
+exports.deleteAlert = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.alert.delete({
+            where: { alertId: id }
+        });
+        res.json({ success: true, message: 'Alert deleted successfully' });
+    } catch (error) {
+        console.error('deleteAlert error:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete alert' });
+    }
 };

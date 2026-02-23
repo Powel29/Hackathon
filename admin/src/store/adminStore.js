@@ -56,17 +56,40 @@ export const useAdminStore = create()(persist((set, get) => {
         isLoggedIn: false,
         fetchAllData: async () => {
             try {
-                const [comp, conn, bills, reqs] = await Promise.all([
+                const [comp, conn, bills, reqs, alerts] = await Promise.all([
                     axios.get('/api/admin/complaints'),
                     axios.get('/api/admin/connections'),
                     axios.get('/api/admin/bills'),
-                    axios.get('/api/admin/requests')
+                    axios.get('/api/admin/requests'),
+                    axios.get('/api/admin/alerts')
                 ]);
+
+                // Transform DB alerts back to the categorized object the UI expects
+                const CategorizedAlerts = JSON.parse(JSON.stringify(INITIAL_DEPT_ALERTS));
+                if (alerts.data && alerts.data.data) {
+                    alerts.data.data.forEach(a => {
+                        const dept = a.serviceType.toLowerCase();
+                        const cat = a.alertType || 'municipalNotices'; // fallback
+                        if (CategorizedAlerts[dept]) {
+                            CategorizedAlerts[dept][cat] = CategorizedAlerts[dept][cat] || [];
+                            CategorizedAlerts[dept][cat].push({
+                                id: a.alertId,
+                                title: a.title,
+                                content: a.message,
+                                type: a.severity || 'info',
+                                active: a.isActive,
+                                updatedAt: a.createdAt
+                            });
+                        }
+                    });
+                }
+
                 set({
                     complaints: comp.data.data || [],
                     connections: conn.data.data || [],
                     bills: bills.data.data || [],
-                    requests: reqs.data.data || []
+                    requests: reqs.data.data || [],
+                    deptAlerts: CategorizedAlerts
                 });
             } catch (err) {
                 console.error("Failed to fetch admin data", err);
@@ -88,7 +111,6 @@ export const useAdminStore = create()(persist((set, get) => {
                     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                     localStorage.setItem('suvidha_admin_token', token);
                     set({ adminUser: user, isLoggedIn: true, activeDept: user.department });
-                    localStorage.setItem('suvidha_dept_alerts', JSON.stringify(get().deptAlerts));
                     await get().fetchAllData();
                     return true;
                 } else {
@@ -179,6 +201,30 @@ export const useAdminStore = create()(persist((set, get) => {
                 bills: state.bills.map(b => b.id !== id ? b : { ...b, status: 'paid' })
             }));
         },
+        createBill: async (billData) => {
+            try {
+                const resp = await axios.post('/api/admin/bills', billData);
+                if (resp.data && resp.data.success) {
+                    await get().fetchAllData();
+                    return true;
+                }
+            } catch (err) {
+                console.error("Failed to create bill", err);
+            }
+            return false;
+        },
+        updateBillStatus: async (id, status, serviceType) => {
+            try {
+                const resp = await axios.put(`/api/admin/bills/${id}`, { status, serviceType });
+                if (resp.data.success) {
+                    set((state) => ({
+                        bills: state.bills.map(b => b.id === id ? { ...b, status } : b)
+                    }));
+                }
+            } catch (err) {
+                console.error("Failed to update bill", err);
+            }
+        },
         updateConnectionStatus: async (id, status, notes, rejectionReason = '') => {
             set((state) => {
                 const updated = state.connections.map(c => {
@@ -207,38 +253,72 @@ export const useAdminStore = create()(persist((set, get) => {
             }));
             try { await axios.put(`/api/admin/requests/${id}`, { status, assignedTo, notes, scheduledDate }); } catch (e) { console.error(e); }
         },
-        saveDeptAlert: (dept, alertCategory, alertId, updates) => {
+        saveDeptAlert: async (dept, alertCategory, alertId, updates) => {
+            // Optimistic UI update
             set((state) => {
                 const deptAlerts = { ...state.deptAlerts };
                 const newDept = { ...deptAlerts[dept] };
                 const category = newDept[alertCategory] || [];
                 newDept[alertCategory] = category.map(a => a.id === alertId ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a);
                 deptAlerts[dept] = newDept;
-                localStorage.setItem('suvidha_dept_alerts', JSON.stringify(deptAlerts));
                 return { deptAlerts };
             });
+
+            try {
+                await axios.put(`/api/admin/alerts/${alertId}`, updates);
+            } catch (err) {
+                console.error("Failed to save alert to backend", err);
+                // Refresh data to revert to server state
+                await get().fetchAllData();
+            }
         },
-        addDeptAlert: (dept, alertCategory, alert) => {
-            set((state) => {
-                const deptAlerts = { ...state.deptAlerts };
-                const newDept = { ...deptAlerts[dept] };
-                const category = newDept[alertCategory] || [];
-                newDept[alertCategory] = [...category, alert];
-                deptAlerts[dept] = newDept;
-                localStorage.setItem('suvidha_dept_alerts', JSON.stringify(deptAlerts));
-                return { deptAlerts };
-            });
+        addDeptAlert: async (dept, alertCategory, alert) => {
+            try {
+                const resp = await axios.post('/api/admin/alerts', {
+                    ...alert,
+                    serviceType: dept,
+                    alertType: alertCategory
+                });
+
+                if (resp.data && resp.data.success) {
+                    const savedAlert = resp.data.data;
+                    set((state) => {
+                        const deptAlerts = { ...state.deptAlerts };
+                        const newDept = { ...deptAlerts[dept] };
+                        const category = newDept[alertCategory] || [];
+                        newDept[alertCategory] = [...category, {
+                            id: savedAlert.alertId,
+                            title: savedAlert.title,
+                            content: savedAlert.message,
+                            type: savedAlert.severity,
+                            active: savedAlert.isActive,
+                            updatedAt: savedAlert.createdAt
+                        }];
+                        deptAlerts[dept] = newDept;
+                        return { deptAlerts };
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to add alert to backend", err);
+            }
         },
-        deleteDeptAlert: (dept, alertCategory, alertId) => {
+        deleteDeptAlert: async (dept, alertCategory, alertId) => {
+            // Optimistic UI update
             set((state) => {
                 const deptAlerts = { ...state.deptAlerts };
                 const newDept = { ...deptAlerts[dept] };
                 const category = newDept[alertCategory] || [];
                 newDept[alertCategory] = category.filter(a => a.id !== alertId);
                 deptAlerts[dept] = newDept;
-                localStorage.setItem('suvidha_dept_alerts', JSON.stringify(deptAlerts));
                 return { deptAlerts };
             });
+
+            try {
+                await axios.delete(`/api/admin/alerts/${alertId}`);
+            } catch (err) {
+                console.error("Failed to delete alert from backend", err);
+                await get().fetchAllData();
+            }
         },
         markAsChecked: (type, id) => {
             set((state) => {

@@ -10,7 +10,8 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  FileText
+  FileText,
+  Shield
 } from 'lucide-react';
 import { useKioskStore } from '../../store/useKioskStore';
 import { departmentService } from '../../services/api';
@@ -20,9 +21,11 @@ export function MunicipalDashboard() {
   const user = useKioskStore((state) => state.user);
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
-    const fetchAccountData = async () => {
+    const fetchData = async () => {
       if (!user?.consumerId) {
         console.log('❌ No consumerId found:', user);
         setLoading(false);
@@ -31,25 +34,35 @@ export function MunicipalDashboard() {
 
       try {
         setLoading(true);
-        console.log('🔍 Fetching municipal account for:', user.consumerId);
-        const response = await departmentService.getAccountDetails('MUNICIPAL', user.consumerId);
-        console.log('✅ Municipal account response:', response);
+        console.log('🔍 Fetching municipal data for:', user.consumerId);
 
-        if (response.success) {
-          setAccountData(response.account);
-          console.log('✅ Municipal account data set:', response.account);
-        } else {
-          console.error('❌ API returned success: false');
+        // Parallel fetch for account details and alerts
+        const [accountResponse, alertsResponse] = await Promise.all([
+          departmentService.getAccountDetails('MUNICIPAL', user.consumerId),
+          departmentService.getAlerts('MUNICIPAL')
+        ]);
+
+        console.log('✅ Municipal account response:', accountResponse);
+        console.log('✅ Municipal alerts response:', alertsResponse);
+
+        if (accountResponse.success) {
+          setAccountData(accountResponse.account);
+        }
+
+        if (alertsResponse.success) {
+          setAlerts(alertsResponse.alerts);
         }
       } catch (error) {
-        console.error('❌ Failed to fetch municipal account data:', error);
-        console.error('Error details:', error.response?.data);
+        console.error('❌ Failed to fetch municipal data:', error);
+        if (error.code === 'ACCESS_DENIED' || error.message?.toLowerCase().includes('not belong')) {
+          setAccessDenied(true);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAccountData();
+    fetchData();
   }, [user?.consumerId]);
 
   if (loading) {
@@ -303,41 +316,35 @@ export function MunicipalDashboard() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="font-bold text-gray-900 mb-4">Municipal Notices & Events</h3>
         <div className="space-y-3">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">Health Camp</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Free health checkup camp on Feb 5, 2026 at Ward 12-A Community Hall (9 AM - 5 PM)
-                </p>
+          {alerts.length > 0 ? (
+            alerts.map((alert) => (
+              <div key={alert.alertId} className={`border rounded-lg p-3 ${alert.severity === 'HIGH' ? 'bg-red-50 border-red-200' :
+                  alert.severity === 'MEDIUM' ? 'bg-yellow-50 border-yellow-200' :
+                    'bg-blue-50 border-blue-200'
+                }`}>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className={`w-4 h-4 mt-0.5 ${alert.severity === 'HIGH' ? 'text-red-600' :
+                      alert.severity === 'MEDIUM' ? 'text-yellow-600' :
+                        'text-blue-600'
+                    }`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">{alert.title}</p>
+                    <p className="text-xs text-gray-600 mt-1">{alert.message}</p>
+                    {alert.startsAt && (
+                      <p className="text-[10px] text-gray-400 mt-2">
+                        {new Date(alert.startsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+              <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No active notices at this time.</p>
             </div>
-          </div>
-
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 text-green-600 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">Cleanliness Drive</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Participate in the neighborhood cleanliness drive on Feb 7, 2026 (7 AM onwards)
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">Road Maintenance Notice</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Main Street road repair work scheduled from Feb 10-15, 2026. Expect traffic diversions.
-                </p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -367,6 +374,31 @@ export function MunicipalDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Access Denied Modal */}
+      {accessDenied && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="bg-red-600 p-6 flex justify-center">
+              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                <Shield className="w-12 h-12 text-white" />
+              </div>
+            </div>
+            <div className="p-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+              <p className="text-gray-600 mb-8">
+                This consumer number does not belong to your Aadhaar record. You are not authorized to view these details.
+              </p>
+              <button
+                onClick={() => window.location.href = '/kiosk/service-selection'}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
+              >
+                Go Back to Services
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

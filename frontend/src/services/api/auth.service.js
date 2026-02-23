@@ -4,7 +4,6 @@ import api from '../api.js';
  * Authentication Service
  * 
  * Handles all authentication-related API calls
- * Currently using mock data - replace with actual database calls when ready
  */
 
 /**
@@ -76,74 +75,21 @@ export async function verifyOTP(request) {
 }
 
 /**
- * Verify consumer ID for service access
- */
-export async function verifyConsumerId(request) {
-    try {
-        // Mock implementation for now as per instructions (backend might not have this yet)
-        console.log('Verifying Consumer ID:', request.consumerId, 'for service:', request.serviceType);
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Mock valid consumer IDs
-        const validConsumerIds = {
-            electricity: ['EC123456789', 'ELEC-001', 'E12345'],
-            gas: ['GC987654321', 'GAS-001', 'G54321'],
-            water: ['WC987654321', 'WATER-001', 'W98765'],
-            municipal: ['MC456789123', 'MUN-001', 'M11111']
-        };
-
-        const validIds = validConsumerIds[request.serviceType] || [];
-
-        if (validIds.includes(request.consumerId)) {
-            return {
-                success: true,
-                message: 'Consumer ID verified successfully',
-                data: {
-                    consumerServiceId: 'mock-service-id-' + Date.now(),
-                    consumerId: request.consumerId,
-                    serviceType: request.serviceType
-                }
-            };
-        } else {
-            return {
-                success: false,
-                message: 'Consumer ID not found for this service',
-                error: 'INVALID_CONSUMER_ID'
-            };
-        }
-    } catch (error) {
-        console.error('Verify Consumer ID error:', error);
-        return {
-            success: false,
-            message: 'Failed to verify consumer ID',
-            error: String(error)
-        };
-    }
-}
-
-/**
  * Logout user
  */
-export async function logout(sessionToken) {
+export async function logout() {
     try {
         await api.post('/auth/logout');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-
-        return {
-            success: true,
-            message: 'Logged out successfully'
-        };
     } catch (error) {
         console.error('Logout error:', error);
-        return {
-            success: false,
-            message: 'Failed to logout',
-            error: String(error)
-        };
+    } finally {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
     }
+    return {
+        success: true,
+        message: 'Logged out successfully'
+    };
 }
 
 /**

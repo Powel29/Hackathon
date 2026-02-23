@@ -36,8 +36,8 @@ export function DepartmentVerification() {
           color: 'from-yellow-50 to-yellow-100',
           borderColor: 'border-yellow-200',
           idLabel: 'Electricity Consumer Number',
-          idPlaceholder: 'Enter your EC Number',
-          idPrefix: 'EC',
+          idPlaceholder: 'e.g. ELEC-DL-2024-001234',
+          idPrefix: 'ELEC',
           maxLength: 30,
           description: 'Enter your electricity consumer number to access your account'
         };
@@ -48,8 +48,8 @@ export function DepartmentVerification() {
           color: 'from-orange-50 to-orange-100',
           borderColor: 'border-orange-200',
           idLabel: 'Gas Consumer Number',
-          idPlaceholder: 'Enter your GC Number',
-          idPrefix: 'GC',
+          idPlaceholder: 'e.g. GAS-DL-2024-001234',
+          idPrefix: 'GAS',
           maxLength: 30,
           description: 'Enter your gas consumer number to access your account'
         };
@@ -60,8 +60,8 @@ export function DepartmentVerification() {
           color: 'from-blue-50 to-blue-100',
           borderColor: 'border-blue-200',
           idLabel: 'Water Consumer Number',
-          idPlaceholder: 'Enter your WC Number',
-          idPrefix: 'WC',
+          idPlaceholder: 'e.g. WATER-DL-2024-001234',
+          idPrefix: 'WATER',
           maxLength: 30,
           description: 'Enter your water consumer number to access your account'
         };
@@ -71,9 +71,9 @@ export function DepartmentVerification() {
           icon: <Building2 className="w-12 h-12 text-green-600" />,
           color: 'from-green-50 to-green-100',
           borderColor: 'border-green-200',
-          idLabel: 'Property Tax Number',
-          idPlaceholder: 'Enter your PT Number',
-          idPrefix: 'PT',
+          idLabel: 'Municipal Consumer Number',
+          idPlaceholder: 'e.g. MUN-DL-2024-001234',
+          idPrefix: 'MUN',
           maxLength: 30,
           description: 'Enter your property tax number to access municipal services'
         };

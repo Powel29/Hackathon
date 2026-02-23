@@ -156,7 +156,7 @@ export function ViewBills() {
                     <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                       <p className="text-xs text-gray-600 mb-1">Type</p>
                       <p className="text-sm font-semibold text-[#212529]">
-                        {bill.type || 'ELECTRICITY'}
+                        {bill.type || bill.serviceType || 'N/A'}
                       </p>
                     </div>
                   </div>

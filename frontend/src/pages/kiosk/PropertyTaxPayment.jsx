@@ -51,21 +51,7 @@ export function PropertyTaxPayment() {
                     if (bills.length > 0) {
                         setBillDetails(bills[0]);
                     } else {
-                        // Fallback mock if no API data
-                        setBillDetails({
-                            id: 'b55b5555-5555-4555-8555-555555555555',
-                            billNumber: 'PT-2026-1001',
-                            amount: 4550,
-                            billingPeriod: '2025-2026',
-                            dueDate: '2026-03-31',
-                            breakdown: {
-                                generalTax: 3500,
-                                conservancyTax: 500,
-                                educationCess: 200,
-                                treeCess: 50,
-                                arrears: 300
-                            }
-                        });
+                        setError("No pending property tax bill found for this account.");
                     }
                 }
 
@@ -121,12 +107,12 @@ export function PropertyTaxPayment() {
     }
 
     // Fallback data if API fails to provide specific fields
-    const propertyAddress = propertyDetails?.address || "123, Gandhi Nagar, Sector 4";
-    const propertyOwner = propertyDetails?.ownerName || user?.name || "Citizen";
-    const propertyId = propertyDetails?.propertyId || user?.consumerId || "PID-987654321";
-    const zone = propertyDetails?.zone || "North Zone";
-    const carpetArea = propertyDetails?.carpetArea || "1200 sq. ft.";
-    const propertyType = propertyDetails?.propertyType || "Residential";
+    const propertyAddress = propertyDetails?.address || "N/A";
+    const propertyOwner = propertyDetails?.ownerName || user?.name || user?.fullName || "Citizen";
+    const propertyId = propertyDetails?.propertyId || propertyDetails?.propertyTaxNumber || user?.consumerId || "N/A";
+    const zone = propertyDetails?.zone || "N/A";
+    const carpetArea = propertyDetails?.carpetArea || propertyDetails?.propertyArea ? `${propertyDetails.propertyArea} sq. ft.` : "N/A";
+    const propertyType = propertyDetails?.propertyType || "N/A";
 
     const totalAmount = billDetails?.amount || 0;
     const billNumber = billDetails?.billNumber || "N/A";

@@ -29,7 +29,7 @@ api.interceptors.response.use(
                 console.warn('Session expired or invalid. Redirecting to login...');
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                window.location.href = '/kiosk/login';
+                window.location.href = '/kiosk/login-register';
             }
         }
         return Promise.reject(error);
@@ -118,37 +118,10 @@ export const billService = {
             console.log('✅ User Bills Response:', response.data);
             const bills = response.data.bills || [];
 
-            // Inject Mock Property Tax Bill (for demo/interface similarity task)
-            const ptBill = {
-                billId: 'pt-2026-001',
-                billNumber: 'PT-2026-1001',
-                consumerNumber: 'PID-987654321', // Matches PropertyTaxPayment default
-                serviceType: 'MUNICIPAL', // Uppercase to match filter
-                amount: 4550,
-                dueDate: '2026-03-31',
-                status: 'pending',
-                billingPeriod: '2025-2026'
-            };
-
-            // Avoid duplicates if backend already returns it (unlikely for now)
-            if (!bills.find(b => b.billNumber === ptBill.billNumber)) {
-                bills.push(ptBill);
-            }
-
             return bills;
         } catch (error) {
             console.error('❌ API getUserBills error:', error);
-            // Fallback mock data for Property Tax task if backend is offline/error
-            return [{
-                billId: 'pt-2026-001',
-                billNumber: 'PT-2026-1001',
-                consumerNumber: 'PID-987654321',
-                serviceType: 'MUNICIPAL',
-                amount: 4550,
-                dueDate: '2026-03-31',
-                status: 'pending',
-                billingPeriod: '2025-2026'
-            }];
+            throw error;
         }
     },
     getBillByNumber: async (billNumber) => {
@@ -359,6 +332,17 @@ export const departmentService = {
         } catch (error) {
             const err = new Error(error.response?.data?.message || 'Failed to submit approval request');
             throw err;
+        }
+    },
+    getAlerts: async (serviceType) => {
+        try {
+            console.log('🔍 Fetching alerts for:', serviceType);
+            const response = await api.get(`/departments/${serviceType.toUpperCase()}/alerts`);
+            console.log('✅ Alerts Response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ API getAlerts error:', error);
+            throw error;
         }
     }
 };

@@ -84,11 +84,11 @@ export function AadhaarLogin() {
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
         <div className="w-full max-w-md">
           <button
-            onClick={() => navigate('/kiosk/service-selection')}
+            onClick={() => navigate('/kiosk/login-register')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
-            {t('back')}
+            {t('common.back')}
           </button>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -98,10 +98,10 @@ export function AadhaarLogin() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-[#212529]">
-                  {t('aadhaarLogin')}
+                  {t('authentication.aadhaarLogin')}
                 </h2>
                 <p className="text-sm text-gray-600">
-                  {t('enterAadhaar')}
+                  {t('authentication.enterAadhaar')}
                 </p>
               </div>
             </div>
@@ -109,19 +109,19 @@ export function AadhaarLogin() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('aadhaarNumber')}
+                  {t('authentication.aadhaarNumber')}
                 </label>
                 <input
                   type="text"
                   value={aadhaar}
                   onChange={handleInputChange}
-                  placeholder={t('aadhaarPlaceholder')}
+                  placeholder={t('authentication.aadhaarPlaceholder')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent"
                   maxLength={12}
                 />
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-gray-500">
-                    {t('aadhaarDigitsCounter', { count: aadhaar.length })}
+                    {t('authentication.aadhaarDigitsCounter', { count: aadhaar.length })}
                   </span>
                   {aadhaar.length > 0 && (
                     <span className="text-sm font-mono text-gray-700">
@@ -146,12 +146,12 @@ export function AadhaarLogin() {
                 disabled={aadhaar.length !== 12}
                 className="w-full"
               >
-                {t('proceedToOTP')}
+                {t('authentication.proceedToOTP')}
               </TouchButton>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-xs text-center text-gray-700">
-                  {t('aadhaarSecurityNote')}
+                  {t('authentication.aadhaarSecurityNote')}
                 </p>
               </div>
             </div>

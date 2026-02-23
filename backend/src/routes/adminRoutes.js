@@ -20,6 +20,7 @@ router.put('/connections/:id', adminController.updateConnection);
 
 // Bills routes
 router.get('/bills', adminController.getBills);
+router.post('/bills', adminController.createBill);
 router.put('/bills/:id', adminController.updateBill);
 
 // Services Requests routes
@@ -30,5 +31,11 @@ router.put('/requests/:id', adminController.updateRequest);
 router.get('/account-requests', accountRequestController.getPendingRequests);
 router.post('/account-requests/:id/approve', accountRequestController.approveRequest);
 router.post('/account-requests/:id/reject', accountRequestController.rejectRequest);
+
+// Alerts routes
+router.get('/alerts', adminController.getAlerts);
+router.post('/alerts', adminController.createAlert);
+router.put('/alerts/:id', adminController.updateAlert);
+router.delete('/alerts/:id', adminController.deleteAlert);
 
 module.exports = router;
