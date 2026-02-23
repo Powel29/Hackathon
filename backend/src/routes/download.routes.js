@@ -7,7 +7,7 @@ router.get("/:key", async (req, res, next) => {
     try {
         const key = `documents/${req.params.key}`;
 
-        const url = await generateSignedUrl(key);
+        const url = await generateSignedUrl(key, req.query.filename || null);
 
         res.json({ url });
     } catch (err) {

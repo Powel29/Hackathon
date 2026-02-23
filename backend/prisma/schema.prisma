@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Citizen {
@@ -35,6 +34,7 @@ model Citizen {
   serviceAccounts        ServiceAccount[]
   serviceRequests        ServiceRequest[]
   waterAccounts          WaterAccount?
+  accountRequests        AccountRequest[]
 
   @@index([aadharHash])
   @@index([mobileNumber])
@@ -209,7 +209,7 @@ model Document {
   documentId    String   @id @default(uuid()) @db.Uuid
   citizenId     String   @db.VarChar(12)
   relatedEntity String   @db.VarChar(30)
-  relatedId     String   @db.Uuid
+  relatedId     String   @db.VarChar(100)
   documentType  String   @db.VarChar(30)
   department    String?  @db.VarChar(20)
   fileName      String?  @db.VarChar(255)
@@ -524,4 +524,38 @@ model WaterConsumption {
 
   @@index([accountId, date])
   @@map("water_consumption")
+}
+
+model AccountRequest {
+  id             String    @id @default(uuid()) @db.Uuid
+  citizenId      String    @db.VarChar(12)
+  serviceType    String    @db.VarChar(20) // ELECTRICITY, WATER, GAS, MUNICIPAL
+  consumerNumber String    @db.VarChar(50)
+  status         String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  adminNotes     String?
+  requestedAt    DateTime  @default(now())
+  resolvedAt     DateTime?
+
+  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
+
+  @@index([citizenId])
+  @@index([status])
+  @@map("account_requests")
+}
+
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  departmentId String   @unique @db.VarChar(30)
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @db.VarChar(100)
+  department   String   @db.VarChar(30)
+  role         String   @db.VarChar(30)
+  avatar       String?  @db.VarChar(10)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([departmentId])
+  @@map("admins")
 }

@@ -28,7 +28,7 @@ export function MyDocuments() {
     const fetchDocuments = async () => {
         try {
             setLoading(true);
-            const docs = await documentService.getUserDocuments(user.aadharNumber, selectedService);
+            const docs = await documentService.getUserDocuments(user.aadhaarNumber, selectedService);
             setDocuments(docs || []);
         } catch (error) {
             console.error('Error fetching documents:', error);
@@ -39,11 +39,11 @@ export function MyDocuments() {
     };
 
     const openDocument = (url) => {
-        if (url) {
-            window.open(url, '_blank');
-        } else {
+        if (!url) {
             toast.error('Document link not available');
+            return;
         }
+        window.open(url, '_blank');
     };
 
     const getEntityLabel = (entity) => {
@@ -175,7 +175,7 @@ export function MyDocuments() {
                                         </span>
                                         <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md">
                                             <Calendar className="w-3.5 h-3.5" />
-                                            {format(new Date(doc.createdAt), 'MMM dd, yyyy')}
+                                            {doc.createdAt ? format(new Date(doc.createdAt), 'MMM dd, yyyy') : 'N/A'}
                                         </span>
                                     </div>
 
@@ -188,7 +188,7 @@ export function MyDocuments() {
                                             <div className="flex items-center gap-2 text-sm text-gray-600">
                                                 <Tag className="w-4 h-4 opacity-70" />
                                                 <span className="font-medium">Ref ID:</span>
-                                                <span className="text-gray-800 truncate" title={doc.relatedId}>{doc.relatedId.substring(0, 18)}...</span>
+                                                <span className="text-gray-800 truncate" title={doc.relatedId}>{(doc.relatedId || '').substring(0, 18)}...</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-sm text-gray-600">
                                                 <FileText className="w-4 h-4 opacity-70" />

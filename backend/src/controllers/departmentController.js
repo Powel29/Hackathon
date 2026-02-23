@@ -122,12 +122,12 @@ exports.verifyDepartmentAccount = async (req, res) => {
         }
 
         // Check if account is active
-        if (account.status !== 'ACTIVE') {
+        if (typeof account.status !== 'string' || account.status.toUpperCase() !== 'ACTIVE') {
             return res.status(400).json({
                 success: false,
                 error: {
                     code: 'ACCOUNT_INACTIVE',
-                    message: `This account is currently ${account.status.toLowerCase()}. Please contact the department office.`
+                    message: `This account is currently ${account.status ? account.status.toLowerCase() : 'unknown'}. Please contact the department office.`
                 }
             });
         }

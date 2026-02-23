@@ -17,7 +17,7 @@ import { departmentService } from '../../services/api';
 
 export function MunicipalDashboard() {
   const navigate = useNavigate();
-  const { user } = useKioskStore();
+  const user = useKioskStore((state) => state.user);
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,7 +74,7 @@ export function MunicipalDashboard() {
     : 'Mar 31, 2026';
   const garbageCollectionDay = accountData?.garbageCollectionDay || accountData?.wasteCollectionSchedule || 'Monday, Wednesday, Friday';
 
-  console.log('📊 Municipal Dashboard values:', { propertyTaxDue, annualTax, propertyType, propertyArea, wardNumber, garbageCollectionDay, accountData });
+
 
 
   return (

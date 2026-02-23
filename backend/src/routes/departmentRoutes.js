@@ -49,4 +49,27 @@ router.get(
     departmentController.getDepartmentAccountDetails
 );
 
+/**
+ * POST /api/departments/request-approval
+ * Protected: citizen requests admin approval for a consumer number
+ */
+const accountRequestController = require('../controllers/accountRequestController');
+router.post(
+    '/request-approval',
+    verifyToken,
+    [
+        body('serviceType')
+            .trim()
+            .notEmpty()
+            .withMessage('serviceType is required'),
+        body('consumerNumber')
+            .trim()
+            .notEmpty()
+            .withMessage('consumerNumber is required')
+    ],
+    validate,
+    accountRequestController.createRequest
+);
+
 module.exports = router;
+

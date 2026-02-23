@@ -9,6 +9,8 @@ import { ArrowLeft, CheckCircle, Upload, Edit3, Zap, Flame, Droplets, Building2 
 import govtLogo from '../../assets/kiosk/Government_of_India_logo.svg';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { MapPin } from 'lucide-react';
+import MapAddressPicker from '../../components/MapAddressPicker';
 
 
 
@@ -97,7 +99,19 @@ const CITIES = {
 export function NewConnection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedService } = useKioskStore();
+  let { selectedService, setSelectedService } = useKioskStore();
+
+  // Hard refresh fallback if store loses state but URL provides context
+  useEffect(() => {
+    if (!selectedService) {
+      if (window.location.pathname.includes('/new-connection')) {
+        // Defaulting or we could prompt the user to go back.
+        // Wait, the KioskDashboard uses ServiceSelection which sets selectedService.
+        // Service isn't in URL here. Let's redirect if missing.
+        navigate('/kiosk/service-selection');
+      }
+    }
+  }, [selectedService, navigate]);
   const canvasRef = useRef(null);
   const totalSteps = 5;
   const stepTitles = [
@@ -114,6 +128,7 @@ export function NewConnection() {
   const printContainerRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [useMapMode, setUseMapMode] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [formData, setFormData] = useState({
     fullName: '',
@@ -123,6 +138,8 @@ export function NewConnection() {
     city: '',
     state: '',
     pincode: '',
+    latitude: '',
+    longitude: '',
     connectionType: '',
 
     purposeOfSupply: '',
@@ -339,6 +356,12 @@ export function NewConnection() {
         serviceDetails.propertyPID = formData.propertyPID;
       }
 
+      // Add exact map coordinates if user selected via map
+      if (formData.latitude && formData.longitude) {
+        serviceDetails.latitude = formData.latitude;
+        serviceDetails.longitude = formData.longitude;
+      }
+
       const payload = {
         serviceType: selectedService,
         applicantName: formData.fullName,
@@ -421,40 +444,46 @@ export function NewConnection() {
 
         // Auto-generate Application receipt and upload
         setTimeout(async () => {
-          if (!printContainerRef.current) return;
           try {
-            const originalDisplay = printContainerRef.current.style.display;
-            printContainerRef.current.style.display = 'block';
-
-            const canvas = await html2canvas(printContainerRef.current, {
-              scale: 2,
-              useCORS: true,
-              logging: false
-            });
-
-            printContainerRef.current.style.display = originalDisplay;
-
-            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = await import('jspdf');
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.setFontSize(22);
+            pdf.text('Application Receipt', 20, 20);
+
+            pdf.setFontSize(12);
+            pdf.text(`Application ID: ${newAppId}`, 20, 35);
+            pdf.text(`Service Type: ${selectedService.toUpperCase()}`, 20, 45);
+            pdf.text(`Applicant Name: ${formData.fullName}`, 20, 55);
+            pdf.text(`Mobile Number: ${formData.mobileNumber}`, 20, 65);
+            pdf.text(`Connection Type: ${formData.connectionType}`, 20, 75);
+            pdf.text(`Status: PENDING`, 20, 85);
+            pdf.text(`Date: ${new Date().toLocaleString()}`, 20, 95);
+
+            pdf.setFontSize(10);
+            pdf.setTextColor(100);
+            pdf.text('This is a computer generated receipt.', 20, 115);
+
             const pdfBlob = pdf.output('blob');
-
             const file = new File([pdfBlob], `Application_${newAppId}.pdf`, { type: 'application/pdf' });
 
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            await apiModule.documentService.uploadDocument(file, {
-              citizenId: user.aadhaarNumber || '111122223333',
-              department: selectedService,
-              relatedEntity: 'CONNECTION_APPLICATION',
-              relatedId: internalId || newAppId,
-              documentType: 'APPLICATION_RECEIPT'
-            });
+            const citizenId = user.aadhaarNumber || user.aadharNumber;
+            if (citizenId) {
+              await apiModule.documentService.uploadDocument(file, {
+                citizenId,
+                department: selectedService,
+                relatedEntity: 'CONNECTION_APPLICATION',
+                relatedId: internalId || newAppId,
+                documentType: 'APPLICATION_RECEIPT'
+              });
+              console.log("Successfully uploaded Application PDF!");
+            } else {
+              console.error("Missing citizen ID - cannot upload application receipt PDF");
+            }
             console.log("Successfully uploaded Application PDF!");
           } catch (pdfErr) {
-            console.error("Failed to snapshot application PDF:", pdfErr);
+            console.error("Failed to generate application PDF:", pdfErr);
           }
         }, 1500);
 
@@ -1229,6 +1258,50 @@ export function NewConnection() {
           {/* Step 2: Address Details */}
           {currentStep === 2 && (
             <div className="space-y-4">
+              <div className="flex bg-gray-100 rounded-lg p-1 mb-4 w-full max-w-sm mx-auto">
+                <button
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${!useMapMode ? 'bg-white shadow-sm text-[#0066CC]' : 'text-gray-600 hover:text-gray-900'}`}
+                  onClick={() => setUseMapMode(false)}
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Manual Entry
+                </button>
+                <button
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${useMapMode ? 'bg-white shadow-sm text-[#0066CC]' : 'text-gray-600 hover:text-gray-900'}`}
+                  onClick={() => setUseMapMode(true)}
+                >
+                  <MapPin className="w-4 h-4" />
+                  Pick on Map
+                </button>
+              </div>
+
+              {useMapMode ? (
+                <div className="mb-6">
+                  <MapAddressPicker
+                    initialAddress={formData.address}
+                    onAddressSelect={(location) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        address: location.formattedAddress,
+                        state: location.state || prev.state,
+                        city: location.city || prev.city,
+                        pincode: location.pincode || prev.pincode,
+                        latitude: location.lat || prev.latitude,
+                        longitude: location.lng || prev.longitude
+                      }));
+                      // clear relevant errors
+                      setFormErrors(prev => ({
+                        ...prev,
+                        address: '',
+                        state: location.state ? '' : prev.state,
+                        city: location.city ? '' : prev.city,
+                        pincode: location.pincode ? '' : prev.pincode
+                      }));
+                    }}
+                  />
+                </div>
+              ) : null}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('newConnection.address')} *
