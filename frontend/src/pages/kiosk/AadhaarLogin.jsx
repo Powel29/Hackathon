@@ -41,7 +41,8 @@ export function AadhaarLogin() {
         navigate('/kiosk/otp-verification', {
           state: {
             aadhaarNumber: aadhaar,
-            maskedMobile: response.maskedMobile
+            maskedMobile: response.maskedMobile,
+            mobileNumber: response.mobileNumber
           }
         });
       } else {

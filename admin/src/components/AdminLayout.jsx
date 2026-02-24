@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAdminStore } from '../store/adminStore';
-import { LayoutDashboard, FileText, Zap, Receipt, GitBranch, Bell, LogOut, ChevronDown, Search, Users, Shield, RefreshCw, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, FileText, Zap, Receipt, GitBranch, Bell, LogOut, ChevronDown, Search, Users, Shield, RefreshCw, ClipboardList, Monitor } from 'lucide-react';
 import { canApproveConnections, canSwitchAllDepartments, canViewAnalytics } from '../utils/permissions';
 const DEPT_COLORS = {
     electricity: '#D97706',
@@ -120,6 +120,7 @@ export function AdminLayout({ children, activeRoute, onNavigate }) {
         { id: 'dept-alerts', icon: <Bell size={16} />, label: 'Dept Alerts' },
         { id: 'users', icon: <Users size={16} />, label: 'Users' },
         { id: 'account-approvals', icon: <ClipboardList size={16} />, label: 'Account Approvals' },
+        { id: 'kiosks', icon: <Monitor size={16} />, label: 'Kiosk Monitor' },
     ].filter(item => {
         if (item.id === 'dashboard')
             return canViewAnalytics(adminUser?.role);

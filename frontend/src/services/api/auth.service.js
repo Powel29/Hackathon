@@ -99,7 +99,8 @@ export async function resendOTP(request) {
     try {
         // Call backend API
         const response = await api.post('/auth/resend-otp', {
-            aadharNumber: request.aadhaarNumber
+            aadharNumber: request.aadhaarNumber,
+            mobileNumber: request.mobileNumber
         });
         return response.data;
     } catch (error) {

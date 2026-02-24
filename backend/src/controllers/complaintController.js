@@ -234,10 +234,27 @@ exports.getMyComplaints = async (req, res) => {
                 ...(serviceType && { serviceType })
             },
             orderBy: { createdAt: 'desc' },
-            include: {
+            select: {
+                complaintId: true,
+                complaintNumber: true,
+                citizenId: true,
+                serviceType: true,
+                complaintType: true,
+                description: true,
+                status: true,
+                priority: true,
+                createdAt: true,
+                updatedAt: true,
+                resolutionNote: true,
+                assignedTo: true,
                 statusHistory: {
-                    orderBy: { changedAt: 'desc' },
-                    take: 1
+                    select: {
+                        historyId: true,
+                        newStatus: true,
+                        citizenMessage: true,
+                        changedAt: true
+                    },
+                    orderBy: { changedAt: 'desc' }
                 }
             }
         });
@@ -256,7 +273,11 @@ exports.getMyComplaints = async (req, res) => {
             complaints: complaints.map(c => ({
                 ...c,
                 originalId: c.complaintId,
-                complaintId: c.complaintNumber || c.complaintId
+                complaintId: c.complaintNumber || c.complaintId,
+                technician: c.assignedTo ? {
+                    name: c.assignedTo,
+                    phone: "+91 98765 43210"
+                } : null
             })),
             summary
         });
@@ -267,7 +288,9 @@ exports.getMyComplaints = async (req, res) => {
             success: false,
             error: {
                 code: 'SERVER_ERROR',
-                message: 'Failed to fetch complaints'
+                message: 'Failed to fetch complaints',
+                details: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
             }
         });
     }
@@ -291,7 +314,21 @@ exports.getComplaintDetails = async (req, res) => {
                 ...whereClause,
                 citizenId
             },
-            include: {
+            select: {
+                complaintId: true,
+                complaintNumber: true,
+                citizenId: true,
+                serviceType: true,
+                description: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+                complaintType: true,
+                location: true,
+                priority: true,
+                resolutionNote: true,
+                assignedTo: true,
+                title: true,
                 citizen: {
                     select: {
                         fullName: true,
@@ -300,6 +337,12 @@ exports.getComplaintDetails = async (req, res) => {
                     }
                 },
                 statusHistory: {
+                    select: {
+                        historyId: true,
+                        newStatus: true,
+                        citizenMessage: true,
+                        changedAt: true
+                    },
                     orderBy: { changedAt: 'desc' }
                 }
             }
@@ -329,7 +372,11 @@ exports.getComplaintDetails = async (req, res) => {
                 ...complaint,
                 originalId: complaint.complaintId,
                 complaintId: complaint.complaintNumber || complaint.complaintId,
-                documents
+                documents,
+                technician: complaint.assignedTo ? {
+                    name: complaint.assignedTo,
+                    phone: "+91 98765 43210"
+                } : null
             }
         });
 
@@ -370,7 +417,16 @@ exports.trackComplaint = async (req, res) => {
                 createdAt: true,
                 updatedAt: true,
                 resolvedAt: true,
+                description: true,
+                resolutionNote: true,
+                assignedTo: true,
                 statusHistory: {
+                    select: {
+                        historyId: true,
+                        newStatus: true,
+                        citizenMessage: true,
+                        changedAt: true
+                    },
                     orderBy: { changedAt: 'desc' }
                 }
             }
@@ -405,7 +461,11 @@ exports.trackComplaint = async (req, res) => {
                 ...complaint,
                 originalId: complaint.complaintId,
                 complaintId: complaint.complaintNumber || complaint.complaintId,
-                estimatedResolution
+                estimatedResolution,
+                technician: complaint.assignedTo ? {
+                    name: complaint.assignedTo,
+                    phone: "+91 98765 43210" // Mock phone
+                } : null
             }
         });
 

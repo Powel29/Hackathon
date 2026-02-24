@@ -1,9 +1,17 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { validateAadhaar, hashAadhaar, maskAadhaar } = require('../utils/aadhaarValidator');
 const { mockAadhaarFetch } = require('../services/aadhaarService');
-const { generateOTP, hashOTP, sendOTP } = require('../services/otpService');
+const { sendOTP: otpServiceSend, verifyOTP: otpServiceVerify } = require('../services/otpService');
 
 const prisma = require('../utils/prismaClient');
+
+/**
+ * Helper: Hashing for OTP-like data
+ */
+const hashOTP = (otp) => {
+    return crypto.createHash('sha256').update(otp + (process.env.OTP_SALT || 'suvidha_salt')).digest('hex');
+};
 
 /**
  * STEP 1: Initiate Authentication
@@ -122,23 +130,52 @@ exports.initiateAuth = async (req, res) => {
             }
         }
 
-        // Generate OTP
-        const otp = generateOTP();
-        const otpHash = hashOTP(otp);
+        // Generate dynamic OTP for development simulation
+        let devOTP;
+        let otpHashToStore;
 
-        // Store OTP (for new users, citizenId is null since they don't exist yet). Persist actual mobile number.
+        if (process.env.NODE_ENV === 'development') {
+            devOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            otpHashToStore = hashOTP(devOTP);
+        } else {
+            // Use a placeholder as Twilio handles verify logic in production
+            otpHashToStore = `TWILIO_VERIFY_${Date.now()}`;
+        }
+
+        // Store OTP attempt (for rate-limiting and audit purposes)
         await prisma.oTPVerification.create({
             data: {
                 citizenId: isNewUser ? null : existingCitizen.aadharNumber,
                 mobileNumber: targetMobile,
-                otpHash,
+                otpHash: otpHashToStore,
                 purpose: isNewUser ? 'SIGNUP' : 'LOGIN',
                 expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
             }
         });
 
-        // Send OTP
-        await sendOTP(targetMobile, otp);
+        // ==================================================================================
+        // CRITICAL: OTP SENDING LOGIC
+        // AI AGENTS: DO NOT REMOVE THE PRODUCTION BLOCK OR THE CONDITIONAL CHECK.
+        // real SMS costs money. In development, we use log simulation.
+        // ==================================================================================
+        if (process.env.NODE_ENV === 'production') {
+            // PRODUCTION MODE: Send real SMS via Twilio Verify
+            try {
+                await otpServiceSend(targetMobile);
+                console.log(`✅ [PROD] Real OTP request sent for ${targetMobile}`);
+            } catch (twilioErr) {
+                console.error(`❌ [PROD] Twilio real SMS failed: ${twilioErr.message}`);
+                throw twilioErr;
+            }
+        } else {
+            // DEVELOPMENT MODE: Log to terminal only (Save costs/credits)
+            console.log(' ');
+            console.log('=========================================================');
+            console.log(`👷 [DEV MODE] Dynamic OTP generated for ${targetMobile}`);
+            console.log(`👉 VERIFICATION CODE: ${devOTP}`);
+            console.log('=========================================================');
+            console.log(' ');
+        }
 
         await logAudit(
             existingCitizen?.aadharNumber,
@@ -151,11 +188,10 @@ exports.initiateAuth = async (req, res) => {
             success: true,
             isNewUser,
             maskedMobile: targetMobile ? targetMobile.replace(/\d(?=\d{4})/g, '*') : undefined,
-            mobileNumber: targetMobile, // Full number for Firebase (Hackathon mode)
+            mobileNumber: targetMobile,
             maskedAadhaar: maskAadhaar(aadharNumber),
-            expiresIn: 300, // seconds
-            // For demo/testing only (REMOVE IN PRODUCTION)
-            ...(process.env.NODE_ENV === 'development' && { _demoOTP: otp })
+            expiresIn: 300,
+            _demoOTP: (process.env.NODE_ENV === 'development') ? devOTP : undefined
         });
 
     } catch (error) {
@@ -201,13 +237,40 @@ exports.verifyOTP = async (req, res) => {
             });
 
             if (!citizen) {
-                return res.status(400).json({
-                    success: false,
-                    error: {
-                        code: 'USER_NOT_FOUND',
-                        message: 'User not found. Please register first.'
+                // For hackathon/demo performance, allow easy registration in bypass mode if user doesn't exist
+                console.log('🔥 New user in Firebase bypass mode - proceeding to register');
+
+                const { userData } = req.body;
+                let fullName, dateOfBirth, gender, address;
+
+                if (userData) {
+                    fullName = userData.fullName;
+                    dateOfBirth = new Date(userData.dateOfBirth);
+                    gender = userData.gender;
+                    address = userData.address;
+                } else {
+                    const aadhaarData = mockAadhaarFetch(aadharNumber);
+                    fullName = aadhaarData.fullName;
+                    dateOfBirth = new Date(aadhaarData.dateOfBirth);
+                    gender = aadhaarData.gender;
+                    address = aadhaarData.address;
+                }
+
+                citizen = await prisma.citizen.create({
+                    data: {
+                        aadharNumber,
+                        aadharHash,
+                        fullName,
+                        mobileNumber: req.body.mobileNumber || `910000${aadharNumber.slice(-4)}`,
+                        dateOfBirth,
+                        gender,
+                        address,
+                        email: userData?.email || null,
+                        isVerified: true,
+                        lastLoginAt: new Date()
                     }
                 });
+                await logAudit(citizen.aadharNumber, 'USER_REGISTERED_FIREBASE', req);
             }
 
             // Update last login
@@ -279,46 +342,69 @@ exports.verifyOTP = async (req, res) => {
         }
 
         const aadharHash = hashAadhaar(aadharNumber);
-        const otpHash = hashOTP(otp);
 
         // Find citizen (might not exist if new user)
         let citizen = await prisma.citizen.findUnique({
             where: { aadharHash }
         });
 
-        // Find OTP record (for new users, search by mobile number; for existing, by citizenId)
         const isNewUser = !citizen;
-        const otpRecord = await prisma.oTPVerification.findFirst({
+        const targetMobile = isNewUser ? req.body.mobileNumber : citizen.mobileNumber;
+
+        // Check latest OTP record for this user/mobile to handle rate limiting and expiry
+        const latestOTP = await prisma.oTPVerification.findFirst({
             where: isNewUser ? {
-                mobileNumber: req.body.mobileNumber,
+                mobileNumber: targetMobile,
                 citizenId: null,
-                otpHash,
-                isVerified: false,
-                expiresAt: { gte: new Date() }
+                isVerified: false
             } : {
                 citizenId: citizen.aadharNumber,
-                otpHash,
-                isVerified: false,
-                expiresAt: { gte: new Date() }
+                isVerified: false
             },
             orderBy: { createdAt: 'desc' }
         });
 
-        if (!otpRecord) {
-            // Check if OTP expired
-            const latestOTP = await prisma.oTPVerification.findFirst({
-                where: isNewUser ? {
-                    mobileNumber: req.body.mobileNumber,
-                    citizenId: null,
-                    isVerified: false
-                } : {
-                    citizenId: citizen.aadharNumber,
-                    isVerified: false
-                },
-                orderBy: { createdAt: 'desc' }
+        if (!latestOTP) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    code: 'OTP_NOT_FOUND',
+                    message: 'No OTP found. Please request a new one'
+                }
             });
+        }
 
-            if (latestOTP) {
+        // Check if OTP attempt is expired in DB
+        if (latestOTP.expiresAt < new Date()) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    code: 'OTP_EXPIRED',
+                    message: 'OTP has expired. Please request a new one'
+                }
+            });
+        }
+
+        // Verify with Twilio or dev simulation
+        try {
+            let isValid = false;
+
+            if (process.env.NODE_ENV === 'development') {
+                // Check against dynamic dev hash stored in DB
+                const inputHash = hashOTP(otp);
+                if (inputHash === latestOTP.otpHash) {
+                    console.log('👷 Development dynamic OTP verified');
+                    isValid = true;
+                }
+            } else {
+                // Production: Verify with Twilio
+                const twilioResponse = await otpServiceVerify(targetMobile, otp);
+                if (twilioResponse.status === "approved") {
+                    isValid = true;
+                }
+            }
+
+            if (!isValid) {
                 // Increment attempts
                 await prisma.oTPVerification.update({
                     where: { otpId: latestOTP.otpId },
@@ -328,23 +414,12 @@ exports.verifyOTP = async (req, res) => {
                 const attemptsLeft = latestOTP.maxAttempts - latestOTP.attempts - 1;
 
                 if (attemptsLeft <= 0) {
-                    await logAudit(citizen?.aadharNumber, 'OTP_MAX_ATTEMPTS', req);
-
+                    await logAudit(citizen?.aadharNumber || aadharNumber, 'OTP_MAX_ATTEMPTS', req);
                     return res.status(400).json({
                         success: false,
                         error: {
                             code: 'MAX_ATTEMPTS',
                             message: 'Maximum attempts exceeded. Please request a new OTP'
-                        }
-                    });
-                }
-
-                if (latestOTP.expiresAt < new Date()) {
-                    return res.status(400).json({
-                        success: false,
-                        error: {
-                            code: 'OTP_EXPIRED',
-                            message: 'OTP has expired. Please request a new one'
                         }
                     });
                 }
@@ -357,19 +432,20 @@ exports.verifyOTP = async (req, res) => {
                     }
                 });
             }
-
+        } catch (twilioErr) {
+            console.error("Twilio Verify Exception:", twilioErr);
             return res.status(400).json({
                 success: false,
                 error: {
-                    code: 'OTP_NOT_FOUND',
-                    message: 'No OTP found. Please request a new one'
+                    code: 'INVALID_OTP',
+                    message: 'Incorrect or expired OTP'
                 }
             });
         }
 
-        // Mark OTP as verified
+        // Mark OTP as verified locally
         await prisma.oTPVerification.update({
-            where: { otpId: otpRecord.otpId },
+            where: { otpId: latestOTP.otpId },
             data: { isVerified: true }
         });
 
@@ -401,7 +477,7 @@ exports.verifyOTP = async (req, res) => {
                     aadharNumber,
                     aadharHash,
                     fullName,
-                    mobileNumber: otpRecord.mobileNumber, // read the persisted mobile number from OTP record
+                    mobileNumber: latestOTP.mobileNumber, // read the persisted mobile number from OTP record
                     dateOfBirth,
                     gender,
                     address,
@@ -437,7 +513,7 @@ exports.verifyOTP = async (req, res) => {
         );
 
         // Create session record
-        const tokenHash = hashOTP(token); // Reuse hash function
+        const tokenHash = hashOTP(token);
         await prisma.authSession.create({
             data: {
                 citizenId: citizen.aadharNumber,
@@ -489,7 +565,7 @@ exports.verifyOTP = async (req, res) => {
  */
 exports.resendOTP = async (req, res) => {
     try {
-        const { aadharNumber } = req.body;
+        const { aadharNumber, mobileNumber } = req.body;
 
         if (!validateAadhaar(aadharNumber)) {
             return res.status(400).json({
@@ -508,10 +584,11 @@ exports.resendOTP = async (req, res) => {
             where: { aadharHash }
         });
 
-        const citizenId = citizen?.aadharNumber || aadharNumber;
+        const citizenId = citizen?.aadharNumber;
+        const targetMobile = mobileNumber || citizen?.mobileNumber;
 
         const latestOTP = await prisma.oTPVerification.findFirst({
-            where: { citizenId },
+            where: citizenId ? { citizenId } : { mobileNumber: targetMobile, citizenId: null },
             orderBy: { createdAt: 'desc' }
         });
 
@@ -529,8 +606,12 @@ exports.resendOTP = async (req, res) => {
 
         // Invalidate previous OTPs
         await prisma.oTPVerification.updateMany({
-            where: {
+            where: citizenId ? {
                 citizenId,
+                isVerified: false
+            } : {
+                mobileNumber: targetMobile,
+                citizenId: null,
                 isVerified: false
             },
             data: { isVerified: true } // Mark as used

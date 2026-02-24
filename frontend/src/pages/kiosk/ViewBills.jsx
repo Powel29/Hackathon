@@ -10,7 +10,7 @@ import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock } from 'lucide-rea
 export function ViewBills() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedService } = useKioskStore();
+  const { selectedService, setBills: setStoreBills } = useKioskStore();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,6 +25,9 @@ export function ViewBills() {
         const fetchedBills = await billService.getUserBills(filters);
         console.log('📋 Fetched bills:', fetchedBills);
         setBills(fetchedBills || []);
+        if (setStoreBills) {
+          setStoreBills(fetchedBills || []);
+        }
       } catch (err) {
         console.error('❌ Error fetching bills:', err);
         setError('Failed to load bills');
@@ -167,8 +170,8 @@ export function ViewBills() {
                         variant="primary"
                         size="medium"
                         onClick={() => {
-                          if (bill.serviceType === 'MUNICIPAL') {
-                            navigate(`/kiosk/pay-property-tax/${bill.billId || bill.id}`);
+                          if (bill.serviceType === 'MUNICIPAL' || bill.type === 'MUNICIPAL') {
+                            navigate(`/kiosk/pay-property-tax/${bill.id}`);
                           } else {
                             navigate(`/kiosk/pay-bill/${bill.id}`);
                           }

@@ -5,7 +5,6 @@ import {
   Building2,
   Trash2,
   Home,
-  MapPin,
   Calendar,
   AlertCircle,
   CheckCircle,
@@ -14,7 +13,7 @@ import {
   Shield
 } from 'lucide-react';
 import { useKioskStore } from '../../store/useKioskStore';
-import { departmentService } from '../../services/api';
+import { departmentService, complaintService } from '../../services/api';
 
 export function MunicipalDashboard() {
   const navigate = useNavigate();
@@ -23,6 +22,31 @@ export function MunicipalDashboard() {
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [alerts, setAlerts] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+
+  // Civic & Cleanliness tips that rotate every minute
+  const civicTips = [
+    "🧹 Keep your surroundings clean: Proper waste disposal prevents diseases and improves community health.",
+    "♻️ Segregate your waste: Separating dry and wet waste at the source makes recycling significantly more efficient.",
+    "🌱 Plant more trees: Urban greenery reduces air pollution and helps maintain a cooler city temperature.",
+    "🚫 Say no to single-use plastics: Using cloth bags for shopping helps reduce landfill waste and protects the environment.",
+    "💧 Save water in public spaces: Report any leaking street taps or public fountain issues immediately to the helpline.",
+    "🚶 Walk or cycle for short distances: It's good for your health and helps reduce traffic congestion in our city.",
+    "🗑️ Always use public trash bins: Littering in parks and on streets can lead to heavy fines and public nuisance.",
+    "🚦 Follow traffic rules: Responsible driving ensures safety for pedestrians and reduces city-wide accidents.",
+    "🏘️ Participate in ward meetings: Your voice matters in the development and maintenance of your local neighborhood.",
+    "🐶 Be a responsible pet owner: Always clean up after your pets in public parks and residential walkways."
+  ];
+
+  // Rotate civic tip every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTipIndex((prevIndex) => (prevIndex + 1) % civicTips.length);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,10 +60,11 @@ export function MunicipalDashboard() {
         setLoading(true);
         console.log('🔍 Fetching municipal data for:', user.consumerId);
 
-        // Parallel fetch for account details and alerts
-        const [accountResponse, alertsResponse] = await Promise.all([
+        // Parallel fetch for account details, alerts, and complaints
+        const [accountResponse, alertsResponse, complaintsData] = await Promise.all([
           departmentService.getAccountDetails('MUNICIPAL', user.consumerId),
-          departmentService.getAlerts('MUNICIPAL')
+          departmentService.getAlerts('MUNICIPAL'),
+          complaintService.getUserComplaints({ serviceType: 'MUNICIPAL' })
         ]);
 
         console.log('✅ Municipal account response:', accountResponse);
@@ -51,6 +76,10 @@ export function MunicipalDashboard() {
 
         if (alertsResponse.success) {
           setAlerts(alertsResponse.alerts);
+        }
+
+        if (complaintsData) {
+          setComplaints(complaintsData);
         }
       } catch (error) {
         console.error('❌ Failed to fetch municipal data:', error);
@@ -177,86 +206,87 @@ export function MunicipalDashboard() {
           </div>
         </div>
 
-        {/* Garbage Collection Schedule */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-green-600" />
+        {/* Merged Civic Insights & Alerts Center */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          <div className="bg-gradient-to-r from-green-600 to-teal-600 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3 text-white">
+              <Shield className="w-6 h-6" />
+              <div>
+                <h3 className="font-bold">Civic Insights & Notices</h3>
+                <p className="text-[10px] opacity-80 uppercase tracking-widest font-bold">Official Municipal Feed</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Waste Collection</h3>
-              <p className="text-xs text-gray-600">Garbage pickup schedule</p>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] text-white font-bold backdrop-blur-md">
+              TIP {currentTipIndex + 1} OF {civicTips.length}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-gray-900">Regular Collection</p>
-                <CheckCircle className="w-5 h-5 text-green-600" />
+          <div className="p-5 flex-1 space-y-4">
+            {/* Rotating Civic Tip - Highlighted */}
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+              <div className="flex gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                  {civicTips[currentTipIndex]}
+                </p>
               </div>
-              <p className="text-xs text-gray-600">{garbageCollectionDay}</p>
-              <p className="text-xs text-gray-600 mt-1">Time: 6:00 AM - 9:00 AM</p>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-gray-900">Dry Waste Collection</p>
-                <Clock className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-xs text-gray-600">Every Tuesday</p>
-              <p className="text-xs text-gray-600 mt-1">Paper, Plastic, Glass, Metal</p>
-            </div>
+            {/* Department Alerts from API */}
+            <div className="space-y-3">
+              {alerts.length > 0 ? (
+                alerts.slice(0, 3).map((alert) => {
+                  const sev = (alert.severity || 'INFO').toUpperCase();
+                  const isHigh = sev === 'HIGH' || sev === 'DANGER';
+                  const isMed = sev === 'MEDIUM' || sev === 'WARNING';
+                  const isSuccess = sev === 'SUCCESS';
 
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-gray-900">Bulk Waste Pickup</p>
-                <Calendar className="w-5 h-5 text-purple-600" />
-              </div>
-              <p className="text-xs text-gray-600">First Saturday of Month</p>
-              <p className="text-xs text-gray-600 mt-1">Furniture, Electronics, etc.</p>
+                  return (
+                    <div key={alert.alertId} className={`border border-l-4 rounded-lg p-3 transition-all hover:brightness-95 animate-in fade-in slide-in-from-right-4 duration-500 ${isHigh
+                      ? 'bg-red-50 border-red-500/30 border-l-red-600'
+                      : isMed
+                        ? 'bg-amber-50 border-amber-500/30 border-l-amber-600'
+                        : isSuccess
+                          ? 'bg-emerald-50 border-emerald-500/30 border-l-emerald-600'
+                          : 'bg-blue-50 border-blue-500/30 border-l-blue-600'
+                      }`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <p className={`text-sm font-bold line-clamp-1 ${isHigh ? 'text-red-900' :
+                          isMed ? 'text-amber-900' :
+                            isSuccess ? 'text-emerald-900' :
+                              'text-blue-900'
+                          }`}>
+                          {alert.title}
+                        </p>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm ${isHigh ? 'bg-red-600 text-white' :
+                          isMed ? 'bg-amber-500 text-white' :
+                            isSuccess ? 'bg-emerald-600 text-white' :
+                              'bg-blue-600 text-white'
+                          }`}>
+                          {sev}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-relaxed line-clamp-2">{alert.message}</p>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                    <Building2 className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-blue-900 text-center">No Active Municipal Notices</p>
+                    <p className="text-[10px] text-blue-600 font-medium text-center">Your ward is currently operating with no reported disruptions.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Civic Facilities */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900">Civic Facilities Near You</h3>
-            <p className="text-xs text-gray-600">Community services and amenities</p>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { name: 'Community Hall', distance: '0.5 km', status: 'Available', color: 'green' },
-            { name: 'Public Library', distance: '0.8 km', status: 'Open', color: 'green' },
-            { name: 'Health Center', distance: '1.2 km', status: 'Open 24/7', color: 'blue' },
-            { name: 'Park & Recreation', distance: '0.3 km', status: 'Open', color: 'green' },
-            { name: 'Sports Complex', distance: '1.5 km', status: 'Available', color: 'green' },
-            { name: 'Swimming Pool', distance: '2.0 km', status: 'Closed', color: 'red' }
-          ].map((facility, index) => (
-            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <MapPin className="w-4 h-4 text-gray-600" />
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${facility.color === 'green' ? 'bg-green-100 text-green-700' :
-                  facility.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
-                  {facility.status}
-                </span>
-              </div>
-              <p className="text-sm font-semibold text-gray-900">{facility.name}</p>
-              <p className="text-xs text-gray-600 mt-1">{facility.distance} away</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Active Complaints/Requests */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -279,72 +309,118 @@ export function MunicipalDashboard() {
         </div>
 
         <div className="space-y-3">
-          {[
-            { type: 'Street Light', status: 'In Progress', date: 'Jan 28, 2026', color: 'blue' },
-            { type: 'Road Damage', status: 'Under Review', date: 'Jan 25, 2026', color: 'yellow' },
-            { type: 'Drainage Block', status: 'Resolved', date: 'Jan 20, 2026', color: 'green' }
-          ].map((complaint, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-              onClick={() => navigate('/kiosk/track-complaint')}>
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 ${complaint.color === 'green' ? 'bg-green-100' :
-                  complaint.color === 'blue' ? 'bg-blue-100' :
-                    'bg-yellow-100'
-                  } rounded-lg flex items-center justify-center`}>
-                  <FileText className={`w-4 h-4 ${complaint.color === 'green' ? 'text-green-600' :
-                    complaint.color === 'blue' ? 'text-blue-600' :
-                      'text-yellow-600'
-                    }`} />
+          {complaints.length > 0 ? (
+            complaints.slice(0, 3).map((complaint) => {
+              const statusLower = complaint.status?.toLowerCase();
+              const color = statusLower === 'resolved' ? 'green' :
+                statusLower === 'pending' ? 'yellow' :
+                  'blue';
+
+              return (
+                <div key={complaint.complaintId || complaint.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/kiosk/track-complaint/${complaint.complaintId || complaint.id}`)}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 ${color === 'green' ? 'bg-green-100' :
+                      color === 'blue' ? 'bg-blue-100' :
+                        'bg-yellow-100'
+                      } rounded-lg flex items-center justify-center`}>
+                      <FileText className={`w-4 h-4 ${color === 'green' ? 'text-green-600' :
+                        color === 'blue' ? 'text-blue-600' :
+                          'text-yellow-600'
+                        }`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{complaint.title || complaint.complaintType}</p>
+                      <p className="text-xs text-gray-600">
+                        {new Date(complaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${color === 'green' ? 'bg-green-100 text-green-700' :
+                    color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                    {complaint.status}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{complaint.type}</p>
-                  <p className="text-xs text-gray-600">{complaint.date}</p>
-                </div>
-              </div>
-              <span className={`text-xs font-semibold px-2 py-1 rounded-full ${complaint.color === 'green' ? 'bg-green-100 text-green-700' :
-                complaint.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                  'bg-yellow-100 text-yellow-700'
-                }`}>
-                {complaint.status}
-              </span>
+              );
+            })
+          ) : (
+            <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+              <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No active requests found.</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* Upcoming Events & Notices */}
+      {/* Waste Collection Full Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">Municipal Notices & Events</h3>
-        <div className="space-y-3">
-          {alerts.length > 0 ? (
-            alerts.map((alert) => (
-              <div key={alert.alertId} className={`border rounded-lg p-3 ${alert.severity === 'HIGH' ? 'bg-red-50 border-red-200' :
-                  alert.severity === 'MEDIUM' ? 'bg-yellow-50 border-yellow-200' :
-                    'bg-blue-50 border-blue-200'
-                }`}>
-                <div className="flex items-start gap-3">
-                  <AlertCircle className={`w-4 h-4 mt-0.5 ${alert.severity === 'HIGH' ? 'text-red-600' :
-                      alert.severity === 'MEDIUM' ? 'text-yellow-600' :
-                        'text-blue-600'
-                    }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">{alert.title}</p>
-                    <p className="text-xs text-gray-600 mt-1">{alert.message}</p>
-                    {alert.startsAt && (
-                      <p className="text-[10px] text-gray-400 mt-2">
-                        {new Date(alert.startsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-              <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No active notices at this time.</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <Trash2 className="w-6 h-6 text-green-600" />
             </div>
-          )}
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Waste Collection Services</h3>
+              <p className="text-sm text-gray-600">Schedule and waste management information</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/kiosk/register-complaint')}
+            className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors"
+          >
+            <AlertCircle className="w-4 h-4" />
+            Report Missed Pickup
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="p-2 bg-white rounded-lg shadow-sm">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-green-700">Daily Routine</span>
+            </div>
+            <p className="font-bold text-gray-900">Regular Collection</p>
+            <p className="text-xs text-gray-600 mt-1">{garbageCollectionDay}</p>
+            <div className="mt-4 pt-3 border-t border-green-100">
+              <p className="text-xs font-semibold text-gray-500">Collection window:</p>
+              <p className="text-sm font-bold text-green-700">6:00 AM - 9:00 AM</p>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="p-2 bg-white rounded-lg shadow-sm">
+                <Clock className="w-5 h-5 text-blue-600" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Weekly Special</span>
+            </div>
+            <p className="font-bold text-gray-900">Dry Waste Collection</p>
+            <p className="text-xs text-gray-600 mt-1">Every Tuesday morning</p>
+            <div className="mt-4 pt-3 border-t border-blue-100">
+              <p className="text-xs font-semibold text-gray-500">Items Accepted:</p>
+              <p className="text-sm font-bold text-blue-700 line-clamp-1">Plastic, Glass, Metal, Paper</p>
+            </div>
+          </div>
+
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="p-2 bg-white rounded-lg shadow-sm">
+                <Calendar className="w-5 h-5 text-purple-600" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Monthly Bulk</span>
+            </div>
+            <p className="font-bold text-gray-900">Bulk Waste Pickup</p>
+            <p className="text-xs text-gray-600 mt-1">1st Saturday of every month</p>
+            <div className="mt-4 pt-3 border-t border-purple-100">
+              <p className="text-xs font-semibold text-gray-500">Instructions:</p>
+              <p className="text-sm font-bold text-purple-700">Keep segregated outside gate</p>
+            </div>
+          </div>
         </div>
       </div>
 

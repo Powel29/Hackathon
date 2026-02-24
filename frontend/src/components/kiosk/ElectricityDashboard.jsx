@@ -21,6 +21,30 @@ export function ElectricityDashboard() {
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [alerts, setAlerts] = useState([]);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+
+  // Energy saving tips that rotate every minute
+  const energyTips = [
+    "💡 Switch to LED bulbs: They use 75% less energy and last 25 times longer than incandescent lighting.",
+    "🔌 Unplug phantom loads: Electronic devices continue to draw power even when turned off if they are plugged in.",
+    "🌡️ Set your AC to 24°C: This is the optimal temperature for comfort and energy efficiency.",
+    "🧼 Clean your AC filters regularly: Dirty filters can increase energy consumption by up to 15%.",
+    "☀️ Use natural light: Open curtains during the day to reduce the need for artificial lighting.",
+    "👕 Wash clothes in cold water: About 90% of the energy used by washing machines goes to heating the water.",
+    "🧊 Keep your fridge full: A full refrigerator stays cool more efficiently than an empty one.",
+    "💻 Enable power-saving modes: Use sleep/hibernate modes on your computer and monitor during breaks.",
+    "🚿 Install a water-efficient showerhead: It saves water and the energy used to heat it.",
+    "🥘 Use the right size burner: Matching your pot size to the stove burner prevents wasted heat."
+  ];
+
+  // Rotate energy tip every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTipIndex((prevIndex) => (prevIndex + 1) % energyTips.length);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,11 +91,17 @@ export function ElectricityDashboard() {
   const connectionType = accountData?.connectionType || 'Residential';
   const lastReadingDate = accountData?.lastReadingDate
     ? new Date(accountData.lastReadingDate).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+      month: 'short', day: 'numeric', year: 'numeric'
     })
     : 'N/A';
+
+  // Format consumption history for the chart
+  const consumptionData = accountData?.consumptionHistory?.slice(0, 7).reverse().map(item => ({
+    value: item.value,
+    day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })
+  })) || [];
+
+  const maxUsage = Math.max(...consumptionData.map(d => d.value), 10);
 
   if (loading) {
     return (
@@ -145,7 +175,7 @@ export function ElectricityDashboard() {
 
       {/* Electricity-specific Features */}
       <div className="grid grid-cols-2 gap-6">
-        {/* Current Consumption Graph Placeholder */}
+        {/* Current Consumption Graph - Live Data */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -157,94 +187,112 @@ export function ElectricityDashboard() {
             </div>
           </div>
 
-          {/* Simple Bar Chart Visualization */}
           <div className="flex items-end justify-between gap-2 h-40">
-            {[6.5, 7.2, 8.1, 7.8, 9.2, 8.5, 8.2].map((value, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                <div
-                  className="w-full bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-lg transition-all hover:from-yellow-600 hover:to-yellow-400"
-                  style={{ height: `${(value / 10) * 100}%` }}
-                ></div>
-                <span className="text-xs text-gray-600">
-                  {[t('electricity.mondayShort'), t('electricity.tuesdayShort'), t('electricity.wednesdayShort'), t('electricity.thursdayShort'), t('electricity.fridayShort'), t('electricity.saturdayShort'), t('electricity.sundayShort')][index]}
-                </span>
+            {consumptionData.length > 0 ? (
+              consumptionData.map((item, index) => (
+                <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                  <div
+                    className="w-full bg-gradient-to-t from-yellow-500 to-yellow-300 rounded-t-lg transition-all hover:from-yellow-600 hover:to-yellow-400"
+                    style={{ height: `${(item.value / maxUsage) * 100}%` }}
+                  ></div>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase">{item.day}</span>
+                </div>
+              ))
+            ) : (
+              <div className="w-full h-full flex items-center justify-center border-2 border-dashed border-gray-100 rounded-xl">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">No Recent Consumption Data</p>
               </div>
-            ))}
+            )}
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">{t('electricity.weeklyAverage')}</span>
-              <span className="font-bold text-gray-900">{t('electricity.weeklyAverageValue', { value: '7.9 kWh/day' })}</span>
+              <span className="text-gray-600 font-medium">Daily Avg Target:</span>
+              <span className="font-bold text-green-600">Under 8.0 kWh</span>
             </div>
           </div>
         </div>
 
-        {/* Power Outage & Maintenance Alerts */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">{t('electricity.powerAlerts')}</h3>
-              <p className="text-xs text-gray-600">{t('electricity.outagesAndMaintenance')}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {alerts.length > 0 ? (
-              alerts.map((alert) => (
-                <div key={alert.alertId} className={`border rounded-lg p-3 ${alert.severity === 'HIGH' ? 'bg-red-50 border-red-200' :
-                    alert.severity === 'MEDIUM' ? 'bg-yellow-50 border-yellow-200' :
-                      'bg-blue-50 border-blue-200'
-                  }`}>
-                  <div className="flex items-start gap-3">
-                    {alert.severity === 'HIGH' || alert.severity === 'MEDIUM' ? (
-                      <Clock className={`w-4 h-4 mt-0.5 ${alert.severity === 'HIGH' ? 'text-red-600' : 'text-yellow-600'
-                        }`} />
-                    ) : (
-                      <Activity className="w-4 h-4 text-blue-600 mt-0.5" />
-                    )}
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{alert.title}</p>
-                      <p className="text-xs text-gray-600 mt-1">{alert.message}</p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="flex items-start gap-3">
-                  <Activity className="w-4 h-4 text-green-600 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">{t('electricity.systemStatus')}</p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {t('electricity.allSystemsOperational')}
-                    </p>
-                  </div>
-                </div>
+        {/* Merged Electricity Safety & Alerts Center */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3 text-white">
+              <Shield className="w-6 h-6" />
+              <div>
+                <h3 className="font-bold">Grid Safety & Status</h3>
+                <p className="text-[10px] opacity-80 uppercase tracking-widest font-bold">Live Power Updates</p>
               </div>
-            )}
+            </div>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] text-white font-bold backdrop-blur-md">
+              TIP {currentTipIndex + 1} OF {energyTips.length}
+            </div>
+          </div>
+
+          <div className="p-5 flex-1 space-y-4 overflow-y-auto max-h-[300px]">
+            {/* Rotating Energy Tip - Highlighted */}
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+              <div className="flex gap-3">
+                <Zap className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                  {energyTips[currentTipIndex]}
+                </p>
+              </div>
+            </div>
+
+            {/* Department Alerts from API */}
+            <div className="space-y-3">
+              {alerts.length > 0 ? (
+                alerts.map((alert) => {
+                  const sev = (alert.severity || 'INFO').toUpperCase();
+                  const isHigh = sev === 'HIGH' || sev === 'DANGER';
+                  const isMed = sev === 'MEDIUM' || sev === 'WARNING';
+                  const isSuccess = sev === 'SUCCESS';
+
+                  return (
+                    <div key={alert.alertId} className={`border border-l-4 rounded-lg p-3 transition-all hover:brightness-95 animate-in fade-in slide-in-from-right-4 duration-500 ${isHigh
+                      ? 'bg-red-50 border-red-500/30 border-l-red-600'
+                      : isMed
+                        ? 'bg-amber-50 border-amber-500/30 border-l-amber-600'
+                        : isSuccess
+                          ? 'bg-emerald-50 border-emerald-500/30 border-l-emerald-600'
+                          : 'bg-blue-50 border-blue-500/30 border-l-blue-600'
+                      }`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <p className={`text-sm font-bold line-clamp-1 ${isHigh ? 'text-red-900' :
+                          isMed ? 'text-amber-900' :
+                            isSuccess ? 'text-emerald-900' :
+                              'text-blue-900'
+                          }`}>
+                          {alert.title}
+                        </p>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm ${isHigh ? 'bg-red-600 text-white' :
+                          isMed ? 'bg-amber-500 text-white' :
+                            isSuccess ? 'bg-emerald-600 text-white' :
+                              'bg-blue-600 text-white'
+                          }`}>
+                          {sev}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-relaxed line-clamp-2">{alert.message}</p>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="bg-green-50 border-2 border-dashed border-green-200 rounded-xl p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                    <Activity className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-green-900 text-center">Power Grid Fully Operational</p>
+                    <p className="text-[10px] text-green-600 font-medium text-center">No outages or maintenance reported in your sector.</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Energy Saving Tips */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900">{t('electricity.energySavingTip')}</h3>
-            <p className="text-xs text-gray-600">{t('electricity.energySavingPractices')}</p>
-          </div>
-        </div>
-        <p className="text-sm text-gray-700">
-          💡 {t('electricity.ledBulbTip', { min: 300, max: 400 })}
-        </p>
-      </div>
       {/* Access Denied Modal */}
       {accessDenied && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

@@ -168,14 +168,15 @@ model Complaint {
 }
 
 model ComplaintStatusHistory {
-  historyId   String    @id @default(uuid()) @db.Uuid
-  complaintId String    @db.Uuid
-  oldStatus   String?   @db.VarChar(20)
-  newStatus   String    @db.VarChar(20)
-  changedBy   String?   @db.VarChar(12)
-  notes       String?
-  changedAt   DateTime  @default(now())
-  complaint   Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
+  historyId      String    @id @default(uuid()) @db.Uuid
+  complaintId    String    @db.Uuid
+  oldStatus      String?   @db.VarChar(20)
+  newStatus      String    @db.VarChar(20)
+  changedBy      String?   @db.VarChar(12)
+  notes          String?   @db.Text // Internal Notes
+  citizenMessage String?   @db.Text // Visible to Citizen
+  changedAt      DateTime  @default(now())
+  complaint      Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
 
   @@index([complaintId])
   @@map("complaint_status_history")
@@ -248,6 +249,22 @@ model KioskLog {
   citizen   Citizen? @relation(fields: [citizenId], references: [aadharNumber])
 
   @@map("kiosk_logs")
+}
+
+model Kiosk {
+  id              String   @id @db.VarChar(30)
+  location        String   @db.VarChar(150)
+  status          String   @default("online") @db.VarChar(20) // online, offline, maintenance
+  lastTransaction String?  @db.VarChar(50)
+  todayCount      Int      @default(0)
+  uptime          String?  @db.VarChar(10)
+  printer         String   @default("ok") @db.VarChar(20) // ok, low_paper, error
+  network         String   @default("excellent") @db.VarChar(20) // excellent, good, poor
+  lastSeen        DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("kiosks")
 }
 
 model ConnectionApplication {

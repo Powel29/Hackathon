@@ -1,3 +1,4 @@
+// Prisma Client updated with Kiosk model
 const prisma = require('../config/prisma');
 const generateSignedUrl = require('../services/s3Download.service');
 
@@ -10,7 +11,12 @@ const getCitizenMobile = (citizen) => citizen ? citizen.mobileNumber : 'Unknown'
 exports.getComplaints = async (req, res) => {
     try {
         const complaints = await prisma.complaint.findMany({
-            include: { citizen: true, statusHistory: true }
+            include: {
+                citizen: true,
+                statusHistory: {
+                    orderBy: { changedAt: 'desc' }
+                }
+            }
         });
 
         const formatted = complaints.map(c => ({
@@ -26,8 +32,8 @@ exports.getComplaints = async (req, res) => {
             status: c.status.toLowerCase().replace(/\s+/g, '_'),
             location: c.location || '',
             assignedTo: c.assignedTo || '',
-            adminNotes: c.resolutionNote || '',
-            citizenUpdateMessage: '',
+            adminNotes: '', // Admin notes are now history-only or we'd need a separate field on Complaint
+            citizenUpdateMessage: c.resolutionNote || '',
             attachments: [],
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
@@ -35,8 +41,9 @@ exports.getComplaints = async (req, res) => {
             statusHistory: c.statusHistory.map(h => ({
                 status: h.newStatus,
                 timestamp: h.changedAt,
-                note: h.notes || '',
-                by: h.changedBy || 'System'
+                note: h.notes || '', // Internal
+                citizenMessage: h.citizenMessage || '', // Public
+                by: h.changedBy || 'Admin'
             }))
         }));
 
@@ -53,7 +60,7 @@ exports.updateComplaint = async (req, res) => {
     try {
         const updateData = {};
         if (status) updateData.status = status;
-        if (adminNotes) updateData.resolutionNote = adminNotes;
+        if (citizenMessage) updateData.resolutionNote = citizenMessage; // Use resolutionNote for the latest citizen update
         if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
 
         const complaint = await prisma.complaint.update({
@@ -61,16 +68,17 @@ exports.updateComplaint = async (req, res) => {
             data: updateData
         });
 
-        if (status) {
-            await prisma.complaintStatusHistory.create({
-                data: {
-                    complaintId: id,
-                    newStatus: status,
-                    changedBy: by || 'Admin',
-                    notes: adminNotes || ''
-                }
-            });
-        }
+        // Always create a history entry if something changed
+        await prisma.complaintStatusHistory.create({
+            data: {
+                complaintId: id,
+                newStatus: status || complaint.status,
+                oldStatus: complaint.status,
+                changedBy: by || 'Admin',
+                notes: adminNotes || '',
+                citizenMessage: citizenMessage || ''
+            }
+        });
 
         res.json({ success: true, data: complaint });
     } catch (error) {
@@ -496,5 +504,17 @@ exports.deleteAlert = async (req, res) => {
     } catch (error) {
         console.error('deleteAlert error:', error);
         res.status(500).json({ success: false, message: 'Failed to delete alert' });
+    }
+};
+
+exports.getKiosks = async (req, res) => {
+    try {
+        const kiosks = await prisma.kiosk.findMany({
+            orderBy: { id: 'asc' }
+        });
+        res.json({ success: true, data: kiosks });
+    } catch (error) {
+        console.error('getKiosks error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch kiosks' });
     }
 };

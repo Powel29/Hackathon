@@ -3,7 +3,9 @@ import { router } from './routes';
 import { useEffect } from 'react';
 import { useKioskStore } from './store/useKioskStore';
 import { SessionWarning } from './components/kiosk/SessionWarning';
+import { kioskService } from './services/api/kiosk.service';
 import { useTranslation } from 'react-i18next';
+import { Toaster } from 'sonner';
 import './i18n';
 
 function App() {
@@ -37,7 +39,8 @@ function App() {
             inactivityTimer = setTimeout(() => {
                 resetSession();
                 window.location.href = '/kiosk';
-            }, 960000);        };
+            }, 960000);
+        };
 
         // Reset timers on user activity
         const events = ['mousedown', 'touchstart', 'keypress', 'scroll'];
@@ -56,9 +59,23 @@ function App() {
         };
     }, [resetSession, setShowSessionWarning]);
 
+    // Kiosk Background Heartbeat
+    useEffect(() => {
+        // Initial ping
+        kioskService.sendHeartbeat();
+
+        // Every 30 seconds
+        const interval = setInterval(() => {
+            kioskService.sendHeartbeat();
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <>
             <RouterProvider router={router} />
+            <Toaster richColors position="top-right" />
             {showSessionWarning && <SessionWarning />}
         </>
     );

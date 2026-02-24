@@ -15,6 +15,7 @@ import { TrackComplaint } from "./pages/kiosk/TrackComplaint";
 import { NewConnection } from "./pages/kiosk/NewConnection";
 import { TrackNewConnection } from "./pages/kiosk/TrackNewConnection";
 import { WaterTankerBooking } from "./pages/kiosk/WaterTankerBooking";
+import { GasCylinderBooking } from "./pages/kiosk/GasCylinderBooking";
 import { TrackRequest } from "./pages/kiosk/TrackRequest";
 import { AdminDashboard } from "./pages/kiosk/AdminDashboard";
 import { PropertyTaxPayment } from "./pages/kiosk/PropertyTaxPayment";
@@ -86,6 +87,14 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <WaterTankerBooking />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/kiosk/gas-cylinder-booking",
+        element: (
+            <ProtectedRoute>
+                <GasCylinderBooking />
             </ProtectedRoute>
         ),
     },

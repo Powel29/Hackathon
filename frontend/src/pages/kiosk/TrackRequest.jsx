@@ -184,10 +184,41 @@ export function TrackRequest() {
                                         </div>
                                     )}
 
+                                    {selectedRequest.requestType === 'GAS_CYLINDER_BOOKING' && selectedRequest.details && (
+                                        <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                                            <h3 className="flex items-center gap-2 font-bold text-orange-800 mb-3">
+                                                <Flame className="w-5 h-5 text-orange-600" />
+                                                Gas Booking Details
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                <div className="flex justify-between border-b border-orange-200 pb-2">
+                                                    <span className="text-orange-600">Cylinder Type</span>
+                                                    <span className="font-semibold text-orange-900 uppercase">{selectedRequest.details.cylinderType?.replace('_', ' ')}</span>
+                                                </div>
+                                                <div className="flex justify-between border-b border-orange-200 pb-2">
+                                                    <span className="text-orange-600">Delivery Mode</span>
+                                                    <span className="font-semibold text-orange-900 capitalize">{selectedRequest.details.deliveryType}</span>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <span className="text-orange-600 block mb-1">Scheduled Date/Slot</span>
+                                                    <span className="font-semibold text-orange-900">
+                                                        {selectedRequest.details.deliveryType === 'urgent' ? 'Urgent Delivery' : `${selectedRequest.details.deliveryDate} | ${selectedRequest.details.deliverySlot}`}
+                                                    </span>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <span className="text-orange-600 block mb-1 text-xs">Delivery Address</span>
+                                                    <p className="font-semibold text-orange-900 text-xs">
+                                                        {selectedRequest.details.houseNumber}, {selectedRequest.details.street}, {selectedRequest.details.city}, {selectedRequest.details.state} - {selectedRequest.details.pincode}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Add more specific detail views for other request types here */}
 
                                     {/* Raw Details Fallback */}
-                                    {selectedRequest.requestType !== 'WATER_TANKER' && (
+                                    {selectedRequest.requestType !== 'WATER_TANKER' && selectedRequest.requestType !== 'GAS_CYLINDER_BOOKING' && (
                                         <div className="bg-gray-50 p-4 rounded-lg">
                                             <pre className="text-xs text-gray-600 overflow-auto">
                                                 {JSON.stringify(selectedRequest.details, null, 2)}
@@ -204,12 +235,15 @@ export function TrackRequest() {
                                                     const res = await apiModule.documentService.getRelatedDocuments(selectedRequest.requestId || selectedRequest.id);
                                                     if (res.success && res.documents?.length > 0) {
                                                         const receipt = res.documents.find(d =>
-                                                            d.documentType === 'APPLICATION_RECEIPT' || d.documentType === 'PAYMENT_RECEIPT'
+                                                            d.documentType === 'APPLICATION_RECEIPT' ||
+                                                            d.documentType === 'PAYMENT_RECEIPT' ||
+                                                            d.documentType === 'GAS_BOOKING_RECEIPT'
                                                         );
                                                         if (receipt && receipt.url) {
                                                             window.open(receipt.url, '_blank');
                                                         } else {
-                                                            alert("Document might still be generating. Please try again later.");
+                                                            // If no specific receipt, open the first available document
+                                                            window.open(res.documents[0].url, '_blank');
                                                         }
                                                     } else {
                                                         alert("No attached documents found for this request.");

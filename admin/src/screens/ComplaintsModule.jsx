@@ -143,14 +143,15 @@ function ComplaintDetailModal({ complaint, onClose }) {
                 <div style={{ marginBottom: 8 }}>
                     <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 14 }}>📋 Status History</div>
                     <div className="timeline">
-                        {[...(complaint.statusHistory || [])].reverse().map((h, i) => (<div key={i} className="timeline-item">
-                            <div className={`timeline-dot ${h.status === 'resolved' ? 'green' : h.status === 'in_progress' ? '' : h.status === 'open' ? 'orange' : 'gray'}`} />
+                        {(complaint.statusHistory || []).map((h, i) => (<div key={i} className="timeline-item">
+                            <div className={`timeline-dot ${h.status?.toLowerCase() === 'resolved' ? 'green' : h.status?.toLowerCase() === 'in_progress' ? '' : h.status?.toLowerCase() === 'open' ? 'orange' : 'gray'}`} />
                             <div className="timeline-content">
                                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
                                     {h.status.replace('_', ' ')}
                                     <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 6 }}>by {h.by}</span>
                                 </div>
-                                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{h.note}</div>
+                                {h.note && <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>🔒 {h.note}</div>}
+                                {h.citizenMessage && <div style={{ fontSize: 11, color: 'var(--primary)', marginTop: 2, fontWeight: 500 }}>📣 {h.citizenMessage}</div>}
                                 <div className="timeline-time">{new Date(h.timestamp).toLocaleString('en-IN')}</div>
                             </div>
                         </div>))}
