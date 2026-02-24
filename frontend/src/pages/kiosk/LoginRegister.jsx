@@ -182,6 +182,11 @@ export function LoginRegister() {
             setMode('register');
             setLoginType(null);
           }
+        } else if (response.code === 'RATE_LIMIT') {
+          toast.error(response.message || 'Access Restricted', {
+            description: 'Due to security reasons, too many OTP requests have been made. Please try again after some time.',
+            duration: 6000,
+          });
         } else {
           toast.error(response.message || t('authentication.errorSendingOTP'));
         }
@@ -273,7 +278,14 @@ export function LoginRegister() {
           navigate('/kiosk/service-selection');
         }
       } else {
-        toast.error(verifyResponse.message || t('authentication.invalidOTP'));
+        if (verifyResponse.code === 'MAX_ATTEMPTS') {
+          toast.error(verifyResponse.message, {
+            description: 'Please go back and request a new OTP.',
+            duration: 5000,
+          });
+        } else {
+          toast.error(verifyResponse.message || t('authentication.invalidOTP'));
+        }
       }
     } catch (error) {
       console.error("❌ OTP Verify Error:", error);

@@ -11,7 +11,8 @@ import {
   Clock,
   AlertCircle,
   User,
-  Phone
+  Phone,
+  MessageSquare
 } from 'lucide-react';
 import { complaintService } from '../../services/api';
 
@@ -219,6 +220,17 @@ export function TrackComplaint() {
                     </p>
                   </div>
 
+                  {selectedComplaint.resolutionNote && (
+                    <div className="pb-3 border-b border-gray-100 italic">
+                      <span className="text-sm text-[#0066CC] font-bold block mb-2 flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" /> {t('complaints.adminNote') || 'Official Comment'}:
+                      </span>
+                      <p className="text-sm text-[#212529] bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                        {selectedComplaint.resolutionNote}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                     <span className="text-sm text-gray-700">{t('complaints.createdOn')}:</span>
                     <span className="text-sm font-bold text-[#212529]">
@@ -275,26 +287,26 @@ export function TrackComplaint() {
               </h3>
 
               <div className="relative">
-                {selectedComplaint.timeline?.map((event, index) => (
+                {(selectedComplaint.statusHistory || []).map((event, index) => (
                   <div key={index} className="relative pb-6 last:pb-0">
-                    {index !== selectedComplaint.timeline.length - 1 && (
+                    {index !== (selectedComplaint.statusHistory?.length - 1) && (
                       <div className="absolute left-3 top-7 bottom-0 w-0.5 bg-gray-200"></div>
                     )}
-
                     <div className="flex gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${getStatusColor(event.status)}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${getStatusColor(event.newStatus?.toLowerCase())}`}>
                         <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
-
                       <div className="flex-1">
                         <p className="text-sm font-bold text-[#212529] capitalize mb-1">
-                          {t(`complaints.${getStatusTranslationKey(event.status)}`) || event.status}
+                          {t(`complaints.${getStatusTranslationKey(event.newStatus?.toLowerCase())}`) || event.newStatus?.replace('_', ' ')}
                         </p>
-                        <p className="text-xs text-gray-600 mb-1">
-                          {event.note}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(event.timestamp).toLocaleDateString('en-IN', {
+                        {event.citizenMessage && (
+                          <p className="text-xs text-gray-700 bg-blue-50/50 p-2 rounded border border-blue-100/50 mb-1 leading-relaxed">
+                            {event.citizenMessage}
+                          </p>
+                        )}
+                        <p className="text-[10px] font-medium text-gray-400">
+                          {new Date(event.changedAt).toLocaleDateString('en-IN', {
                             day: '2-digit',
                             month: 'short',
                             hour: '2-digit',
@@ -305,6 +317,9 @@ export function TrackComplaint() {
                     </div>
                   </div>
                 ))}
+                {(!selectedComplaint.statusHistory || selectedComplaint.statusHistory.length === 0) && (
+                  <p className="text-sm text-gray-500 italic">No history available</p>
+                )}
               </div>
             </div>
           </div>

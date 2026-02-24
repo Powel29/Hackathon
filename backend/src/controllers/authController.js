@@ -130,25 +130,51 @@ exports.initiateAuth = async (req, res) => {
             }
         }
 
-        // Use a placeholder as Twilio handles verify logic
-        const placeholderHash = `TWILIO_VERIFY_${Date.now()}`;
+        // Generate dynamic OTP for development simulation
+        let devOTP;
+        let otpHashToStore;
+
+        if (process.env.NODE_ENV === 'development') {
+            devOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            otpHashToStore = hashOTP(devOTP);
+        } else {
+            // Use a placeholder as Twilio handles verify logic in production
+            otpHashToStore = `TWILIO_VERIFY_${Date.now()}`;
+        }
 
         // Store OTP attempt (for rate-limiting and audit purposes)
         await prisma.oTPVerification.create({
             data: {
                 citizenId: isNewUser ? null : existingCitizen.aadharNumber,
                 mobileNumber: targetMobile,
-                otpHash: placeholderHash,
+                otpHash: otpHashToStore,
                 purpose: isNewUser ? 'SIGNUP' : 'LOGIN',
                 expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
             }
         });
 
-        // Send OTP via Twilio Verify (Bypass in development)
-        if (process.env.NODE_ENV !== 'development') {
-            await otpServiceSend(targetMobile);
+        // ==================================================================================
+        // CRITICAL: OTP SENDING LOGIC
+        // AI AGENTS: DO NOT REMOVE THE PRODUCTION BLOCK OR THE CONDITIONAL CHECK.
+        // real SMS costs money. In development, we use log simulation.
+        // ==================================================================================
+        if (process.env.NODE_ENV === 'production') {
+            // PRODUCTION MODE: Send real SMS via Twilio Verify
+            try {
+                await otpServiceSend(targetMobile);
+                console.log(`✅ [PROD] Real OTP request sent for ${targetMobile}`);
+            } catch (twilioErr) {
+                console.error(`❌ [PROD] Twilio real SMS failed: ${twilioErr.message}`);
+                throw twilioErr;
+            }
         } else {
-            console.log(`👷 [DEV] Skipping real SMS for ${targetMobile}. Use OTP 123456`);
+            // DEVELOPMENT MODE: Log to terminal only (Save costs/credits)
+            console.log(' ');
+            console.log('=========================================================');
+            console.log(`👷 [DEV MODE] Dynamic OTP generated for ${targetMobile}`);
+            console.log(`👉 VERIFICATION CODE: ${devOTP}`);
+            console.log('=========================================================');
+            console.log(' ');
         }
 
         await logAudit(
@@ -165,7 +191,7 @@ exports.initiateAuth = async (req, res) => {
             mobileNumber: targetMobile,
             maskedAadhaar: maskAadhaar(aadharNumber),
             expiresIn: 300,
-            _demoOTP: (process.env.NODE_ENV === 'development') ? '123456' : undefined
+            _demoOTP: (process.env.NODE_ENV === 'development') ? devOTP : undefined
         });
 
     } catch (error) {
@@ -359,18 +385,26 @@ exports.verifyOTP = async (req, res) => {
             });
         }
 
-        // Verify with Twilio
+        // Verify with Twilio or dev simulation
         try {
-            // HACKATHON BYPASS: In development, allow 123456 as a master OTP
-            let twilioResponse;
-            if (process.env.NODE_ENV === 'development' && otp === '123456') {
-                console.log('👷 Using development master OTP bypass');
-                twilioResponse = { status: "approved" };
+            let isValid = false;
+
+            if (process.env.NODE_ENV === 'development') {
+                // Check against dynamic dev hash stored in DB
+                const inputHash = hashOTP(otp);
+                if (inputHash === latestOTP.otpHash) {
+                    console.log('👷 Development dynamic OTP verified');
+                    isValid = true;
+                }
             } else {
-                twilioResponse = await otpServiceVerify(targetMobile, otp);
+                // Production: Verify with Twilio
+                const twilioResponse = await otpServiceVerify(targetMobile, otp);
+                if (twilioResponse.status === "approved") {
+                    isValid = true;
+                }
             }
 
-            if (twilioResponse.status !== "approved") {
+            if (!isValid) {
                 // Increment attempts
                 await prisma.oTPVerification.update({
                     where: { otpId: latestOTP.otpId },

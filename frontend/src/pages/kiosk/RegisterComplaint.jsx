@@ -10,7 +10,7 @@ import { complaintService, documentService } from '../../services/api';
 export function RegisterComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { addComplaint, selectedService } = useKioskStore();
+  const { addComplaint, selectedService, fetchComplaints } = useKioskStore();
   const [description, setDescription] = useState('');
   const [selectedIssue, setSelectedIssue] = useState('');
   const [files, setFiles] = useState([]);
@@ -246,9 +246,8 @@ export function RegisterComplaint() {
       const complaintData = {
         serviceType: selectedService.toUpperCase(),
         complaintType,
-        title: description,
-        description: description, // Use same for now since we have one field
-        // files... need to upload separately or multipart?
+        title: description.substring(0, 197) + (description.length > 197 ? '...' : ''),
+        description: description,
       };
 
       const response = await complaintService.submit(complaintData);
@@ -286,12 +285,18 @@ export function RegisterComplaint() {
             }
           }
         }
+
+        // Refresh the global store list so dashboard update immediately
+        if (fetchComplaints) {
+          await fetchComplaints();
+        }
+
         setShowSuccess(true);
       }
     } catch (error) {
       console.error("Complaint submission failed", error);
-      // Show error?
-      alert("Failed to submit complaint. Please try again.");
+      const errorMessage = error.response?.data?.error?.message || error.message || "Failed to submit complaint. Please try again.";
+      alert(`Submission Error: ${errorMessage}`);
     }
   };
 

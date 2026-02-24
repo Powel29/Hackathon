@@ -129,7 +129,11 @@ export const useAdminStore = create()(persist((set, get) => {
                     if (c.id !== id)
                         return c;
                     const newHistory = {
-                        status, timestamp: new Date().toISOString(), note: adminNotes || `Status updated to ${status}`, by
+                        status,
+                        timestamp: new Date().toISOString(),
+                        note: adminNotes || `Status updated to ${status}`,
+                        citizenMessage: citizenMessage || '',
+                        by
                     };
                     return { ...c, status, adminNotes, citizenUpdateMessage: citizenMessage, assignedTo, updatedAt: new Date().toISOString(), statusHistory: [...c.statusHistory, newHistory] };
                 });

@@ -18,6 +18,7 @@ export const useKioskStore = create((set, get) => ({
 
     setLanguage: (language) => set({ language }),
     setSelectedService: (service) => set({ selectedService: service }),
+    setBills: (bills) => set({ bills }),
 
     setUser: (user) => {
         set({ user, isAuthenticated: !!user });

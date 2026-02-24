@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useKioskStore } from './store/useKioskStore';
 import { SessionWarning } from './components/kiosk/SessionWarning';
 import { useTranslation } from 'react-i18next';
+import { Toaster } from 'sonner';
 import './i18n';
 
 function App() {
@@ -37,7 +38,8 @@ function App() {
             inactivityTimer = setTimeout(() => {
                 resetSession();
                 window.location.href = '/kiosk';
-            }, 960000);        };
+            }, 960000);
+        };
 
         // Reset timers on user activity
         const events = ['mousedown', 'touchstart', 'keypress', 'scroll'];
@@ -59,6 +61,7 @@ function App() {
     return (
         <>
             <RouterProvider router={router} />
+            <Toaster richColors position="top-right" />
             {showSessionWarning && <SessionWarning />}
         </>
     );

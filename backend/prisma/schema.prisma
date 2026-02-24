@@ -168,14 +168,15 @@ model Complaint {
 }
 
 model ComplaintStatusHistory {
-  historyId   String    @id @default(uuid()) @db.Uuid
-  complaintId String    @db.Uuid
-  oldStatus   String?   @db.VarChar(20)
-  newStatus   String    @db.VarChar(20)
-  changedBy   String?   @db.VarChar(12)
-  notes       String?
-  changedAt   DateTime  @default(now())
-  complaint   Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
+  historyId      String    @id @default(uuid()) @db.Uuid
+  complaintId    String    @db.Uuid
+  oldStatus      String?   @db.VarChar(20)
+  newStatus      String    @db.VarChar(20)
+  changedBy      String?   @db.VarChar(12)
+  notes          String?   @db.Text // Internal Notes
+  citizenMessage String?   @db.Text // Visible to Citizen
+  changedAt      DateTime  @default(now())
+  complaint      Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
 
   @@index([complaintId])
   @@map("complaint_status_history")

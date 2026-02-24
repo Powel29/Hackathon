@@ -92,13 +92,19 @@ app.use((req, res) => {
 
 // Error Handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
+    console.error('!!!!!!!!!!!!!!!!!!!!! ERROR CAUGHT !!!!!!!!!!!!!!!!!!!!!');
+    console.error('Path:', req.path);
+    console.error('Method:', req.method);
+    console.error('Message:', err.message);
+    console.error('Stack:', err.stack);
+    console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
 
     res.status(err.status || 500).json({
         success: false,
         error: {
             code: err.code || 'SERVER_ERROR',
-            message: err.message || 'Something went wrong'
+            message: err.message || 'Something went wrong',
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
         }
     });
 });

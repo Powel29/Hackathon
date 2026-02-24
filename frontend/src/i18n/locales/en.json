@@ -133,7 +133,8 @@
     "open": "Open",
     "inProgress": "In Progress",
     "resolved": "Resolved",
-    "closed": "Closed"
+    "closed": "Closed",
+    "adminNote": "Official Comment"
   },
   "newConnection": {
     "newConnectionApplication": "New Connection Application",

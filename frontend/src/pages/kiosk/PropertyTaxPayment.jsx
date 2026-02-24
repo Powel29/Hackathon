@@ -41,7 +41,7 @@ export function PropertyTaxPayment() {
                     // Since billId is optional in the route (for direct access from dashboard), we might not always have it.
                     // If direct access, we fetch 'current' bill.
                     const bills = await billService.getUserBills({ serviceType: 'MUNICIPAL', status: 'pending' });
-                    const targetBill = bills.find(b => b.billId === billId) || bills[0];
+                    const targetBill = bills.find(b => b.id === billId) || bills[0];
                     if (targetBill) {
                         setBillDetails(targetBill);
                     }
