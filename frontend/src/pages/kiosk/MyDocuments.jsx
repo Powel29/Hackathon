@@ -28,7 +28,8 @@ export function MyDocuments() {
     const fetchDocuments = async () => {
         try {
             setLoading(true);
-            const docs = await documentService.getUserDocuments(user.aadhaarNumber, selectedService);
+            const citizenId = user?.aadhaarNumber || user?.aadharNumber;
+            const docs = await documentService.getUserDocuments(citizenId, selectedService);
             setDocuments(docs || []);
         } catch (error) {
             console.error('Error fetching documents:', error);
@@ -64,7 +65,8 @@ export function MyDocuments() {
             'CHALLAN': 'Challan',
             'SUPPORTING_DOC': 'Supporting Document',
             'ID_PROOF': 'ID Proof',
-            'ADDRESS_PROOF': 'Address Proof'
+            'ADDRESS_PROOF': 'Address Proof',
+            'GAS_BOOKING_RECEIPT': 'Gas Cylinder Booking Receipt'
         };
         return labels[type] || type;
     };

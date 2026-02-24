@@ -13,9 +13,7 @@ const INITIAL_DEPT_ALERTS = {
     gas: { safetyAlerts: [], pressureAlerts: [] },
     municipal: { wasteCollection: [], municipalNotices: [] }
 };
-const INITIAL_KIOSKS = [
-    { id: 'K001', location: 'Municipal Office', status: 'online', lastTransaction: '2 mins ago', todayCount: 145, uptime: '99.2%', printer: 'ok', network: 'excellent' }
-];
+const INITIAL_KIOSKS = [];
 
 export const useAdminStore = create()(persist((set, get) => {
     // Restore JWT from localStorage on page load / hot-reload
@@ -56,12 +54,13 @@ export const useAdminStore = create()(persist((set, get) => {
         isLoggedIn: false,
         fetchAllData: async () => {
             try {
-                const [comp, conn, bills, reqs, alerts] = await Promise.all([
+                const [comp, conn, bills, reqs, alerts, kiosks] = await Promise.all([
                     axios.get('/api/admin/complaints'),
                     axios.get('/api/admin/connections'),
                     axios.get('/api/admin/bills'),
                     axios.get('/api/admin/requests'),
-                    axios.get('/api/admin/alerts')
+                    axios.get('/api/admin/alerts'),
+                    axios.get('/api/admin/kiosks')
                 ]);
 
                 // Transform DB alerts back to the categorized object the UI expects
@@ -89,7 +88,8 @@ export const useAdminStore = create()(persist((set, get) => {
                     connections: conn.data.data || [],
                     bills: bills.data.data || [],
                     requests: reqs.data.data || [],
-                    deptAlerts: CategorizedAlerts
+                    deptAlerts: CategorizedAlerts,
+                    kiosks: kiosks.data.data || []
                 });
             } catch (err) {
                 console.error("Failed to fetch admin data", err);

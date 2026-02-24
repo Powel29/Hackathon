@@ -3,6 +3,7 @@ import { router } from './routes';
 import { useEffect } from 'react';
 import { useKioskStore } from './store/useKioskStore';
 import { SessionWarning } from './components/kiosk/SessionWarning';
+import { kioskService } from './services/api/kiosk.service';
 import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
 import './i18n';
@@ -57,6 +58,19 @@ function App() {
             });
         };
     }, [resetSession, setShowSessionWarning]);
+
+    // Kiosk Background Heartbeat
+    useEffect(() => {
+        // Initial ping
+        kioskService.sendHeartbeat();
+
+        // Every 30 seconds
+        const interval = setInterval(() => {
+            kioskService.sendHeartbeat();
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <>

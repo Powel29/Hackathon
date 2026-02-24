@@ -1,3 +1,4 @@
+// Prisma Client updated with Kiosk model
 const prisma = require('../config/prisma');
 const generateSignedUrl = require('../services/s3Download.service');
 
@@ -503,5 +504,17 @@ exports.deleteAlert = async (req, res) => {
     } catch (error) {
         console.error('deleteAlert error:', error);
         res.status(500).json({ success: false, message: 'Failed to delete alert' });
+    }
+};
+
+exports.getKiosks = async (req, res) => {
+    try {
+        const kiosks = await prisma.kiosk.findMany({
+            orderBy: { id: 'asc' }
+        });
+        res.json({ success: true, data: kiosks });
+    } catch (error) {
+        console.error('getKiosks error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch kiosks' });
     }
 };

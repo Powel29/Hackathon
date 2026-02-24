@@ -5,7 +5,6 @@ import {
   Building2,
   Trash2,
   Home,
-  MapPin,
   Calendar,
   AlertCircle,
   CheckCircle,
@@ -24,6 +23,30 @@ export function MunicipalDashboard() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [alerts, setAlerts] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+
+  // Civic & Cleanliness tips that rotate every minute
+  const civicTips = [
+    "🧹 Keep your surroundings clean: Proper waste disposal prevents diseases and improves community health.",
+    "♻️ Segregate your waste: Separating dry and wet waste at the source makes recycling significantly more efficient.",
+    "🌱 Plant more trees: Urban greenery reduces air pollution and helps maintain a cooler city temperature.",
+    "🚫 Say no to single-use plastics: Using cloth bags for shopping helps reduce landfill waste and protects the environment.",
+    "💧 Save water in public spaces: Report any leaking street taps or public fountain issues immediately to the helpline.",
+    "🚶 Walk or cycle for short distances: It's good for your health and helps reduce traffic congestion in our city.",
+    "🗑️ Always use public trash bins: Littering in parks and on streets can lead to heavy fines and public nuisance.",
+    "🚦 Follow traffic rules: Responsible driving ensures safety for pedestrians and reduces city-wide accidents.",
+    "🏘️ Participate in ward meetings: Your voice matters in the development and maintenance of your local neighborhood.",
+    "🐶 Be a responsible pet owner: Always clean up after your pets in public parks and residential walkways."
+  ];
+
+  // Rotate civic tip every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTipIndex((prevIndex) => (prevIndex + 1) % civicTips.length);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -183,102 +206,87 @@ export function MunicipalDashboard() {
           </div>
         </div>
 
-        {/* Municipal Notices & Events */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-blue-600" />
+        {/* Merged Civic Insights & Alerts Center */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          <div className="bg-gradient-to-r from-green-600 to-teal-600 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3 text-white">
+              <Shield className="w-6 h-6" />
+              <div>
+                <h3 className="font-bold">Civic Insights & Notices</h3>
+                <p className="text-[10px] opacity-80 uppercase tracking-widest font-bold">Official Municipal Feed</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Municipal Notices</h3>
-              <p className="text-xs text-gray-600">Latest updates & alerts</p>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] text-white font-bold backdrop-blur-md">
+              TIP {currentTipIndex + 1} OF {civicTips.length}
             </div>
           </div>
 
-          <div className="space-y-3">
-            {alerts.length > 0 ? (
-              alerts.slice(0, 3).map((alert) => {
-                const sev = (alert.severity || 'INFO').toUpperCase();
-                const isHigh = sev === 'HIGH' || sev === 'DANGER';
-                const isMed = sev === 'MEDIUM' || sev === 'WARNING';
-                const isSuccess = sev === 'SUCCESS';
+          <div className="p-5 flex-1 space-y-4">
+            {/* Rotating Civic Tip - Highlighted */}
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+              <div className="flex gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                  {civicTips[currentTipIndex]}
+                </p>
+              </div>
+            </div>
 
-                return (
-                  <div key={alert.alertId} className={`border border-l-4 rounded-lg p-3 transition-all hover:brightness-95 ${isHigh
-                    ? 'bg-red-50 border-red-500/30 border-l-red-600'
-                    : isMed
-                      ? 'bg-amber-50 border-amber-500/30 border-l-amber-600'
-                      : isSuccess
-                        ? 'bg-emerald-50 border-emerald-500/30 border-l-emerald-600'
-                        : 'bg-blue-50 border-blue-500/30 border-l-blue-600'
-                    }`}>
-                    <div className="flex justify-between items-start mb-1">
-                      <p className={`text-sm font-bold line-clamp-1 ${isHigh ? 'text-red-900' :
-                        isMed ? 'text-amber-900' :
-                          isSuccess ? 'text-emerald-900' :
-                            'text-blue-900'
-                        }`}>
-                        {alert.title}
-                      </p>
-                      <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm ${isHigh ? 'bg-red-600 text-white' :
-                        isMed ? 'bg-amber-500 text-white' :
-                          isSuccess ? 'bg-emerald-600 text-white' :
-                            'bg-blue-600 text-white'
-                        }`}>
-                        {sev}
-                      </span>
+            {/* Department Alerts from API */}
+            <div className="space-y-3">
+              {alerts.length > 0 ? (
+                alerts.slice(0, 3).map((alert) => {
+                  const sev = (alert.severity || 'INFO').toUpperCase();
+                  const isHigh = sev === 'HIGH' || sev === 'DANGER';
+                  const isMed = sev === 'MEDIUM' || sev === 'WARNING';
+                  const isSuccess = sev === 'SUCCESS';
+
+                  return (
+                    <div key={alert.alertId} className={`border border-l-4 rounded-lg p-3 transition-all hover:brightness-95 animate-in fade-in slide-in-from-right-4 duration-500 ${isHigh
+                      ? 'bg-red-50 border-red-500/30 border-l-red-600'
+                      : isMed
+                        ? 'bg-amber-50 border-amber-500/30 border-l-amber-600'
+                        : isSuccess
+                          ? 'bg-emerald-50 border-emerald-500/30 border-l-emerald-600'
+                          : 'bg-blue-50 border-blue-500/30 border-l-blue-600'
+                      }`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <p className={`text-sm font-bold line-clamp-1 ${isHigh ? 'text-red-900' :
+                          isMed ? 'text-amber-900' :
+                            isSuccess ? 'text-emerald-900' :
+                              'text-blue-900'
+                          }`}>
+                          {alert.title}
+                        </p>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm ${isHigh ? 'bg-red-600 text-white' :
+                          isMed ? 'bg-amber-500 text-white' :
+                            isSuccess ? 'bg-emerald-600 text-white' :
+                              'bg-blue-600 text-white'
+                          }`}>
+                          {sev}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-relaxed line-clamp-2">{alert.message}</p>
                     </div>
-                    <p className="text-xs text-gray-700 leading-relaxed line-clamp-2">{alert.message}</p>
+                  );
+                })
+              ) : (
+                <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                    <Building2 className="w-5 h-5 text-blue-600" />
                   </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No active notices.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Civic Facilities */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900">Civic Facilities Near You</h3>
-            <p className="text-xs text-gray-600">Community services and amenities</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { name: 'Community Hall', distance: '0.5 km', status: 'Available', color: 'green' },
-            { name: 'Public Library', distance: '0.8 km', status: 'Open', color: 'green' },
-            { name: 'Health Center', distance: '1.2 km', status: 'Open 24/7', color: 'blue' },
-            { name: 'Park & Recreation', distance: '0.3 km', status: 'Open', color: 'green' },
-            { name: 'Sports Complex', distance: '1.5 km', status: 'Available', color: 'green' },
-            { name: 'Swimming Pool', distance: '2.0 km', status: 'Closed', color: 'red' }
-          ].map((facility, index) => (
-            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <MapPin className="w-4 h-4 text-gray-600" />
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${facility.color === 'green' ? 'bg-green-100 text-green-700' :
-                  facility.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
-                  {facility.status}
-                </span>
-              </div>
-              <p className="text-sm font-semibold text-gray-900">{facility.name}</p>
-              <p className="text-xs text-gray-600 mt-1">{facility.distance} away</p>
+                  <div>
+                    <p className="text-sm font-bold text-blue-900 text-center">No Active Municipal Notices</p>
+                    <p className="text-[10px] text-blue-600 font-medium text-center">Your ward is currently operating with no reported disruptions.</p>
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
+          </div>
         </div>
       </div>
+
+
 
       {/* Active Complaints/Requests */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

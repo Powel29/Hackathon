@@ -66,6 +66,7 @@ app.use('/api/connections', require('./routes/connectionRoutes'));
 app.use('/api/upload', uploadRoutes);
 app.use('/api/download', downloadRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/kiosks', require('./routes/kioskRoutes'));
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));

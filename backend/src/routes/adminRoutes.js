@@ -38,4 +38,7 @@ router.post('/alerts', adminController.createAlert);
 router.put('/alerts/:id', adminController.updateAlert);
 router.delete('/alerts/:id', adminController.deleteAlert);
 
+// Kiosk Monitoring
+router.get('/kiosks', adminController.getKiosks);
+
 module.exports = router;

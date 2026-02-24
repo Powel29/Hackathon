@@ -355,6 +355,7 @@
     "meterId": "Meter ID",
     "cylinderStatus": "Cylinder Status",
     "bookNewConnection": "Book New Connection",
+    "bookCylinder": "Book Cylinder",
     "safetyGuidelines": "Safety Guidelines",
     "emergencySupport": "Emergency Support",
     "turnOffCylinder": "Always Turn OFF cylinder valve when not in use"
@@ -395,7 +396,30 @@
     "emailRequired": "Valid email is required",
     "dateOfBirthRequired": "Date of Birth is required",
     "genderRequired": "Gender is required",
+    "cylinderTypeRequired": "Cylinder type is required",
     "addressRequired": "Address is required"
+  },
+  "gasCylinderBooking": {
+    "title": "Gas Cylinder Booking",
+    "customerDetails": "Customer Details",
+    "deliveryAddress": "Delivery Address",
+    "bookingDetails": "Booking Details",
+    "cylinderType": "Cylinder Type",
+    "domestic14": "Domestic (14.2 kg)",
+    "commercial19": "Commercial (19 kg)",
+    "domestic5": "Domestic (5 kg)",
+    "deliveryType": "Delivery Type",
+    "scheduled": "Scheduled Delivery",
+    "urgent": "Urgent (Within 4 hours)",
+    "preferredDate": "Preferred Date",
+    "preferredTime": "Preferred Time Slot",
+    "bookingSuccess": "Booking Confirmed!",
+    "bookingId": "Booking ID",
+    "successMessage": "Your gas cylinder has been booked successfully. You will receive an SMS confirmation shortly.",
+    "printReceipt": "Print Receipt",
+    "viewReceipt": "View Receipt",
+    "downloadReceipt": "Download Receipt",
+    "backToDashboard": "Back to Dashboard"
   },
   "trackNewConnection": {
     "pageTitle": "Track New Connection Application",
