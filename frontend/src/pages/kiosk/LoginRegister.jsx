@@ -304,7 +304,7 @@ export function LoginRegister() {
         }
       }
 
-      await authService.sendOTP(aadhar, mobile);
+      await authService.sendOTP({ aadhaarNumber: aadhar, mobileNumber: mobile });
       toast.success(t('authentication.otpResentSuccessfully'));
     } catch (error) {
       console.error("❌ Resend OTP Error:", error);

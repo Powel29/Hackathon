@@ -22,6 +22,7 @@ export function OTPVerification() {
 
   const aadhaarNumber = location.state?.aadhaarNumber || '';
   const maskedMobile = location.state?.maskedMobile;
+  const mobileNumber = location.state?.mobileNumber;
 
   console.log('OTPVerification State:', location.state);
 
@@ -73,7 +74,7 @@ export function OTPVerification() {
       setCanResend(false);
 
       try {
-        const response = await authService.resendOTP({ aadhaarNumber });
+        const response = await authService.resendOTP({ aadhaarNumber, mobileNumber });
         if (!response.success) {
           setError(response.message || t('errorResendingOTP'));
         }
