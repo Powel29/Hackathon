@@ -11,6 +11,8 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { MapPin } from 'lucide-react';
 import MapAddressPicker from '../../components/MapAddressPicker';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 
 
 
@@ -100,6 +102,8 @@ export function NewConnection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   let { selectedService, setSelectedService } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const enqueue = useOfflineStore(s => s.enqueue);
 
   // Hard refresh fallback if store loses state but URL provides context
   useEffect(() => {
@@ -257,6 +261,11 @@ export function NewConnection() {
     }
 
     if (step === 4) {
+      if (!isOnline) {
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+      }
+
       if (!formData.aadhaarFile) errors.aadhaarFile = 'Aadhaar document is required';
       if (!formData.addressProofFile) errors.addressProofFile = 'Address proof is required';
       if (!formData.photoFile) errors.photoFile = 'Photo is required';
@@ -372,8 +381,21 @@ export function NewConnection() {
         state: formData.state,
         pincode: formData.pincode,
         connectionType: formData.connectionType,
-        serviceDetails
+        serviceDetails,
+        // Non-PII link for offline sync attribute
+        aadharHash: user?.aadharHash
       };
+
+      if (!isOnline) {
+        // FR-OFF-002: Offline Queue Routing
+        const tempId = enqueue({
+          operationType: 'connection_req',
+          payload
+        });
+        setApplicationId(`QUEUED-${tempId.substring(0, 6).toUpperCase()}`);
+        setShowSuccess(true);
+        return;
+      }
 
       const apiModule = await import('../../services/api');
       const response = await apiModule.connectionService.requestNew(payload);
@@ -1765,427 +1787,436 @@ export function NewConnection() {
           {/* Step 4: Document Upload */}
           {currentStep === 4 && (
             <div className="space-y-4">
-              {/* Common Documents */}
-              <h4 className="text-base font-semibold text-gray-700 border-b pb-2">Common Documents</h4>
-              {['aadhaarFile', 'addressProofFile', 'photoFile'].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {field === 'aadhaarFile' ? 'Aadhaar Card' : field === 'addressProofFile' ? 'Address Proof' : 'Passport Photo'} *
-                  </label>
-                  <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors[field] ? 'border-red-500' : 'border-gray-300'
-                    }`}>
-                    <Upload className="w-5 h-5 text-gray-400" />
-                    <div className="text-center">
-                      <p className="text-sm font-semibold text-gray-700">
-                        {formData[field] ? formData[field].name : 'Click to upload'}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        JPG, PNG or PDF (Max 5MB)
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,application/pdf"
-                      onChange={(e) => handleFileUpload(field, e.target.files?.[0] || null)}
-                      className="hidden"
-                    />
-                  </label>
-                  {formErrors[field] && <p className="text-xs text-red-600 mt-1">{formErrors[field]}</p>}
+              {!isOnline && (
+                <div className="bg-orange-50 border border-orange-200 text-orange-800 p-4 rounded-lg text-sm font-medium mb-4">
+                  You are currently offline. Document uploads are disabled, but you can still submit your application. Required documents can be provided later when the connection is restored.
                 </div>
-              ))}
-
-              {/* Electricity-Specific Documents */}
-              {selectedService === 'electricity' && (
-                <>
-                  <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Electricity-Specific Documents</h4>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Wiring Completion Certificate *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.wiringCertificateFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.wiringCertificateFile ? formData.wiringCertificateFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('wiringCertificateFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.wiringCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.wiringCertificateFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ownership Proof / Owner NOC *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.ownershipProofFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.ownershipProofFile ? formData.ownershipProofFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('ownershipProofFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.ownershipProofFile && <p className="text-xs text-red-600 mt-1">{formErrors.ownershipProofFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Building Completion / Occupancy Certificate *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.buildingCertificateFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.buildingCertificateFile ? formData.buildingCertificateFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('buildingCertificateFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.buildingCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.buildingCertificateFile}</p>}
-                  </div>
-                </>
               )}
-
-              {/* Gas-Specific Documents */}
-              {selectedService === 'gas' && (
+              {isOnline && (
                 <>
-                  <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Gas-Specific Documents</h4>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Owner / Society NOC *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.ownerNOCFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.ownerNOCFile ? formData.ownerNOCFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('ownerNOCFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.ownerNOCFile && <p className="text-xs text-red-600 mt-1">{formErrors.ownerNOCFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Kitchen Layout / Installation Photo *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.kitchenLayoutFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.kitchenLayoutFile ? formData.kitchenLayoutFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('kitchenLayoutFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.kitchenLayoutFile && <p className="text-xs text-red-600 mt-1">{formErrors.kitchenLayoutFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Safety Compliance Declaration *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.safetyDeclarationFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.safetyDeclarationFile ? formData.safetyDeclarationFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('safetyDeclarationFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.safetyDeclarationFile && <p className="text-xs text-red-600 mt-1">{formErrors.safetyDeclarationFile}</p>}
-                  </div>
-                </>
-              )}
-
-              {/* Water-Specific Documents */}
-              {selectedService === 'water' && (
-                <>
-                  <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Water-Specific Documents</h4>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Plumbing Completion Certificate *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.plumbingCertificateFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.plumbingCertificateFile ? formData.plumbingCertificateFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('plumbingCertificateFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.plumbingCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.plumbingCertificateFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Property Tax Receipt *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.propertyTaxReceiptFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.propertyTaxReceiptFile ? formData.propertyTaxReceiptFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('propertyTaxReceiptFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.propertyTaxReceiptFile && <p className="text-xs text-red-600 mt-1">{formErrors.propertyTaxReceiptFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Approved Building Plan *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.approvedBuildingPlanFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.approvedBuildingPlanFile ? formData.approvedBuildingPlanFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('approvedBuildingPlanFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.approvedBuildingPlanFile && <p className="text-xs text-red-600 mt-1">{formErrors.approvedBuildingPlanFile}</p>}
-                  </div>
-                </>
-              )}
-
-              {/* Municipal-Specific Documents */}
-              {selectedService === 'municipal' && (
-                <>
-                  <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Municipal-Specific Documents</h4>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Completion / Occupancy Certificate *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.completionCertificateFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.completionCertificateFile ? formData.completionCertificateFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('completionCertificateFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.completionCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.completionCertificateFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Builder Handover Letter *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.builderHandoverFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.builderHandoverFile ? formData.builderHandoverFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('builderHandoverFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.builderHandoverFile && <p className="text-xs text-red-600 mt-1">{formErrors.builderHandoverFile}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Property Tax Registration Proof *
-                    </label>
-                    <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.propertyTaxProofFile ? 'border-red-500' : 'border-gray-300'
-                      }`}>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">
-                          {formData.propertyTaxProofFile ? formData.propertyTaxProofFile.name : 'Click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,application/pdf"
-                        onChange={(e) => handleFileUpload('propertyTaxProofFile', e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                    {formErrors.propertyTaxProofFile && <p className="text-xs text-red-600 mt-1">{formErrors.propertyTaxProofFile}</p>}
-                  </div>
-                </>
-              )}
-
-              {/* Common Signature Section */}
-              <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Signature</h4>
-
-              {/* Signature Type Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Choose Signature Type *
-                </label>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {(['photo', 'digital']).map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => handleInputChange('signatureType', type)}
-                      className={`p-3 border-2 rounded-lg text-sm font-semibold transition-all ${formData.signatureType === type
-                        ? 'border-[#0066CC] bg-blue-50 text-[#0066CC]'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                        }`}
-                    >
-                      {type === 'photo' ? '📷 Signature Photo' : '✍️ Digital Signature'}
-                    </button>
+                  {/* Common Documents */}
+                  <h4 className="text-base font-semibold text-gray-700 border-b pb-2">Common Documents</h4>
+                  {['aadhaarFile', 'addressProofFile', 'photoFile'].map((field) => (
+                    <div key={field}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {field === 'aadhaarFile' ? 'Aadhaar Card' : field === 'addressProofFile' ? 'Address Proof' : 'Passport Photo'} *
+                      </label>
+                      <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors[field] ? 'border-red-500' : 'border-gray-300'
+                        }`}>
+                        <Upload className="w-5 h-5 text-gray-400" />
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-gray-700">
+                            {formData[field] ? formData[field].name : 'Click to upload'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            JPG, PNG or PDF (Max 5MB)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,application/pdf"
+                          onChange={(e) => handleFileUpload(field, e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                      </label>
+                      {formErrors[field] && <p className="text-xs text-red-600 mt-1">{formErrors[field]}</p>}
+                    </div>
                   ))}
-                </div>
-                {formErrors.signatureType && <p className="text-xs text-red-600 mt-1">{formErrors.signatureType}</p>}
-              </div>
 
-              {/* Signature Photo Upload */}
-              {formData.signatureType === 'photo' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Upload Signature Photo *
-                  </label>
-                  <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.signaturePhotoFile ? 'border-red-500' : 'border-gray-300'
-                    }`}>
-                    <Upload className="w-5 h-5 text-gray-400" />
-                    <div className="text-center">
-                      <p className="text-sm font-semibold text-gray-700">
-                        {formData.signaturePhotoFile ? formData.signaturePhotoFile.name : 'Click to upload'}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        JPG or PNG (Max 5MB)
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png"
-                      onChange={(e) => handleFileUpload('signaturePhotoFile', e.target.files?.[0] || null)}
-                      className="hidden"
-                    />
-                  </label>
-                  {formErrors.signaturePhotoFile && <p className="text-xs text-red-600 mt-1">{formErrors.signaturePhotoFile}</p>}
-                </div>
-              )}
+                  {/* Electricity-Specific Documents */}
+                  {selectedService === 'electricity' && (
+                    <>
+                      <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Electricity-Specific Documents</h4>
 
-              {/* Digital Signature Canvas */}
-              {formData.signatureType === 'digital' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Draw Your Signature *
-                  </label>
-                  <div className={`border rounded-lg p-4 ${formErrors.signature ? 'border-red-500' : 'border-gray-300'}`}>
-                    <p className="text-sm text-gray-600 mb-2 text-center">Sign in the box below</p>
-                    <canvas
-                      ref={canvasRef}
-                      width={600}
-                      height={150}
-                      onTouchStart={startDrawing}
-                      onTouchMove={draw}
-                      onTouchEnd={stopDrawing}
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
-                      className="border border-dashed border-gray-300 rounded-lg w-full bg-white"
-                      style={{ cursor: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 32 32\"><line x1=\"16\" y1=\"0\" x2=\"16\" y2=\"32\" stroke=\"black\" stroke-width=\"2\"/><line x1=\"0\" y1=\"16\" x2=\"32\" y2=\"16\" stroke=\"black\" stroke-width=\"2\"/><circle cx=\"16\" cy=\"16\" r=\"4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/></svg>') 16 16, crosshair" }}
-                    />
-                    <div className="mt-3 flex justify-end">
-                      <TouchButton
-                        variant="secondary"
-                        size="small"
-                        icon={<Edit3 className="w-4 h-4" />}
-                        onClick={clearSignature}
-                      >
-                        {t('newConnection.clear')}
-                      </TouchButton>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Wiring Completion Certificate *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.wiringCertificateFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.wiringCertificateFile ? formData.wiringCertificateFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('wiringCertificateFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.wiringCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.wiringCertificateFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Ownership Proof / Owner NOC *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.ownershipProofFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.ownershipProofFile ? formData.ownershipProofFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('ownershipProofFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.ownershipProofFile && <p className="text-xs text-red-600 mt-1">{formErrors.ownershipProofFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Building Completion / Occupancy Certificate *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.buildingCertificateFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.buildingCertificateFile ? formData.buildingCertificateFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('buildingCertificateFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.buildingCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.buildingCertificateFile}</p>}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Gas-Specific Documents */}
+                  {selectedService === 'gas' && (
+                    <>
+                      <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Gas-Specific Documents</h4>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Owner / Society NOC *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.ownerNOCFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.ownerNOCFile ? formData.ownerNOCFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('ownerNOCFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.ownerNOCFile && <p className="text-xs text-red-600 mt-1">{formErrors.ownerNOCFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Kitchen Layout / Installation Photo *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.kitchenLayoutFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.kitchenLayoutFile ? formData.kitchenLayoutFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('kitchenLayoutFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.kitchenLayoutFile && <p className="text-xs text-red-600 mt-1">{formErrors.kitchenLayoutFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Safety Compliance Declaration *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.safetyDeclarationFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.safetyDeclarationFile ? formData.safetyDeclarationFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('safetyDeclarationFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.safetyDeclarationFile && <p className="text-xs text-red-600 mt-1">{formErrors.safetyDeclarationFile}</p>}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Water-Specific Documents */}
+                  {selectedService === 'water' && (
+                    <>
+                      <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Water-Specific Documents</h4>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Plumbing Completion Certificate *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.plumbingCertificateFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.plumbingCertificateFile ? formData.plumbingCertificateFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('plumbingCertificateFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.plumbingCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.plumbingCertificateFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Property Tax Receipt *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.propertyTaxReceiptFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.propertyTaxReceiptFile ? formData.propertyTaxReceiptFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('propertyTaxReceiptFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.propertyTaxReceiptFile && <p className="text-xs text-red-600 mt-1">{formErrors.propertyTaxReceiptFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Approved Building Plan *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.approvedBuildingPlanFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.approvedBuildingPlanFile ? formData.approvedBuildingPlanFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('approvedBuildingPlanFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.approvedBuildingPlanFile && <p className="text-xs text-red-600 mt-1">{formErrors.approvedBuildingPlanFile}</p>}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Municipal-Specific Documents */}
+                  {selectedService === 'municipal' && (
+                    <>
+                      <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Municipal-Specific Documents</h4>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Completion / Occupancy Certificate *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.completionCertificateFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.completionCertificateFile ? formData.completionCertificateFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('completionCertificateFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.completionCertificateFile && <p className="text-xs text-red-600 mt-1">{formErrors.completionCertificateFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Builder Handover Letter *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.builderHandoverFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.builderHandoverFile ? formData.builderHandoverFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('builderHandoverFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.builderHandoverFile && <p className="text-xs text-red-600 mt-1">{formErrors.builderHandoverFile}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Property Tax Registration Proof *
+                        </label>
+                        <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.propertyTaxProofFile ? 'border-red-500' : 'border-gray-300'
+                          }`}>
+                          <Upload className="w-5 h-5 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-gray-700">
+                              {formData.propertyTaxProofFile ? formData.propertyTaxProofFile.name : 'Click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(e) => handleFileUpload('propertyTaxProofFile', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {formErrors.propertyTaxProofFile && <p className="text-xs text-red-600 mt-1">{formErrors.propertyTaxProofFile}</p>}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Common Signature Section */}
+                  <h4 className="text-base font-semibold text-gray-700 border-b pb-2 mt-6">Signature</h4>
+
+                  {/* Signature Type Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Choose Signature Type *
+                    </label>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {(['photo', 'digital']).map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => handleInputChange('signatureType', type)}
+                          className={`p-3 border-2 rounded-lg text-sm font-semibold transition-all ${formData.signatureType === type
+                            ? 'border-[#0066CC] bg-blue-50 text-[#0066CC]'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                            }`}
+                        >
+                          {type === 'photo' ? '📷 Signature Photo' : '✍️ Digital Signature'}
+                        </button>
+                      ))}
                     </div>
+                    {formErrors.signatureType && <p className="text-xs text-red-600 mt-1">{formErrors.signatureType}</p>}
                   </div>
-                  {formErrors.signature && <p className="text-xs text-red-600 mt-1">{formErrors.signature}</p>}
-                </div>
+
+                  {/* Signature Photo Upload */}
+                  {formData.signatureType === 'photo' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Upload Signature Photo *
+                      </label>
+                      <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${formErrors.signaturePhotoFile ? 'border-red-500' : 'border-gray-300'
+                        }`}>
+                        <Upload className="w-5 h-5 text-gray-400" />
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-gray-700">
+                            {formData.signaturePhotoFile ? formData.signaturePhotoFile.name : 'Click to upload'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            JPG or PNG (Max 5MB)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          onChange={(e) => handleFileUpload('signaturePhotoFile', e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                      </label>
+                      {formErrors.signaturePhotoFile && <p className="text-xs text-red-600 mt-1">{formErrors.signaturePhotoFile}</p>}
+                    </div>
+                  )}
+
+                  {/* Digital Signature Canvas */}
+                  {formData.signatureType === 'digital' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Draw Your Signature *
+                      </label>
+                      <div className={`border rounded-lg p-4 ${formErrors.signature ? 'border-red-500' : 'border-gray-300'}`}>
+                        <p className="text-sm text-gray-600 mb-2 text-center">Sign in the box below</p>
+                        <canvas
+                          ref={canvasRef}
+                          width={600}
+                          height={150}
+                          onTouchStart={startDrawing}
+                          onTouchMove={draw}
+                          onTouchEnd={stopDrawing}
+                          onMouseDown={startDrawing}
+                          onMouseMove={draw}
+                          onMouseUp={stopDrawing}
+                          onMouseLeave={stopDrawing}
+                          className="border border-dashed border-gray-300 rounded-lg w-full bg-white"
+                          style={{ cursor: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 32 32\"><line x1=\"16\" y1=\"0\" x2=\"16\" y2=\"32\" stroke=\"black\" stroke-width=\"2\"/><line x1=\"0\" y1=\"16\" x2=\"32\" y2=\"16\" stroke=\"black\" stroke-width=\"2\"/><circle cx=\"16\" cy=\"16\" r=\"4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/></svg>') 16 16, crosshair" }}
+                        />
+                        <div className="mt-3 flex justify-end">
+                          <TouchButton
+                            variant="secondary"
+                            size="small"
+                            icon={<Edit3 className="w-4 h-4" />}
+                            onClick={clearSignature}
+                          >
+                            {t('newConnection.clear')}
+                          </TouchButton>
+                        </div>
+                      </div>
+                      {formErrors.signature && <p className="text-xs text-red-600 mt-1">{formErrors.signature}</p>}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

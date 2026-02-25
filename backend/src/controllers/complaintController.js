@@ -100,8 +100,20 @@ exports.registerComplaint = async (req, res) => {
             description,
             location,
             latitude,
-            longitude
+            longitude,
+            aadharHash
         } = req.body;
+
+        // Security: If payload specifies an owner hash, it must match current token
+        if (aadharHash && aadharHash !== req.user.aadharHash) {
+            return res.status(403).json({
+                success: false,
+                error: {
+                    code: 'ATTRIBUTION_MISMATCH',
+                    message: 'Queued complaint does not belong to current session.'
+                }
+            });
+        }
 
         // Validate service type and complaint type
         if (!COMPLAINT_TYPES[serviceType]?.includes(complaintType)) {

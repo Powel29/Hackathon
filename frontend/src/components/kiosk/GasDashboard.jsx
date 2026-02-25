@@ -5,6 +5,7 @@ import { useKioskStore } from '../../store/useKioskStore';
 import { departmentService } from '../../services/api';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
 import { useNavigate } from 'react-router-dom';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import {
   Flame,
   Package,
@@ -18,6 +19,8 @@ import {
 export function GasDashboard() {
   const navigate = useNavigate();
   const { user, selectedService } = useKioskStore();
+  const networkStatus = useOfflineStore((state) => state.networkStatus);
+  const isOnline = networkStatus === 'online';
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -33,6 +36,13 @@ export function GasDashboard() {
 
       try {
         setLoading(true);
+
+        if (!isOnline) {
+          console.log('[Offline] Skipping live data fetch for GasDashboard');
+          setLoading(false);
+          return;
+        }
+
         // Parallel fetch for account details and alerts
         const [accountResponse, alertsResponse] = await Promise.all([
           departmentService.getAccountDetails('GAS', user.consumerId),

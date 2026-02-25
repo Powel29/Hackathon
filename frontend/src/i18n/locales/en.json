@@ -489,5 +489,81 @@
     "approved": "Approved",
     "active": "Active",
     "rejected": "Rejected"
+  },
+  "a11y": {
+    "accessibilitySettings": "Accessibility Settings",
+    "textSize": "Text Size",
+    "standard": "Standard",
+    "large": "Large",
+    "extraLarge": "Extra Large",
+    "contrast": "Contrast",
+    "default": "Default",
+    "highContrast": "High Contrast",
+    "easyMode": "Easy Mode",
+    "easyModeDesc": "Simpler screens, fewer choices",
+    "voiceGuidance": "Voice Guidance",
+    "voiceDesc": "Spoken instructions each step",
+    "screenReaderHints": "Screen Reader Hints",
+    "resetDefaults": "Reset to Defaults"
+  },
+  "voice": {
+    "widgetAriaLabel": "Voice assist",
+    "repeat": "Repeat",
+    "stop": "Stop",
+    "turnOff": "Turn off",
+    "acknowledged": "Okay.",
+    "tryCommands": "Try: Next, Back, Submit, Repeat, Change Language, Help",
+    "status": {
+      "tapToEnable": "Tap to enable voice assist",
+      "notSupported": "Voice is not supported on this device",
+      "listening": "Listening...",
+      "processing": "Processing...",
+      "speaking": "Speaking guidance...",
+      "fallback": "Command not recognized",
+      "ready": "Voice ready"
+    },
+    "consent": {
+      "title": "Enable voice assistance?",
+      "body": "Voice capture starts only when you tap the microphone. Audio is not stored in this kiosk.",
+      "enable": "Enable Voice"
+    },
+    "errors": {
+      "notHeard": "I could not hear you. Please try again or use touch.",
+      "lowConfidence": "I am not sure what you said. Please speak clearly or tap the screen.",
+      "unrecognized": "I did not recognize that command. Please use on-screen buttons.",
+      "recognitionError": "Voice input failed. Please try again or continue with touch.",
+      "networkError": "Network error. Please check your connection and try again.",
+      "noSpeech": "No speech detected. Please speak clearly and try again.",
+      "permissionDenied": "Microphone permission denied. Please grant access in settings.",
+      "timeout": "No speech detected after 12 seconds. Please try again or use touch."
+    },
+    "guidance": {
+      "languageSelection": "Select your preferred language, then tap Continue.",
+      "loginRegister": "Choose Aadhaar or mobile login to continue.",
+      "dashboard": "Choose a service card like Pay Bills, Register Complaint, or Track Request.",
+      "bills": "Review your bill details and tap Proceed to Pay when ready.",
+      "complaint": "Select complaint type, add details, then submit.",
+      "connection": "Complete each step and tap Next to continue your connection request.",
+      "generic": "Use touch controls or say Help for guidance.",
+      "noPrevious": "There is no previous guidance to repeat."
+    }
+  },
+  "errors": {
+    "apiErrorTitle": "Something went wrong",
+    "apiErrorMessage": "We could not complete your request. Please try again.",
+    "validationTitle": "Please check your input",
+    "validationMessage": "Some fields need your attention before continuing.",
+    "offlineTitle": "You are offline",
+    "offlineMessage": "This action has been saved and will sync automatically when you are back online.",
+    "fatalTitle": "Unable to continue",
+    "fatalMessage": "A critical error occurred. Please restart your session or contact support.",
+    "retry": "Try Again",
+    "retryNow": "Retry Now",
+    "fixInput": "Check again",
+    "goHome": "Go to Home",
+    "goBack": "Go Back",
+    "continueOffline": "Continue Offline",
+    "startOver": "Start Over",
+    "contactSupport": "Contact Support"
   }
 }

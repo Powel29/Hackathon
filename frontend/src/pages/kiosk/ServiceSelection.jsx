@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { ServiceCard } from '../../components/kiosk/ServiceCard';
-import { Zap, Flame, Droplets, Building2, ArrowLeft } from 'lucide-react';
+import { Zap, Flame, Droplets, Building2, ArrowLeft, WifiOff, Clock } from 'lucide-react';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 
 export function ServiceSelection() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { setSelectedService, isAuthenticated } = useKioskStore();
+    const { isOnline } = useNetworkStatus();
 
 
     // Check if user is authenticated, if not redirect to login
@@ -57,9 +59,11 @@ export function ServiceSelection() {
             <div className="max-w-4xl mx-auto">
                 <button
                     onClick={() => navigate('/kiosk/login-register')}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm rounded-xl px-4 py-2 hover:bg-gray-100 transition-colors min-h-[44px]"
+                    style={{ touchAction: 'manipulation' }}
+                    aria-label={t('common.back')}
                 >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-5 h-5" aria-hidden="true" />
                     {t('common.back')}
                 </button>
 
@@ -71,6 +75,23 @@ export function ServiceSelection() {
                         {t('serviceSelection.pleaseSelectService')}
                     </p>
                 </div>
+
+                {!isOnline && (
+                    <div className="mb-8 bg-orange-600 text-white rounded-2xl shadow-lg p-5 flex items-center justify-between overflow-hidden relative border-2 border-orange-500">
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="bg-white/20 p-2 rounded-xl">
+                                <WifiOff className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-black uppercase tracking-wider text-sm">Offline Session Profile</h3>
+                                <p className="text-xs opacity-90 font-medium italic">Hardware is currently disconnected. Transactions will be queued for later sync.</p>
+                            </div>
+                        </div>
+                        <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
+                            <Clock className="w-24 h-24 text-white" />
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-6">
                     {services.map((service) => (

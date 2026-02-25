@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
-import { ArrowLeft, FileText, Download, Calendar, Tag, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileText, Download, Calendar, Tag, RefreshCw, WifiOff } from 'lucide-react';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { documentService } from '../../services/api';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -13,6 +14,7 @@ export function MyDocuments() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { user, isAuthenticated, selectedService } = useKioskStore();
+    const { isOnline } = useNetworkStatus();
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
@@ -22,8 +24,12 @@ export function MyDocuments() {
             navigate('/kiosk/');
             return;
         }
-        fetchDocuments();
-    }, [isAuthenticated, user, navigate, selectedService]);
+        if (isOnline) {
+            fetchDocuments();
+        } else {
+            setLoading(false);
+        }
+    }, [isAuthenticated, user, navigate, selectedService, isOnline]);
 
     const fetchDocuments = async () => {
         try {
@@ -113,11 +119,23 @@ export function MyDocuments() {
                         size="medium"
                         icon={<RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin text-blue-600' : 'text-gray-600'}`} />}
                         onClick={fetchDocuments}
-                        disabled={loading}
+                        disabled={loading || !isOnline}
                     >
                         {t('common.refresh', 'Refresh')}
                     </TouchButton>
                 </div>
+
+                {!isOnline && (
+                    <div className="mb-8 bg-orange-50 border border-orange-200 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+                        <div className="bg-orange-100 p-3 rounded-xl">
+                            <WifiOff className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-orange-900">Documents Unavailable Offline</h3>
+                            <p className="text-sm text-orange-700">Digital records and receipts require a secure connection to the central repository. Please try again once internet connectivity is restored.</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-3 mb-8">

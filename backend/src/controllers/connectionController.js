@@ -4,7 +4,7 @@ const crypto = require('crypto');
 // Request new connection
 exports.requestNewConnection = async (req, res) => {
     try {
-        const {
+        let {
             serviceType,
             applicantName,
             mobileNumber,
@@ -16,6 +16,26 @@ exports.requestNewConnection = async (req, res) => {
             connectionType,
             serviceDetails
         } = req.body;
+
+        // Fallback to Citizen profile for missing PII (essential for offline-synced requests)
+        if (!mobileNumber || !email || !applicantName) {
+            // Security: If payload specifies an owner hash, it must match current token
+            if (req.body.aadharHash && req.body.aadharHash !== req.user.aadharHash) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Attribution mismatch: Queued request does not belong to current session."
+                });
+            }
+
+            const citizen = await prisma.citizen.findUnique({
+                where: { aadharNumber: req.user.citizenId }
+            });
+            if (citizen) {
+                if (!mobileNumber) mobileNumber = citizen.mobileNumber;
+                if (!email) email = citizen.email;
+                if (!applicantName) applicantName = citizen.fullName;
+            }
+        }
 
         // Basic validation
         const missingFields = [];

@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
-import { serviceRequestService } from '../../services/api/serviceRequest.service';
 import { documentService } from '../../services/api';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, MapPin, Flame, CheckCircle, Printer, Home, Clock, Calendar, FileText, Download } from 'lucide-react';
@@ -64,6 +65,8 @@ export function GasCylinderBooking() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { user } = useKioskStore();
+    const { isOnline } = useNetworkStatus();
+    const enqueue = useOfflineStore(s => s.enqueue);
     const receiptRef = useRef(null);
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -131,7 +134,7 @@ export function GasCylinderBooking() {
         }
     };
 
-    const generateAndUploadReceipt = async (requestId, serviceRequestId) => {
+    const generateAndUploadReceipt = async (requestId, serviceRequestId, isOffline = false) => {
         if (!receiptRef.current) return;
 
         try {
@@ -156,6 +159,14 @@ export function GasCylinderBooking() {
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
             const pdfBlob = pdf.output('blob');
+            const blobUrl = URL.createObjectURL(pdfBlob);
+            setReceiptUrl(blobUrl);
+
+            if (isOffline) {
+                console.log('Local receipt generated for offline booking');
+                return;
+            }
+
             const pdfFile = new File([pdfBlob], `Receipt_${requestId}.pdf`, { type: 'application/pdf' });
 
             // Upload to server
@@ -163,19 +174,16 @@ export function GasCylinderBooking() {
             const uploadResponse = await documentService.uploadDocument(pdfFile, {
                 citizenId: citizenId,
                 relatedEntity: 'SERVICE_REQUEST',
-                relatedId: serviceRequestId, // Use UUID from backend
+                relatedId: serviceRequestId,
                 documentType: 'GAS_BOOKING_RECEIPT',
                 department: 'GAS'
             });
 
             if (uploadResponse.success) {
                 console.log('Receipt uploaded successfully');
-                // You would typically get a public URL or similar
-                const blobUrl = URL.createObjectURL(pdfBlob);
-                setReceiptUrl(blobUrl);
             }
         } catch (error) {
-            console.error('Error generating or uploading receipt:', error);
+            console.error('Error generating receipt:', error);
         }
     };
 
@@ -185,10 +193,31 @@ export function GasCylinderBooking() {
             const payload = {
                 serviceType: 'GAS',
                 requestType: 'GAS_CYLINDER_BOOKING',
-                details: formData
+                details: formData,
+                // Non-PII link for offline sync attribute
+                aadharHash: user?.aadharHash
             };
 
-            const response = await serviceRequestService.create(payload);
+            if (!isOnline) {
+                const tempId = enqueue({
+                    operationType: 'gas_booking',
+                    payload
+                });
+                const displayId = `QUEUED-${tempId.substring(0, 6).toUpperCase()}`;
+                setBookingId(displayId);
+
+                // Still generate the receipt locally so it can be downloaded
+                setTimeout(async () => {
+                    await generateAndUploadReceipt(displayId, null, true);
+                    setBookingSuccess(true);
+                    setIsSaving(false);
+                }, 500);
+                return;
+            }
+
+            // Need to dynamically import to resolve correctly since it was removed from top level
+            const apiModule = await import('../../services/api/serviceRequest.service');
+            const response = await apiModule.serviceRequestService.create(payload);
             const newId = response.requestId || 'GAS-' + Date.now();
             setBookingId(newId);
 

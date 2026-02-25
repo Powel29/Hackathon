@@ -6,13 +6,15 @@ import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
 import * as authService from '../../services/api/auth.service';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, WifiOff } from 'lucide-react';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 
 export function OTPVerification() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { setUser } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(3);
@@ -168,6 +170,16 @@ export function OTPVerification() {
               </div>
             </div>
 
+            {!isOnline && (
+              <div className="mb-6 bg-red-50 border border-red-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                <WifiOff className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-red-800">Connection Lost</p>
+                  <p className="text-xs text-red-700 leading-relaxed">Identity verification requires an active internet connection. Please wait for connectivity to be restored or return to login to use offline mode.</p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
@@ -228,7 +240,7 @@ export function OTPVerification() {
                   variant="success"
                   size="large"
                   onClick={handleVerify}
-                  disabled={otp.join('').length !== 6}
+                  disabled={otp.join('').length !== 6 || !isOnline}
                   className="w-full"
                 >
                   {t('verify')}

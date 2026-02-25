@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { useKioskStore } from '../../store/useKioskStore';
 import { departmentService } from '../../services/api';
+import { useOfflineStore } from '../../store/useOfflineStore';
 
 import {
   Zap,
@@ -17,6 +18,8 @@ import {
 export function ElectricityDashboard() {
   const { t } = useTranslation();
   const { user, selectedService } = useKioskStore();
+  const networkStatus = useOfflineStore((state) => state.networkStatus);
+  const isOnline = networkStatus === 'online';
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -55,6 +58,13 @@ export function ElectricityDashboard() {
 
       try {
         setLoading(true);
+
+        if (!isOnline) {
+          console.log('[Offline] Skipping live data fetch for ElectricityDashboard');
+          setLoading(false);
+          return;
+        }
+
         // Parallel fetch for account details and alerts
         const [accountResponse, alertsResponse] = await Promise.all([
           departmentService.getAccountDetails('ELECTRICITY', user.consumerId),

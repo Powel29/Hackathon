@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import {
@@ -13,17 +14,18 @@ import {
   Zap,
   Flame,
   Droplets,
-  Building2
+  Building2,
+  WifiOff
 } from 'lucide-react';
-import { connectionService } from '../../services/api';
-
-
-
+import { connectionService, documentService } from '../../services/api';
+import { useOfflineStore } from '../../store/useOfflineStore';
 
 export function TrackNewConnection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedService } = useKioskStore();
+  const { selectedService, applications: cachedApps } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const { syncQueue } = useOfflineStore();
   const [applicationId, setApplicationId] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [error, setError] = useState('');
@@ -35,10 +37,42 @@ export function TrackNewConnection() {
   const handleSearch = async () => {
     if (!applicationId) return;
 
+    // Check offline queue first
+    const queuedMatch = syncQueue.find(item =>
+      item.operationType === 'connection_req' &&
+      (item.id === applicationId || `QUEUED-${item.id.substring(0, 8).toUpperCase()}` === applicationId)
+    );
+
+    if (queuedMatch) {
+      setSelectedApp({
+        applicationId: `QUEUED-${queuedMatch.id.substring(0, 8).toUpperCase()}`,
+        status: 'queued',
+        applicantName: queuedMatch.payload.applicantName || 'Applicant',
+        serviceType: queuedMatch.payload.serviceType,
+        createdAt: queuedMatch.createdAt,
+        ...queuedMatch.payload,
+        isQueued: true
+      });
+      setError('');
+      return;
+    }
+
+    if (!isOnline) {
+      const match = (cachedApps || []).find(a =>
+        a.applicationId === applicationId ||
+        (a.id && a.id.toString() === applicationId)
+      );
+      if (match) {
+        setSelectedApp(match);
+      } else {
+        setError('Application not found in offline cache. Connect to internet for live lookup.');
+      }
+      return;
+    }
+
     try {
       setError('');
-      setSelectedApp(null);
-
+      setLoading(true);
       const app = await connectionService.track(applicationId);
 
       if (app) {
@@ -49,6 +83,8 @@ export function TrackNewConnection() {
     } catch (e) {
       console.error("Track connection failed", e);
       setError(t('trackNewConnection.errorSystem') || 'Application not found or system error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,14 +106,49 @@ export function TrackNewConnection() {
 
   useEffect(() => {
     fetchUserApplications();
-  }, [targetDepartment]);
+  }, [targetDepartment, isOnline, syncQueue]);
 
   const fetchUserApplications = async () => {
     try {
+      let filtered = [];
+
+      // 1. Get queued items
+      const queuedApps = syncQueue
+        .filter(item => item.operationType === 'connection_req' && item.status !== 'synced')
+        .map(item => ({
+          applicationId: `QUEUED-${item.id.substring(0, 8).toUpperCase()}`,
+          id: item.id,
+          status: 'queued',
+          serviceType: item.payload.serviceType,
+          applicantName: item.payload.applicantName,
+          createdAt: item.createdAt,
+          isQueued: true,
+          ...item.payload
+        }));
+
+      // 2. Filter by department
+      const deptQueued = targetDepartment !== 'ALL'
+        ? queuedApps.filter(a => a.serviceType?.toUpperCase() === targetDepartment)
+        : queuedApps;
+
+      if (!isOnline) {
+        const cached = targetDepartment !== 'ALL'
+          ? (cachedApps || []).filter(a => a.serviceType?.toUpperCase() === targetDepartment)
+          : (cachedApps || []);
+        setRecentApps([...deptQueued, ...cached]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       const filters = targetDepartment !== 'ALL' ? { serviceType: targetDepartment } : {};
       const data = await connectionService.getMyApplications(filters);
-      setRecentApps(data);
+
+      // Merge unique ones (avoid duplicates if some synced recently)
+      const existingIds = new Set(data.map(a => a.applicationId));
+      const uniqueQueued = deptQueued.filter(q => !existingIds.has(q.applicationId));
+
+      setRecentApps([...uniqueQueued, ...data]);
     } catch (error) {
       console.error("Failed to fetch user applications", error);
     } finally {
@@ -86,7 +157,9 @@ export function TrackNewConnection() {
   };
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
+      case 'queued':
+        return <Clock className="w-5 h-5 text-orange-500" />;
       case 'pending':
         return <Clock className="w-5 h-5 text-[#FF9800]" />;
       case 'approved':
@@ -101,7 +174,9 @@ export function TrackNewConnection() {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
+      case 'queued':
+        return 'bg-orange-500';
       case 'pending':
         return 'bg-[#FF9800]';
       case 'approved':
@@ -166,6 +241,16 @@ export function TrackNewConnection() {
                 {t('trackNewConnection.pageTitle') || 'Track Application'}
               </h2>            </div>
           </div>
+
+          {!isOnline && (
+            <div className="mb-6 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <div>
+                <p className="text-sm font-bold text-orange-800">You are currently offline</p>
+                <p className="text-xs text-orange-700">Displaying applications from your last online session. Search is limited to cached data.</p>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <input

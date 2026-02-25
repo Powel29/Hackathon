@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
-import { ArrowLeft, MapPin, Home, Droplets, Truck, CheckCircle, Printer } from 'lucide-react';
+import { ArrowLeft, MapPin, Home, Droplets, Truck, CheckCircle, Printer, WifiOff, AlertCircle, Database } from 'lucide-react';
 import govtLogo from '../../assets/kiosk/Government_of_India_logo.svg';
 
 
@@ -71,6 +73,8 @@ const WATER_TANKER_FACILITIES = [
 export function WaterTankerBooking() {
   const navigate = useNavigate();
   const { user } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const enqueue = useOfflineStore(s => s.enqueue);
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 8;
@@ -178,8 +182,20 @@ export function WaterTankerBooking() {
           ...formData,
           facility: WATER_TANKER_FACILITIES.find(f => f.id === selectedFacility)?.name,
           facilityId: selectedFacility,
-        }
+        },
+        // Non-PII link for offline sync attribute
+        aadharHash: user?.aadharHash
       };
+
+      if (!isOnline) {
+        const tempId = enqueue({
+          operationType: 'tanker_booking',
+          payload
+        });
+        setBookingId(`QUEUED-${tempId.substring(0, 6).toUpperCase()}`);
+        setBookingSuccess(true);
+        return;
+      }
 
       const response = await serviceRequestService.create(payload);
 
@@ -271,13 +287,15 @@ export function WaterTankerBooking() {
                     <td style={{ fontWeight: 'bold', padding: '3px 0' }}>Booking Date:</td>
                     <td style={{ padding: '3px 0' }}>{bookingDate}</td>
                   </tr>
-                  <tr>
-                    <td style={{ fontWeight: 'bold', padding: '3px 0' }}>Booking Time:</td>
-                    <td style={{ padding: '3px 0' }}>{bookingTime}</td>
-                  </tr>
+                  {bookingId.startsWith('QUEUED-') && (
+                    <tr>
+                      <td style={{ fontWeight: 'bold', padding: '3px 0', color: '#ea580c' }}>Sync Status:</td>
+                      <td style={{ padding: '3px 0', color: '#ea580c', fontStyle: 'italic' }}>Pending (Offline)</td>
+                    </tr>
+                  )}
                   <tr>
                     <td style={{ fontWeight: 'bold', padding: '3px 0' }}>Status:</td>
-                    <td style={{ padding: '3px 0', color: '#16a34a', fontWeight: 'bold' }}>✓ CONFIRMED</td>
+                    <td style={{ padding: '3px 0', color: '#16a34a', fontWeight: 'bold' }}>{bookingId.startsWith('QUEUED-') ? 'QUEUED' : '✓ CONFIRMED'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -468,13 +486,30 @@ export function WaterTankerBooking() {
               <div className="w-20 h-20 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-12 h-12 text-cyan-600" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                {bookingId.startsWith('QUEUED-') ? 'Booking Enqueued!' : 'Booking Confirmed!'}
+              </h2>
               <div className="bg-cyan-50 border-2 border-cyan-200 rounded-lg p-4 mb-6">
-                <p className="text-sm font-semibold text-gray-600 mb-1">Booking ID</p>
-                <p className="text-2xl font-bold text-cyan-600">{bookingId}</p>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  {bookingId.startsWith('QUEUED-') ? 'Temporary Reference ID' : 'Booking ID'}
+                </p>
+                <p className="text-2xl font-bold text-cyan-600 font-mono">{bookingId}</p>
               </div>
-              <p className="text-gray-600 mb-6">
-                Your water tanker has been booked successfully. You will receive a confirmation SMS shortly.
+
+              {bookingId.startsWith('QUEUED-') && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 text-left flex items-start gap-3">
+                  <Database className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-orange-800 uppercase tracking-tight">Offline Booking Pending</p>
+                    <p className="text-xs text-orange-700 leading-relaxed">Your request is saved locally. It will be sent to the department automatically once internet connectivity is restored.</p>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-gray-600 mb-6 font-medium">
+                {bookingId.startsWith('QUEUED-')
+                  ? 'Your water tanker booking has been enqueued. Please keep this ID for your records.'
+                  : 'Your water tanker has been booked successfully. You will receive a confirmation SMS shortly.'}
               </p>
 
               <div className="space-y-3">
@@ -533,6 +568,23 @@ export function WaterTankerBooking() {
               />
             ))}
           </div>
+
+          {!isOnline && (
+            <div className="mb-6 bg-orange-600 text-white rounded-2xl shadow-lg p-5 flex items-center justify-between overflow-hidden relative border-2 border-orange-500">
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="bg-white/20 p-2 rounded-xl">
+                  <WifiOff className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black uppercase tracking-wider text-sm">Offline Mode Active</h3>
+                  <p className="text-xs opacity-90 font-medium">Bookings will be enqueued and synced when online.</p>
+                </div>
+              </div>
+              <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
+                <Droplets className="w-24 h-24 text-white" />
+              </div>
+            </div>
+          )}
 
           {/* Form Content */}
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">

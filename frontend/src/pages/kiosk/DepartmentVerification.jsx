@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, Shield, Zap, Flame, Droplets, Building2, Bell } from 'lucide-react';
@@ -14,6 +15,8 @@ export function DepartmentVerification() {
   const selectedService = useKioskStore((state) => state.selectedService);
   const setUser = useKioskStore((state) => state.setUser);
   const user = useKioskStore((state) => state.user);
+  const networkStatus = useOfflineStore((state) => state.networkStatus);
+  const isOnline = networkStatus === 'online';
   const [departmentId, setDepartmentId] = useState('');
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -112,6 +115,21 @@ export function DepartmentVerification() {
         return;
       }
 
+      if (!isOnline) {
+        console.warn('[Offline] Bypassing server verification for:', departmentId);
+        setUser({
+          ...(user || {}),
+          consumerId: departmentId.trim(),
+          accountId: `OFFLINE-${departmentId.trim().toUpperCase()}`,
+          ownerName: 'Offline User',
+          connectionType: 'TEMPORARY',
+          isOfflineSession: true
+        });
+        toast.info('Offline Mode: Account verification will complete during sync.');
+        navigate('/kiosk/dashboard');
+        return;
+      }
+
       const response = await departmentService.verifyAccount(
         selectedService,
         departmentId.trim()
@@ -123,27 +141,20 @@ export function DepartmentVerification() {
           consumerId: response.account.consumerNumber,
           accountId: response.account.accountId,
           ownerName: response.account.ownerName,
-          connectionType: response.account.connectionType
+          connectionType: response.account.connectionType,
+          isOfflineSession: false
         });
         navigate('/kiosk/dashboard');
+      } else if (response.notFound) {
+        setNotFound(true);
+        setError(response.error?.message || 'Account not found');
+      } else {
+        setError(response.error?.message || 'Failed to verify account');
       }
     } catch (err) {
       console.error('Verification error:', err);
       const msg = err.message || 'Failed to verify account. Please try again.';
-      // If account not found, show the request-approval button
-      if (
-        msg.toLowerCase().includes('not found') ||
-        msg.toLowerCase().includes('no water') ||
-        msg.toLowerCase().includes('no electricity') ||
-        msg.toLowerCase().includes('no gas') ||
-        msg.toLowerCase().includes('no municipal') ||
-        err.code === 'NOT_FOUND'
-      ) {
-        setNotFound(true);
-        setError(msg);
-      } else {
-        setError(msg);
-      }
+      setError(msg);
     } finally {
       setIsVerifying(false);
     }
@@ -295,7 +306,7 @@ export function DepartmentVerification() {
                   className="flex-1"
                   disabled={isVerifying || requestSubmitted}
                 >
-                  {isVerifying ? 'Verifying...' : 'Verify & Continue'}
+                  {isVerifying ? 'Verifying...' : (!isOnline ? 'Continue Offline' : 'Verify & Continue')}
                 </TouchButton>
               </div>
             </div>

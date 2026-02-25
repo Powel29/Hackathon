@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, FileText, Upload, Zap, Flame, Droplets, Building2 } from 'lucide-react';
@@ -10,7 +12,9 @@ import { complaintService, documentService } from '../../services/api';
 export function RegisterComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { addComplaint, selectedService, fetchComplaints } = useKioskStore();
+  const { addComplaint, selectedService, fetchComplaints, user } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const enqueue = useOfflineStore(s => s.enqueue);
   const [description, setDescription] = useState('');
   const [selectedIssue, setSelectedIssue] = useState('');
   const [files, setFiles] = useState([]);
@@ -248,7 +252,20 @@ export function RegisterComplaint() {
         complaintType,
         title: description.substring(0, 197) + (description.length > 197 ? '...' : ''),
         description: description,
+        // Attribution for offline sync
+        aadharHash: user?.aadharHash
       };
+
+      if (!isOnline) {
+        // FR-OFF-002: Offline Queue Routing
+        const tempId = enqueue({
+          operationType: 'complaint',
+          payload: complaintData
+        });
+        setComplaintId(`QUEUED-${tempId.substring(0, 6).toUpperCase()}`);
+        setShowSuccess(true);
+        return;
+      }
 
       const response = await complaintService.submit(complaintData);
 
@@ -448,28 +465,36 @@ export function RegisterComplaint() {
             <label className="block text-sm font-semibold text-gray-700 mb-3">
               Upload Supporting Documents (Optional)
             </label>
-            <p className="text-xs text-gray-600 mb-3">
-              Maximum {MAX_FILES} files • Maximum 5MB per file • Allowed: JPG, PNG, PDF
-            </p>
-
-            <label className="flex items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <Upload className="w-5 h-5 text-gray-400" />
-              <div className="text-center">
-                <p className="text-sm font-semibold text-gray-700">
-                  {files.length === 0 ? 'Click to upload files' : `${files.length}/${MAX_FILES} files selected`}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  You can select multiple files at once
-                </p>
+            {!isOnline ? (
+              <div className="bg-orange-50 border border-orange-200 text-orange-800 p-4 rounded-lg text-sm font-medium">
+                Document upload is currently unavailable while offline. You can still submit the complaint text, and it will sync when the connection is restored.
               </div>
-              <input
-                type="file"
-                multiple
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
+            ) : (
+              <>
+                <p className="text-xs text-gray-600 mb-3">
+                  Maximum {MAX_FILES} files • Maximum 5MB per file • Allowed: JPG, PNG, PDF
+                </p>
+
+                <label className="flex items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <Upload className="w-5 h-5 text-gray-400" />
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-gray-700">
+                      {files.length === 0 ? 'Click to upload files' : `${files.length}/${MAX_FILES} files selected`}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      You can select multiple files at once
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </>
+            )}
 
             {/* File Errors */}
             {fileErrors.length > 0 && (

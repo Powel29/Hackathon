@@ -48,18 +48,20 @@ export function LanguageSelection() {
                         {t('language.selectLanguage')}
                     </h2>
 
-                    <div className="grid grid-cols-5 gap-4 mb-8">
+                    <div className="grid grid-cols-4 gap-4 mb-8">
                         {languages.map((lang) => (
                             <button
                                 key={lang.code}
                                 onClick={() => handleLanguageSelect(lang.code)}
-                                className={`bg-white border-2 rounded-xl p-4 flex flex-col items-center justify-center gap-2 transition-all hover:shadow-md ${language === lang.code
+                                aria-pressed={language === lang.code}
+                                aria-label={`${lang.nativeName} (${lang.name})`}
+                                className={`bg-white border-2 rounded-xl p-5 flex flex-col items-center justify-center gap-3 transition-all hover:shadow-md min-h-[100px] ${language === lang.code
                                     ? 'border-[#0066CC] shadow-md bg-blue-50'
                                     : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 style={{ touchAction: 'manipulation' }}
                             >
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${language === lang.code
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${language === lang.code
                                     ? 'bg-[#0066CC] text-white'
                                     : 'bg-gray-100 text-gray-600'
                                     }`}>
@@ -72,13 +74,14 @@ export function LanguageSelection() {
                                     <p className="text-xs text-gray-500">{lang.name}</p>
                                 </div>
                                 {language === lang.code && (
-                                    <div className="w-4 h-4 bg-[#28A745] rounded-full flex items-center justify-center">
-                                        <span className="text-white text-xs">✓</span>
+                                    <div className="w-5 h-5 bg-[#28A745] rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs" aria-hidden="true">✓</span>
                                     </div>
                                 )}
                             </button>
                         ))}
                     </div>
+
 
                     <TouchButton
                         variant="primary"
