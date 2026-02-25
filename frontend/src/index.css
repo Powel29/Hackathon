@@ -217,6 +217,146 @@
     }
 }
 
+/* ==========================================================================
+   PHASE 0 — DESIGN TOKEN SYSTEM & ACCESSIBILITY CLASSES
+   Applied by AccessibilityProvider to <html> element.
+   ========================================================================== */
+
+/* ── Typography Scale: Large (FR-A11Y-003) ─────────────────────────────── */
+html.a11y-text-large {
+    font-size: 18px;
+}
+html.a11y-text-large body,
+html.a11y-text-large p,
+html.a11y-text-large span,
+html.a11y-text-large label {
+    font-size: 1.125rem;
+}
+html.a11y-text-large h1 { font-size: 2rem; }
+html.a11y-text-large h2 { font-size: 1.75rem; }
+html.a11y-text-large h3 { font-size: 1.5rem; }
+html.a11y-text-large button,
+html.a11y-text-large input,
+html.a11y-text-large select,
+html.a11y-text-large textarea {
+    font-size: 1.125rem;
+}
+
+/* ── Typography Scale: XL / Easy Mode (FR-A11Y-003) ───────────────────── */
+html.a11y-text-xl {
+    font-size: 20px;
+}
+html.a11y-text-xl body,
+html.a11y-text-xl p,
+html.a11y-text-xl span,
+html.a11y-text-xl label {
+    font-size: 1.25rem;
+}
+html.a11y-text-xl h1 { font-size: 2.25rem; }
+html.a11y-text-xl h2 { font-size: 2rem; }
+html.a11y-text-xl h3 { font-size: 1.75rem; }
+html.a11y-text-xl button,
+html.a11y-text-xl input,
+html.a11y-text-xl select,
+html.a11y-text-xl textarea {
+    font-size: 1.25rem;
+    min-height: 56px;
+}
+
+/* ── High Contrast Mode (FR-A11Y-001, WCAG 1.4.3) ─────────────────────── */
+html.a11y-high-contrast {
+    --background: #ffffff;
+    --foreground: #000000;
+    --primary: #003d99;
+    --primary-foreground: #ffffff;
+    --border: #000000;
+    --card: #f5f5f5;
+    --card-foreground: #000000;
+    --muted: #e5e5e5;
+    --muted-foreground: #222222;
+    --destructive: #aa0000;
+    --input-background: #f8f8f8;
+}
+html.a11y-high-contrast * {
+    border-color: #000000 !important;
+}
+html.a11y-high-contrast button:focus-visible,
+html.a11y-high-contrast a:focus-visible,
+html.a11y-high-contrast input:focus-visible,
+html.a11y-high-contrast select:focus-visible {
+    outline: 3px solid #000000 !important;
+    outline-offset: 2px !important;
+}
+
+/* ── Easy Mode (FR-A11Y-003) ───────────────────────────────────────────── */
+/* Easy mode hides supplementary UI to reduce cognitive load */
+html.a11y-easy-mode .easy-mode-hide {
+    display: none !important;
+}
+/* Easy mode shows simplified alternatives */
+html.a11y-easy-mode .easy-mode-show {
+    display: block;
+}
+/* Limit screen to 3 choices max (enforced via component logic + this class) */
+html.a11y-easy-mode .kiosk-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+html.a11y-easy-mode .kiosk-choice-grid .kiosk-choice:nth-child(n+4) {
+    display: none;
+}
+
+/* ── Touch Target Enforcement (FR-UX-001) ──────────────────────────────── */
+/* Every interactive kiosk element must hit 80px minimum */
+.kiosk-touch-target {
+    min-width: var(--touch-target-min, 80px);
+    min-height: var(--touch-target-min, 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Focus Visibility Baseline (FR-A11Y-001 — WCAG 2.4.7) ─────────────── */
+/* All focusable elements must have visible focus ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid #0066CC;
+    outline-offset: 2px;
+}
+
+/* ── Network State Indicators ──────────────────────────────────────────── */
+/* Used by NetworkStatusBanner (Phase 2) */
+.network-online   { --network-color: #16a34a; --network-bg: #f0fdf4; }
+.network-offline  { --network-color: #dc2626; --network-bg: #fef2f2; }
+.network-syncing  { --network-color: #2563eb; --network-bg: #eff6ff; }
+.network-retrying { --network-color: #d97706; --network-bg: #fffbeb; }
+
+/* ── Sync Queue Item States ────────────────────────────────────────────── */
+.sync-queued   { color: #6b7280; }
+.sync-retrying { color: #d97706; }
+.sync-synced   { color: #16a34a; }
+.sync-failed   { color: #dc2626; }
+
+/* ── Double-submit Prevention (FR-UX-002) ──────────────────────────────── */
+/* Applied programmatically when a form is being submitted */
+.submitting-lock {
+    pointer-events: none;
+    opacity: 0.7;
+    user-select: none;
+}
+
+/* ── Kiosk Lockdown Mode (FR-UX-004) ───────────────────────────────────── */
+/* Applied to body when KIOSK_LOCKDOWN=true */
+body.kiosk-lockdown a[href^="http"],
+body.kiosk-lockdown a[target="_blank"] {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+
 /**
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */

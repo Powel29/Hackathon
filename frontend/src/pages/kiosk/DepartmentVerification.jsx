@@ -126,24 +126,16 @@ export function DepartmentVerification() {
           connectionType: response.account.connectionType
         });
         navigate('/kiosk/dashboard');
+      } else if (response.notFound) {
+        setNotFound(true);
+        setError(response.error?.message || 'Account not found');
+      } else {
+        setError(response.error?.message || 'Failed to verify account');
       }
     } catch (err) {
       console.error('Verification error:', err);
       const msg = err.message || 'Failed to verify account. Please try again.';
-      // If account not found, show the request-approval button
-      if (
-        msg.toLowerCase().includes('not found') ||
-        msg.toLowerCase().includes('no water') ||
-        msg.toLowerCase().includes('no electricity') ||
-        msg.toLowerCase().includes('no gas') ||
-        msg.toLowerCase().includes('no municipal') ||
-        err.code === 'NOT_FOUND'
-      ) {
-        setNotFound(true);
-        setError(msg);
-      } else {
-        setError(msg);
-      }
+      setError(msg);
     } finally {
       setIsVerifying(false);
     }

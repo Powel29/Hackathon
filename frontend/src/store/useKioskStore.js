@@ -103,12 +103,19 @@ export const useKioskStore = create((set, get) => ({
 
     setShowSessionWarning: (show) => set({ showSessionWarning: show }),
 
-    resetSession: () => set({
-        user: null,
-        isAuthenticated: false,
-        selectedService: null,
-        showSessionWarning: false,
-        bills: [],
-        complaints: []
-    })
+    resetSession: () => {
+        // Wipe auth token from sessionStorage (FR-SEC-001)
+        import('../core/security/storagePolicy').then(({ tokenStrategy }) => {
+            tokenStrategy.securityWipe();
+        });
+        set({
+            user: null,
+            isAuthenticated: false,
+            selectedService: null,
+            showSessionWarning: false,
+            bills: [],
+            complaints: []
+        });
+    }
 }));
+

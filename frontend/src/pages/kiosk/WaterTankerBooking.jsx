@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, MapPin, Home, Droplets, Truck, CheckCircle, Printer } from 'lucide-react';
@@ -71,6 +73,8 @@ const WATER_TANKER_FACILITIES = [
 export function WaterTankerBooking() {
   const navigate = useNavigate();
   const { user } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const enqueue = useOfflineStore(s => s.enqueue);
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 8;
@@ -180,6 +184,16 @@ export function WaterTankerBooking() {
           facilityId: selectedFacility,
         }
       };
+
+      if (!isOnline) {
+        const tempId = enqueue({
+          operationType: 'tanker_booking',
+          payload
+        });
+        setBookingId(`QUEUED-${tempId.substring(0, 6).toUpperCase()}`);
+        setBookingSuccess(true);
+        return;
+      }
 
       const response = await serviceRequestService.create(payload);
 

@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
-import { serviceRequestService } from '../../services/api/serviceRequest.service';
 import { documentService } from '../../services/api';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, MapPin, Flame, CheckCircle, Printer, Home, Clock, Calendar, FileText, Download } from 'lucide-react';
@@ -64,6 +65,8 @@ export function GasCylinderBooking() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { user } = useKioskStore();
+    const { isOnline } = useNetworkStatus();
+    const enqueue = useOfflineStore(s => s.enqueue);
     const receiptRef = useRef(null);
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -188,7 +191,20 @@ export function GasCylinderBooking() {
                 details: formData
             };
 
-            const response = await serviceRequestService.create(payload);
+            if (!isOnline) {
+                const tempId = enqueue({
+                    operationType: 'gas_booking',
+                    payload
+                });
+                setBookingId(`QUEUED-${tempId.substring(0, 6).toUpperCase()}`);
+                setBookingSuccess(true);
+                setIsSaving(false);
+                return;
+            }
+
+            // Need to dynamically import to resolve correctly since it was removed from top level
+            const apiModule = await import('../../services/api/serviceRequest.service');
+            const response = await apiModule.serviceRequestService.create(payload);
             const newId = response.requestId || 'GAS-' + Date.now();
             setBookingId(newId);
 

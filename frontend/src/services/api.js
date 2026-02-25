@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { tokenStrategy } from '../core/security/storagePolicy';
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -9,9 +11,9 @@ const api = axios.create({
     }
 });
 
-// Add token to requests
+// Add token to requests — reads from sessionStorage (FR-SEC-001)
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    const token = tokenStrategy.getToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,8 +29,7 @@ api.interceptors.response.use(
             // Only redirect if not already on login page to avoid redirect loops
             if (!currentPath.includes('/login') && !currentPath.includes('/auth')) {
                 console.warn('Session expired or invalid. Redirecting to login...');
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
+                tokenStrategy.securityWipe();
                 window.location.href = '/kiosk/login-register';
             }
         }
@@ -80,9 +81,9 @@ export const authService = {
             console.log('✅ OTP Verify Response:', response.data);
 
             if (response.data.success && response.data.token) {
-                localStorage.setItem('token', response.data.token);
+                tokenStrategy.setToken(response.data.token);
                 if (response.data.user) {
-                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                    tokenStrategy.setUser(response.data.user);
                 }
             }
 
@@ -103,8 +104,7 @@ export const authService = {
         } catch (error) {
             console.error('Logout error (ignoring):', error);
         } finally {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            tokenStrategy.securityWipe();
         }
     }
 };
@@ -301,6 +301,28 @@ export const departmentService = {
             console.log('✅ Verification Response:', response.data);
             return response.data;
         } catch (error) {
+            // If account not available (404), return formatted result instead of throwing
+            if (error.response && error.response.status === 404) {
+                console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #ff9800; font-weight: bold');
+                console.log('%c⚠️  ACCOUNT NOT AVAILABLE', 'color: #ff9800; font-weight: bold; font-size: 12px');
+                console.table({
+                    Status: 'NOT_FOUND',
+                    Department: serviceType,
+                    ConsumerID: consumerNumber,
+                    Message: error.response?.data?.error?.message || 'Account not found in system'
+                });
+                console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #ff9800; font-weight: bold');
+
+                return {
+                    success: false,
+                    notFound: true,
+                    error: {
+                        message: error.response?.data?.error?.message || 'Account not found',
+                        code: 'NOT_FOUND'
+                    }
+                };
+            }
+
             console.error('❌ API verifyAccount error:', error);
             console.error('❌ Error response:', error.response?.data);
             const err = new Error(error.response?.data?.error?.message || 'Failed to verify account');
