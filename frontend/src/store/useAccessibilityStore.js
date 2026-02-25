@@ -15,7 +15,7 @@ const DEFAULT_PREFS = {
     textSize: 'standard',   // 'standard' | 'large' | 'xl'
     contrast: 'default',    // 'default' | 'high'
     easyMode: false,        // fewer choices, simplified copy
-    voiceGuidance: false,   // TTS guidance on each step
+    voiceGuidance: true,    // TTS guidance on each step
     screenReaderHints: false, // extended aria-live announcements
 };
 

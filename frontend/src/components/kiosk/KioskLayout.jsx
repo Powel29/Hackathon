@@ -26,6 +26,8 @@ import { Languages, Accessibility, Clock, Home, HelpCircle, Database } from 'luc
 import { NetworkStatusBanner } from './NetworkStatusBanner';
 import { AccessibilityPanel } from './AccessibilityPanel';
 import { SyncQueuePanel } from './SyncQueuePanel';
+import { VoiceAssistWidget } from './VoiceAssistWidget';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { useOfflineStore } from '../../store/useOfflineStore';
 import { ENV } from '../../config/env';
@@ -58,6 +60,18 @@ export function KioskLayout({
         setLanguage(langCode);
         i18n.changeLanguage(langCode);
     };
+
+    useVoiceCommand({
+        'home': () => window.location.href = '/kiosk',
+        'back': () => window.history.back(),
+        'change-language': () => {
+            const nextIdx = (languages.findIndex(l => l.code === language) + 1) % languages.length;
+            handleLanguageChange(languages[nextIdx].code);
+        },
+        'help': () => {
+            // Future help modal toggle
+        }
+    });
 
     // Live clock in header
     useEffect(() => {
@@ -168,13 +182,18 @@ export function KioskLayout({
                             </button>
                         </div>
 
+                        {/* Center: Voice Assist (Phase 4) */}
+                        <div className="flex-1 flex justify-center">
+                            <VoiceAssistWidget />
+                        </div>
+
                         {/* Center: Credits */}
                         <p className="text-xs text-gray-400 easy-mode-hide">
                             © 2026 SUVIDHA | Government of India
                         </p>
 
                         {/* Right: Accessibility + Queue */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 justify-end">
                             <button
                                 onClick={() => setA11yPanelOpen(true)}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#0066CC] hover:bg-blue-50 transition-colors min-h-[44px]"

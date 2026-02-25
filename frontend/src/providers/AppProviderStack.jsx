@@ -17,6 +17,7 @@
 import { Component } from 'react';
 import { NetworkStatusProvider } from './NetworkStatusProvider';
 import { AccessibilityProvider } from './AccessibilityProvider';
+import { VoiceAssistProvider } from './VoiceAssistProvider';
 import { validateEnv } from '../config/env';
 import { logFeatureFlags } from '../config/featureFlags';
 import { migrateFromLocalStorage } from '../core/security/storagePolicy';
@@ -110,7 +111,9 @@ export function AppProviderStack({ children }) {
         <RootErrorBoundary>
             <NetworkStatusProvider>
                 <AccessibilityProvider>
-                    {children}
+                    <VoiceAssistProvider>
+                        {children}
+                    </VoiceAssistProvider>
                 </AccessibilityProvider>
             </NetworkStatusProvider>
         </RootErrorBoundary>

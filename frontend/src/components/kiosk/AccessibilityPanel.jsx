@@ -16,7 +16,6 @@ import { X, Type, Eye, Zap, Volume2 } from 'lucide-react';
 import { useAccessibilityStore } from '../../store/useAccessibilityStore';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
-import { isFeatureEnabled } from '../../config/featureFlags';
 
 export function AccessibilityPanel({ isOpen, onClose }) {
     const { t } = useTranslation();
@@ -29,8 +28,6 @@ export function AccessibilityPanel({ isOpen, onClose }) {
         voiceGuidance, toggleVoiceGuidance,
         resetToDefaults,
     } = useAccessibilityStore();
-
-    const voiceEnabled = isFeatureEnabled('voice');
 
     // Focus trap + Escape to close
     useEffect(() => {
@@ -185,38 +182,36 @@ export function AccessibilityPanel({ isOpen, onClose }) {
                         </button>
                     </div>
 
-                    {/* Voice Guidance Toggle (if feature enabled) */}
-                    {voiceEnabled && (
-                        <div>
-                            <button
-                                onClick={toggleVoiceGuidance}
-                                className="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors min-h-[64px]"
-                                style={{ touchAction: 'manipulation' }}
-                                aria-pressed={voiceGuidance}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Volume2 className="w-5 h-5 text-[#0066CC]" aria-hidden="true" />
-                                    <div className="text-left">
-                                        <span className="font-semibold text-[#212529]">
-                                            {t('a11y.voiceGuidance', 'Voice Guidance')}
-                                        </span>
-                                        <p className="text-xs text-gray-500">
-                                            {t('a11y.voiceDesc', 'Spoken instructions each step')}
-                                        </p>
-                                    </div>
+                    {/* Voice Guidance Toggle (always visible) */}
+                    <div>
+                        <button
+                            onClick={toggleVoiceGuidance}
+                            className="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors min-h-[64px]"
+                            style={{ touchAction: 'manipulation' }}
+                            aria-pressed={voiceGuidance}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Volume2 className="w-5 h-5 text-[#0066CC]" aria-hidden="true" />
+                                <div className="text-left">
+                                    <span className="font-semibold text-[#212529]">
+                                        {t('a11y.voiceGuidance', 'Voice Guidance')}
+                                    </span>
+                                    <p className="text-xs text-gray-500">
+                                        {t('a11y.voiceDesc', 'Spoken instructions each step')}
+                                    </p>
                                 </div>
+                            </div>
+                            <div className={[
+                                'w-12 h-7 rounded-full transition-colors flex items-center px-1',
+                                voiceGuidance ? 'bg-[#28A745]' : 'bg-gray-300',
+                            ].join(' ')}>
                                 <div className={[
-                                    'w-12 h-7 rounded-full transition-colors flex items-center px-1',
-                                    voiceGuidance ? 'bg-[#28A745]' : 'bg-gray-300',
-                                ].join(' ')}>
-                                    <div className={[
-                                        'w-5 h-5 rounded-full bg-white shadow transition-transform',
-                                        voiceGuidance ? 'translate-x-5' : 'translate-x-0',
-                                    ].join(' ')} />
-                                </div>
-                            </button>
-                        </div>
-                    )}
+                                    'w-5 h-5 rounded-full bg-white shadow transition-transform',
+                                    voiceGuidance ? 'translate-x-5' : 'translate-x-0',
+                                ].join(' ')} />
+                            </div>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Footer */}

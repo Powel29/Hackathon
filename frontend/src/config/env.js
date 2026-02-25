@@ -44,7 +44,7 @@ export const ENV = {
         /** Offline transaction queue & sync manager */
         offlineQueue: getEnvBool('VITE_FEATURE_OFFLINE_QUEUE', true),
         /** Voice guidance and command recognition */
-        voice: getEnvBool('VITE_FEATURE_VOICE', false),
+        voice: getEnvBool('VITE_FEATURE_VOICE', true),
         /** Easy mode (senior-friendly larger typography) */
         easyMode: getEnvBool('VITE_FEATURE_EASY_MODE', true),
         /** Privacy-safe analytics / telemetry */

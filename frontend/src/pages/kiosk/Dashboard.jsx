@@ -23,6 +23,7 @@ import {
 import { useEffect } from 'react';
 import { useOfflineStore } from '../../store/useOfflineStore';
 import { WifiOff, AlertCircle } from 'lucide-react';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -141,6 +142,13 @@ export function Dashboard() {
     resetSession();
     navigate('/kiosk/');
   };
+
+  useVoiceCommand({
+    'logout': handleLogout,
+    'pay-bill': () => navigate('/kiosk/bills'),
+    'register-complaint': () => navigate('/kiosk/register-complaint'),
+    'track-request': () => navigate('/kiosk/track-request')
+  });
 
   return (
     <KioskLayout>

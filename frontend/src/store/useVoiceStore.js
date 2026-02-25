@@ -1,10 +1,9 @@
 /**
  * SUVIDHA Kiosk - Voice Store
- * Phase 0: Foundation & Architecture Alignment (FR-VOICE-001..003)
+ * Phase 4: Voice Navigation (FR-VOICE-001..003)
  *
- * In-memory only — no persistence (privacy requirement).
- * All voice state is cleared when tab closes or session resets.
- * Consent must be re-obtained every session.
+ * In-memory only - no persistence (privacy requirement).
+ * Voice state is reset at session end and never stored to disk.
  */
 
 import { create } from 'zustand';
@@ -19,40 +18,51 @@ export const useVoiceStore = create((set, get) => ({
     /** Current processing state */
     voiceStatus: 'idle', // 'idle' | 'listening' | 'processing' | 'speaking' | 'error' | 'fallback'
 
-    /** Last recognized command text */
+    /** Last recognized command object */
     lastCommand: null,
 
     /** Current TTS message being spoken */
     currentGuidance: null,
 
+    /** Last successfully spoken guidance (for repeat action) */
+    lastGuidance: null,
+
     /** Was the last command unrecognized? */
     commandFailed: false,
 
-    // ─── Actions ───────────────────────────────────────────────────────────────
+    /** Optional fallback helper message */
+    fallbackMessage: null,
 
     /** User grants consent to use voice */
     grantConsent() {
-        set({ consentGiven: true });
+        set({ consentGiven: true, commandFailed: false, fallbackMessage: null });
     },
 
-    /** Revoke consent — stops all recording immediately */
+    /** Revoke consent - stops all recording immediately */
     revokeConsent() {
         set({
             consentGiven: false,
             isListening: false,
             voiceStatus: 'idle',
             lastCommand: null,
+            currentGuidance: null,
             commandFailed: false,
+            fallbackMessage: null,
         });
     },
 
     /** Start listening (only called after consent is given) */
     startListening() {
         if (!get().consentGiven) {
-            console.warn('[Voice] Cannot start listening — consent not given');
+            console.warn('[Voice] Cannot start listening - consent not given');
             return;
         }
-        set({ isListening: true, voiceStatus: 'listening', commandFailed: false });
+        set({
+            isListening: true,
+            voiceStatus: 'listening',
+            commandFailed: false,
+            fallbackMessage: null,
+        });
     },
 
     /** Stop listening */
@@ -63,24 +73,43 @@ export const useVoiceStore = create((set, get) => ({
         }
     },
 
-    /** Set processing state (command recognized, calling handler) */
+    /** Set processing state */
     setProcessing() {
-        set({ voiceStatus: 'processing' });
+        set({ voiceStatus: 'processing', fallbackMessage: null });
     },
 
     /** Set command result */
     setCommand(command) {
-        set({ lastCommand: command, commandFailed: false, voiceStatus: 'idle' });
+        set({
+            lastCommand: command,
+            commandFailed: false,
+            voiceStatus: 'idle',
+            fallbackMessage: null,
+        });
     },
 
-    /** Mark command as unrecognized — trigger fallback UI */
-    setCommandFailed() {
-        set({ commandFailed: true, voiceStatus: 'fallback', isListening: false });
+    /** Clear the last command after it's been consumed */
+    clearCommand() {
+        set({ lastCommand: null });
+    },
+
+    /** Mark command as unrecognized - trigger fallback UI */
+    setCommandFailed(message = null) {
+        set({
+            commandFailed: true,
+            voiceStatus: 'fallback',
+            isListening: false,
+            fallbackMessage: message,
+        });
     },
 
     /** Set TTS guidance text being spoken */
     setSpeaking(text) {
-        set({ voiceStatus: 'speaking', currentGuidance: text });
+        set({
+            voiceStatus: 'speaking',
+            currentGuidance: text,
+            lastGuidance: text,
+        });
     },
 
     /** Clear speaking state */
@@ -99,7 +128,9 @@ export const useVoiceStore = create((set, get) => ({
             voiceStatus: 'idle',
             lastCommand: null,
             currentGuidance: null,
+            lastGuidance: null,
             commandFailed: false,
+            fallbackMessage: null,
         });
     },
 }));

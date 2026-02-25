@@ -139,6 +139,10 @@ export const useKioskStore = create((set, get) => ({
         import('../core/security/storagePolicy').then(({ tokenStrategy }) => {
             tokenStrategy.securityWipe();
         });
+        // Reset voice state to prevent carry-over between kiosk users.
+        import('./useVoiceStore').then(({ useVoiceStore }) => {
+            useVoiceStore.getState().reset();
+        });
         set({
             user: null,
             isAuthenticated: false,
