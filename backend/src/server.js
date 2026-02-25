@@ -20,6 +20,7 @@ const connectionRoutes = require('./routes/connectionRoutes');
 const uploadRoutes = require('./routes/upload.routes');
 const downloadRoutes = require('./routes/download.routes');
 const documentRoutes = require('./routes/document.routes');
+const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 
@@ -73,6 +74,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/download', downloadRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/kiosks', require('./routes/kioskRoutes'));
+app.use("/api/payment", paymentRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));

@@ -139,17 +139,17 @@ export const billService = {
 
 // Payment Service (Mock)
 export const paymentService = {
-    createOrder: async (orderData) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return {
-            id: 'order_' + Math.random().toString(36).substr(2, 9),
-            amount: orderData.amount,
-            currency: 'INR'
-        };
+     createOrder: async ({ amount, billId, billType }) => {
+        const response = await api.post('/payment/create-order', {
+            amount,
+            billId,
+            billType,
+        });
+        return response.data;
     },
-    verifyPayment: async (_paymentData) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return { success: true };
+   verifyPayment: async (paymentData) => {
+        const response = await api.post('/payment/verify-payment', paymentData);
+        return response.data;
     }
 };
 

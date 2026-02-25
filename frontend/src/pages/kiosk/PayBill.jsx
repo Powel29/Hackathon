@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
@@ -8,6 +9,7 @@ import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
 import { ArrowLeft, CreditCard, FileText, WifiOff } from 'lucide-react';
+import axios from 'axios';
 
 export function PayBill() {
   const { t } = useTranslation();
@@ -17,6 +19,14 @@ export function PayBill() {
   const { isOnline } = useNetworkStatus();
   const enqueue = useOfflineStore(s => s.enqueue);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Razorpay checkout script injection
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   const bill = bills.find(b => b.id === billId);
 
@@ -36,43 +46,74 @@ export function PayBill() {
       </KioskLayout>
     );
   }
-  const handlePayment = () => {
+  const handlePayment = async () => {
     setIsProcessing(true);
+    try {
+      // Use actual bill data from props or state
+      const billId = bill.id || bill.billId;
+      const billType = bill.type || bill.serviceType || bill.billType || "";
+      const amount = bill.amount;
+      const gateway = "razorpay";
+      const status = "PENDING";
+      const transactionRef = undefined; // will be set after payment
+      // Add other bill-type-specific IDs if available
+      const electricityBillId = bill.electricityBillId || undefined;
+      const gasBillId = bill.gasBillId || undefined;
+      const municipalBillId = bill.municipalBillId || undefined;
+      const waterBillId = bill.waterBillId || undefined;
 
-    // Simulate payment processing
-    setTimeout(() => {
-      const transactionId = isOnline ? 'TXN' + Date.now() : 'OFFLINE-TXN-' + Date.now();
+      // Create order on backend
+      const { data: order } = await axios.post(
+        "http://localhost:5000/api/payment/create-order",
+        { amount, billId, billType, gateway, status, electricityBillId, gasBillId, municipalBillId, waterBillId }
+      );
 
-      if (!isOnline) {
-        // Enqueue payment for later sync
-        enqueue({
-          operationType: 'pay_bill',
-          payload: {
-            billId: bill.id,
-            serviceType: bill.type || bill.serviceType,
-            status: 'paid',
-            transactionId,
-            paymentMethod: 'Card',
-            // Non-PII link for offline sync attribute
-            aadharHash: user?.aadharHash
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        handler: async function (response) {
+          const verifyResult = await axios.post("http://localhost:5000/api/payment/verify-payment", {
+            ...response,
+            billId,
+            billType,
+            amount,
+            gateway,
+            status: "SUCCESS",
+            electricityBillId,
+            gasBillId,
+            municipalBillId,
+            waterBillId
+          });
+          if (verifyResult.data && verifyResult.data.success) {
+            // Update bill status in local state/store
+            updateBill(billId, { status: "PAID" });
+            // Redirect to payment success/receipt page
+            navigate(`/kiosk/receipt/${response.razorpay_payment_id}`, {
+              state: {
+                bill: { ...bill, status: "PAID" },
+                transactionId: response.razorpay_payment_id,
+                paymentDate: new Date().toISOString(),
+                paymentMethod: "Card",
+                isOfflinePayment: !isOnline
+              }
+            });
+          } else {
+            toast.error("Payment verification failed");
           }
-        });
-      }
+        },
+        theme: {
+          color: "#3399cc",
+        },
+      };
 
-      // Update bill status to paid locally
-      updateBill(bill.id, { status: 'paid' }, !isOnline);
-
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      toast.error('Failed to process payment');
       setIsProcessing(false);
-      navigate(`/kiosk/receipt/${transactionId}`, {
-        state: {
-          bill: { ...bill, status: 'paid' },
-          transactionId,
-          paymentDate: new Date().toISOString(),
-          paymentMethod: 'Card',
-          isOfflinePayment: !isOnline
-        }
-      });
-    }, 2000);
+    }
   };
   if (isProcessing) {
     return <LoadingScreen message={t('bills.processingPayment')} />;
@@ -157,7 +198,7 @@ export function PayBill() {
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 mt-6">
             <TouchButton
               variant="secondary"
               size="medium"
@@ -167,17 +208,81 @@ export function PayBill() {
               {t('cancel')}
             </TouchButton>
 
-            <TouchButton
-              variant="primary"
-              size="medium"
-              onClick={handlePayment}
-              className="flex-1"
-            >
-              {t('proceedToPay')}
-            </TouchButton>
+            <PayButton bill={bill} navigate={navigate} isOnline={isOnline} updateBill={updateBill} />
           </div>
         </div>
       </div>
     </KioskLayout>
+  );
+}
+
+// PayButton component for explicit payment trigger
+function PayButton({ bill, navigate, isOnline, updateBill }) {
+  const handleRazorpay = async () => {
+    // Extract all relevant attributes from bill/schema
+    const billId = bill.id || bill.billId;
+    const billType = bill.type || bill.serviceType || bill.billType || "";
+    const amount = bill.amount;
+    const gateway = "razorpay";
+    const status = "PENDING";
+    const electricityBillId = bill.electricityBillId || undefined;
+    const gasBillId = bill.gasBillId || undefined;
+    const municipalBillId = bill.municipalBillId || undefined;
+    const waterBillId = bill.waterBillId || undefined;
+
+    // Create order on backend
+    const { data: order } = await axios.post(
+      "http://localhost:5000/api/payment/create-order",
+      { amount, billId, billType, gateway, status, electricityBillId, gasBillId, municipalBillId, waterBillId }
+    );
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      order_id: order.id,
+      handler: async function (response) {
+        const verifyResult = await axios.post("http://localhost:5000/api/payment/verify-payment", {
+          ...response,
+          billId,
+          billType,
+          amount,
+          gateway,
+          status: "SUCCESS",
+          electricityBillId,
+          gasBillId,
+          municipalBillId,
+          waterBillId
+        });
+        if (verifyResult.data && verifyResult.data.success) {
+          // Update bill status in local state/store
+          updateBill(billId, { status: "PAID" });
+          // Redirect to payment success/receipt page
+          navigate(`/kiosk/receipt/${response.razorpay_payment_id}`, {
+            state: {
+              bill: { ...bill, status: "PAID" },
+              transactionId: response.razorpay_payment_id,
+              paymentDate: new Date().toISOString(),
+              paymentMethod: "Card",
+              isOfflinePayment: !isOnline
+            }
+          });
+        } else {
+          toast.error("Payment verification failed");
+        }
+      },
+      theme: {
+        color: "#3399cc",
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+  return (
+    <button onClick={handleRazorpay} className="btn btn-primary">
+      Pay
+    </button>
   );
 }
