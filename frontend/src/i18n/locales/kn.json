@@ -44,7 +44,18 @@
     "newUser": "ಹೊಸ ಬಳಕೆದಾರರಾ?",
     "alreadyHaveAccount": "ಈಗಾಗಲೇ ಖಾತೆಯಿದೆಯೇ?",
     "loginToContinue": "ಮುಂದುವರಿಸಲು ಲಾಗಿನ್ ಮಾಡಿ",
-    "createAccount": "ಖಾತೆಯನ್ನು ರಚಿಸಿ"
+    "createAccount": "ಖಾತೆಯನ್ನು ರಚಿಸಿ",
+    "errorSendingOTP": "Failed to send OTP",
+    "errorResendingOTP": "Failed to resend OTP",
+    "errorVerifyingOTP": "Failed to verify OTP",
+    "sendingOTP": "Sending OTP",
+    "registerOnceAccessServices": "Register once to access all services",
+    "otpSentSuccessfully": "OTP sent successfully",
+    "otpResentSuccessfully": "OTP resent successfully",
+    "registrationSuccessful": "Registration Successful",
+    "enterCredentials": "Enter Credentials",
+    "otpVerificationNote": "An OTP will be sent to your linked mobile number for verification.",
+    "otpSentTo": "OTP sent to"
   },
   "dashboard": {
     "welcome": "ಸ್ವಾಗತ",
@@ -62,7 +73,11 @@
     "electricityDepartment": "ವಿದ್ಯುತ್ ಇಲಾಖೆ",
     "gasDepartment": "ಅನಿಲ ಇಲಾಖೆ",
     "waterDepartment": "ನೀರಿನ ಇಲಾಖೆ",
-    "municipalServices": "ಮುನಿಸಿಪಲ್ ಸೇವೆಗಳು"
+    "municipalServices": "ಮುನಿಸಿಪಲ್ ಸೇವೆಗಳು",
+    "changeDepartment": "Change Department",
+    "quickServices": "Quick Services",
+    "trackConnection": "Track Connection",
+    "trackRequests": "Track Requests"
   },
   "bills": {
     "viewBills": "ಬಿಲ್ಲುಗಳನ್ನು ವೀಕ್ಷಿಸಿ",
@@ -118,7 +133,8 @@
     "open": "ತೆರೆದಿದೆ",
     "inProgress": "ಪ್ರಗತಿಯಲ್ಲಿದೆ",
     "resolved": "ಪರಿಹರಿಸಲಾಗಿದೆ",
-    "closed": "ಮುಚ್ಚಲಾಗಿದೆ"
+    "closed": "ಮುಚ್ಚಲಾಗಿದೆ",
+    "adminNote": "Official Comment"
   },
   "newConnection": {
     "newConnectionApplication": "ಹೊಸ ಸಂಪರ್ಕ ಅರ್ಜಿ",
@@ -284,7 +300,9 @@
     "retry": "ಮರುಪ್ರಯತ್ನಿಸಿ",
     "goBack": "ಹಿಂತಿರುಗಿ",
     "home": "ಮುಖಪುಟ",
-    "changeLanguage": "ಭಾಷೆ ಬದಲಾಯಿಸಿ"
+    "changeLanguage": "ಭಾಷೆ ಬದಲಾಯಿಸಿ",
+    "login": "Login",
+    "all": "All"
   },
   "session": {
     "sessionWarning": "ಸೆಷನ್ ಅವಧಿ ಮುಕ್ತಾಯ ಎಚ್ಚರಿಕೆ",
@@ -297,7 +315,41 @@
     "payElectricityBill": "ವಿದ್ಯುತ್ ಬಿಲ್ ಪಾವತಿಸಿ",
     "checkCurrentBill": "ಪ್ರಸ್ತುತ ಬಿಲ್ ಪರಿಶೀಲಿಸಿ",
     "unitsConsumed": "ಬಳಸಿದ ಘಟಕಗಳು",
-    "amountDue": "ಬಾಕಿ ಮೊತ್ತ"
+    "amountDue": "ಬಾಕಿ ಮೊತ್ತ",
+    "active": "Active",
+    "kwhThisMonth": "kWh This Month",
+    "avgPerDay": "Avg/Day",
+    "kwhDailyAverage": "kWh Daily Average",
+    "peakLoad": "Peak Load",
+    "kwMaximumLoad": "kW Maximum Load",
+    "alert": "Alert",
+    "lastBillAmount": "Last Bill Amount",
+    "consumptionTrend": "Consumption Trend",
+    "last7DaysPattern": "Last 7 Days Pattern",
+    "mondayShort": "Mon",
+    "tuesdayShort": "Tue",
+    "wednesdayShort": "Wed",
+    "thursdayShort": "Thu",
+    "fridayShort": "Fri",
+    "saturdayShort": "Sat",
+    "sundayShort": "Sun",
+    "weeklyAverage": "Weekly Average",
+    "weeklyAverageValue": "{{value}}",
+    "powerAlerts": "Power Alerts",
+    "outagesAndMaintenance": "Outages & Maintenance",
+    "scheduledMaintenance": "Scheduled Maintenance",
+    "scheduledMaintenanceTime": "{{date}}, {{time}}",
+    "maintenanceArea": "Area: {{area}}",
+    "systemStatus": "System Status",
+    "allSystemsOperational": "All systems operational",
+    "uptimeThisMonth": "Uptime this month: {{percent}}%",
+    "smartMeterInfo": "Smart Meter Info",
+    "connectionTypeLabel": "Connection Type",
+    "sanctionedLoad": "Sanctioned Load",
+    "lastReadingDate": "Last Reading Date",
+    "energySavingTip": "Energy Saving Tip",
+    "energySavingPractices": "Energy Saving Practices",
+    "ledBulbTip": "Replacing old bulbs with LED bulbs can save {{min}}-{{max}} rupees per year."
   },
   "gas": {
     "meterId": "ಮೀಟರ್ ಐಡಿ",
@@ -305,7 +357,8 @@
     "bookNewConnection": "ಹೊಸ ಸಂಪರ್ಕ ಬುಕ್ ಮಾಡಿ",
     "safetyGuidelines": "ಭದ್ರತಾ ಮಾರ್ಗಸೂಚಿಗಳು",
     "emergencySupport": "ತುರ್ತು ಸಹಾಯ",
-    "turnOffCylinder": "ಬಳಕೆಯಲ್ಲಿಲ್ಲದಾಗ ಸದಾ ಸಿಲಿಂಡರ್ ವಾಲ್ವ್ ಅನ್ನು ಆಫ್ ಮಾಡಿ"
+    "turnOffCylinder": "ಬಳಕೆಯಲ್ಲಿಲ್ಲದಾಗ ಸದಾ ಸಿಲಿಂಡರ್ ವಾಲ್ವ್ ಅನ್ನು ಆಫ್ ಮಾಡಿ",
+    "bookCylinder": "Book Cylinder"
   },
   "waterSupply": {
     "waterSupplySchedule": "ನೀರಿನ ಸರಬರಾಜು ವೇಳಾಪಟ್ಟಿ",
@@ -340,7 +393,11 @@
     "facilityRequired": "ದಯವಿಟ್ಟು ನೀರಿನ ಟ್ಯಾಂಕರ್ ಸೌಲಭ್ಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
     "descriptionMinLength": "ವಿವರಣೆ ಕನಿಷ್ಠ 20 ಅಕ್ಷರಗಳಾಗಿರಬೇಕು",
     "descriptionMaxLength": "ವಿವರಣೆ 500 ಅಕ್ಷರಗಳನ್ನು ಮೀರಬಾರದು",
-    "emailRequired": "ಮಾನ್ಯವಾದ ಇಮೇಲ್ ಅಗತ್ಯವಿದೆ"
+    "emailRequired": "ಮಾನ್ಯವಾದ ಇಮೇಲ್ ಅಗತ್ಯವಿದೆ",
+    "dateOfBirthRequired": "Date of Birth is required",
+    "genderRequired": "Gender is required",
+    "cylinderTypeRequired": "Cylinder type is required",
+    "addressRequired": "Address is required"
   },
   "trackNewConnection": {
     "pageTitle": "ಹೊಸ ಸಂಪರ್ಕ ಅರ್ಜಿಯನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ",
@@ -365,7 +422,21 @@
     "statusApprovedDesc": "ನಿಮ್ಮ ಅರ್ಜಿಯನ್ನು ವಿಭಾಗದಿಂದ ಅನುಮೋದಿಸಲಾಗಿದೆ",
     "statusActiveDesc": "ನಿಮ್ಮ ಸಂಪರ್ಕ ಈಗ ಸಕ್ರಿಯವಾಗಿದೆ",
     "smsEmailNotification": "ನೀವು SMS ಮತ್ತು ಇಮೇಲ್ ಮೂಲಕ ನವೀಕರಣಗಳನ್ನು ಸ್ವೀಕರಿಸುವಿರಿ",
-    "enterApplicationId": "ಟ್ರ್ಯಾಕ್ ಮಾಡಲು ನಿಮ್ಮ ಅರ್ಜಿ ಐಡಿ ನಮೂದಿಸಿ..."
+    "enterApplicationId": "ಟ್ರ್ಯಾಕ್ ಮಾಡಲು ನಿಮ್ಮ ಅರ್ಜಿ ಐಡಿ ನಮೂದಿಸಿ...",
+    "backToList": "Back to list",
+    "status": "Status",
+    "applicationIdLabel": "APPLICATION ID",
+    "quickSummary": "Quick Summary",
+    "recentApplications": "Your Recent Applications",
+    "loading": "Loading applications...",
+    "noApplications": "No applications found",
+    "noApplicationsDesc": "You haven't submitted any connection requests yet.",
+    "appliedOn": "Applied on",
+    "categoryElectricity": "Electricity Department",
+    "categoryGas": "Gas Department",
+    "categoryWater": "Water Department",
+    "categoryMunicipal": "Municipal Services",
+    "categoryDefault": "Department"
   },
   "trackComplaint": {
     "complaintNotFound": "ದೂರು ಕಂಡುಬಂದಿಲ್ಲ. ದಯವಿಟ್ಟು ದೂರು ಐಡಿ ಪರಿಶೀಲಿಸಿ."
@@ -396,5 +467,61 @@
     "approved": "ಅನುಮೋದಿತ",
     "active": "ಸಕ್ರಿಯ",
     "rejected": "ತಿರಸ್ಕರಿಸಲಾಗಿದೆ"
+  },
+  "gasCylinderBooking": {
+    "title": "Gas Cylinder Booking",
+    "customerDetails": "Customer Details",
+    "deliveryAddress": "Delivery Address",
+    "bookingDetails": "Booking Details",
+    "cylinderType": "Cylinder Type",
+    "domestic14": "Domestic (14.2 kg)",
+    "commercial19": "Commercial (19 kg)",
+    "domestic5": "Domestic (5 kg)",
+    "deliveryType": "Delivery Type",
+    "scheduled": "Scheduled Delivery",
+    "urgent": "Urgent (Within 4 hours)",
+    "preferredDate": "Preferred Date",
+    "preferredTime": "Preferred Time Slot",
+    "bookingSuccess": "Booking Confirmed!",
+    "bookingId": "Booking ID",
+    "successMessage": "Your gas cylinder has been booked successfully. You will receive an SMS confirmation shortly.",
+    "printReceipt": "Print Receipt",
+    "viewReceipt": "View Receipt",
+    "downloadReceipt": "Download Receipt",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "a11y": {
+    "accessibilitySettings": "Accessibility Settings",
+    "textSize": "Text Size",
+    "standard": "Standard",
+    "large": "Large",
+    "extraLarge": "Extra Large",
+    "contrast": "Contrast",
+    "default": "Default",
+    "highContrast": "High Contrast",
+    "easyMode": "Easy Mode",
+    "easyModeDesc": "Simpler screens, fewer choices",
+    "voiceGuidance": "Voice Guidance",
+    "voiceDesc": "Spoken instructions each step",
+    "screenReaderHints": "Screen Reader Hints",
+    "resetDefaults": "Reset to Defaults"
+  },
+  "errors": {
+    "apiErrorTitle": "Something went wrong",
+    "apiErrorMessage": "We could not complete your request. Please try again.",
+    "validationTitle": "Please check your input",
+    "validationMessage": "Some fields need your attention before continuing.",
+    "offlineTitle": "You are offline",
+    "offlineMessage": "This action has been saved and will sync automatically when you are back online.",
+    "fatalTitle": "Unable to continue",
+    "fatalMessage": "A critical error occurred. Please restart your session or contact support.",
+    "retry": "Try Again",
+    "retryNow": "Retry Now",
+    "fixInput": "Check again",
+    "goHome": "Go to Home",
+    "goBack": "Go Back",
+    "continueOffline": "Continue Offline",
+    "startOver": "Start Over",
+    "contactSupport": "Contact Support"
   }
 }

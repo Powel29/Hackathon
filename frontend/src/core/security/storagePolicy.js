@@ -35,6 +35,7 @@ export const STORAGE_KEYS = {
 const PII_FIELDS = [
     'aadharNumber', 'aadhaarNumber', 'aadhar', 'aadhaar',
     'mobileNumber', 'mobile', 'phone', 'phoneNumber',
+    'email', 'emailAddress',
     'otp', 'password', 'pin',
     'dateOfBirth', 'dob',
     'biometric',

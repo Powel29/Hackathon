@@ -192,4 +192,11 @@ export const SyncQueueService = {
         const queue = this.loadQueue().filter(i => i.status !== QUEUE_STATUS.SYNCED);
         this.saveQueue(queue);
     },
+
+    /**
+     * Clear all items from the queue.
+     */
+    clearAll() {
+        this.saveQueue([]);
+    },
 };

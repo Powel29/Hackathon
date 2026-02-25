@@ -16,15 +16,18 @@
  * - NetworkStatusBanner (FR-OFF-001)
  * - AccessibilityPanel trigger (UI-DES-006)
  * - Kiosk lockdown class application (FR-UX-004)
+ * - SyncQueuePanel trigger (UI-DES-005)
  */
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useKioskStore } from '../../store/useKioskStore';
-import { Languages, Accessibility, Clock, Home, HelpCircle } from 'lucide-react';
+import { Languages, Accessibility, Clock, Home, HelpCircle, Database } from 'lucide-react';
 import { NetworkStatusBanner } from './NetworkStatusBanner';
 import { AccessibilityPanel } from './AccessibilityPanel';
+import { SyncQueuePanel } from './SyncQueuePanel';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { ENV } from '../../config/env';
 
 export function KioskLayout({
@@ -36,8 +39,10 @@ export function KioskLayout({
     const { i18n } = useTranslation();
     const { language, setLanguage } = useKioskStore();
     const [a11yPanelOpen, setA11yPanelOpen] = useState(false);
+    const [syncQueueOpen, setSyncQueueOpen] = useState(false);
     const [now, setNow] = useState(new Date());
     const { isOnline } = useNetworkStatus();
+    const pendingCount = useOfflineStore(s => (s.syncStats.pending || 0) + (s.syncStats.retrying || 0));
 
     const languages = [
         { code: 'en', name: 'English', nativeName: 'English' },
@@ -45,7 +50,7 @@ export function KioskLayout({
         { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
         { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
         { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-        { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+        { code: 'mr', name: 'Marathi', nativeName: 'ಮರಾठी' },
         { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' }
     ];
 
@@ -73,7 +78,7 @@ export function KioskLayout({
     return (
         <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
             {/* Network Status Banner — persistent when not online */}
-            <NetworkStatusBanner />
+            <NetworkStatusBanner onOpenQueue={() => setSyncQueueOpen(true)} />
 
             {showHeader && (
                 <header className="bg-white shadow-sm border-b border-gray-200">
@@ -168,16 +173,33 @@ export function KioskLayout({
                             © 2026 SUVIDHA | Government of India
                         </p>
 
-                        {/* Right: Accessibility */}
-                        <button
-                            onClick={() => setA11yPanelOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#0066CC] hover:bg-blue-50 transition-colors min-h-[44px]"
-                            style={{ touchAction: 'manipulation' }}
-                            aria-label="Accessibility Settings"
-                        >
-                            <Accessibility className="w-5 h-5" aria-hidden="true" />
-                            <span>Accessibility</span>
-                        </button>
+                        {/* Right: Accessibility + Queue */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setA11yPanelOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#0066CC] hover:bg-blue-50 transition-colors min-h-[44px]"
+                                style={{ touchAction: 'manipulation' }}
+                                aria-label="Accessibility Settings"
+                            >
+                                <Accessibility className="w-5 h-5" aria-hidden="true" />
+                                <span>Accessibility</span>
+                            </button>
+
+                            <button
+                                onClick={() => setSyncQueueOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors min-h-[44px] relative"
+                                style={{ touchAction: 'manipulation' }}
+                                aria-label="View Queue"
+                            >
+                                <Database className="w-5 h-5" aria-hidden="true" />
+                                <span className="easy-mode-hide">Queue</span>
+                                {pendingCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                                        {pendingCount}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </footer>
             )}
@@ -186,6 +208,12 @@ export function KioskLayout({
             <AccessibilityPanel
                 isOpen={a11yPanelOpen}
                 onClose={() => setA11yPanelOpen(false)}
+            />
+
+            {/* Sync Queue Panel Overlay */}
+            <SyncQueuePanel
+                isOpen={syncQueueOpen}
+                onClose={() => setSyncQueueOpen(false)}
             />
         </div>
     );

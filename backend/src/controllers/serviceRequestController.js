@@ -7,7 +7,15 @@ const prisma = require('../utils/prismaClient');
 exports.createServiceRequest = async (req, res) => {
     try {
         const citizenId = req.user.citizenId;
-        const { serviceType, requestType, details } = req.body;
+        const { serviceType, requestType, details, aadharHash } = req.body;
+
+        // Security: If payload specifies an owner hash, it must match current token
+        if (aadharHash && aadharHash !== req.user.aadharHash) {
+            return res.status(403).json({
+                success: false,
+                message: "Attribution mismatch: Queued service request does not belong to current session."
+            });
+        }
 
         // Basic validation
         if (!serviceType || !requestType || !details) {
@@ -43,6 +51,30 @@ exports.createServiceRequest = async (req, res) => {
                 details: details, // JSON object with form data
             }
         });
+
+        // Background: If this was an offline sync with missing PII, try to recover it for the actual record
+        // (Details are JSON, so we can't easily update schema but we can update the JSON field)
+        const needsPII = !details.mobileNumber || !details.email || !details.fullName || !details.applicantName;
+        if (needsPII) {
+            const citizen = await prisma.citizen.findUnique({ where: { aadharNumber: citizenId } });
+            if (citizen) {
+                const updatedDetails = { ...details };
+                if (!updatedDetails.mobileNumber) updatedDetails.mobileNumber = citizen.mobileNumber;
+                if (!updatedDetails.email) updatedDetails.email = citizen.email;
+                if (!updatedDetails.fullName && !updatedDetails.applicantName) {
+                    updatedDetails.fullName = citizen.fullName;
+                    updatedDetails.applicantName = citizen.fullName;
+                }
+
+                await prisma.serviceRequest.update({
+                    where: { requestId: newRequest.requestId },
+                    data: { details: updatedDetails }
+                });
+
+                // Update local reference for response
+                newRequest.details = updatedDetails;
+            }
+        }
 
         res.status(201).json({
             success: true,

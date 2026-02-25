@@ -11,8 +11,15 @@ import {
   TrendingUp,
   Search,
   Filter,
-  Download
+  Download,
+  Wifi,
+  RefreshCcw,
+  Database,
+  Trash2,
+  Clock
 } from 'lucide-react';
+import { useOfflineStore } from '../../store/useOfflineStore';
+import { OfflineManager } from '../../core/offline/OfflineManager';
 
 export function AdminDashboard() {
   const { t } = useTranslation();
@@ -23,8 +30,8 @@ export function AdminDashboard() {
   const stats = {
     totalComplaints: complaints.length,
     openComplaints: complaints.filter(c => c.status === 'open').length,
-    resolvedToday: complaints.filter(c => 
-      c.status === 'resolved' && 
+    resolvedToday: complaints.filter(c =>
+      c.status === 'resolved' &&
       new Date(c.updatedAt).toDateString() === new Date().toDateString()
     ).length,
     activeUsers: 0, // TODO: Fetch from API
@@ -64,14 +71,15 @@ export function AdminDashboard() {
               { id: 'overview', icon: <LayoutDashboard className="w-4 h-4" />, label: t('overview') },
               { id: 'complaints', icon: <FileText className="w-4 h-4" />, label: t('complaintManagement') },
               { id: 'users', icon: <Users className="w-4 h-4" />, label: t('userManagement') },
-              { id: 'kiosks', icon: <Monitor className="w-4 h-4" />, label: t('kioskStatus') }
+              { id: 'kiosks', icon: <Monitor className="w-4 h-4" />, label: t('kioskStatus') },
+              { id: 'sync', icon: <Database className="w-4 h-4" />, label: 'Device State' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === tab.id
-                    ? 'bg-[#0066CC] text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-[#0066CC] text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 {tab.icon}
@@ -187,9 +195,9 @@ export function AdminDashboard() {
                       <td className="px-4 py-3 text-sm capitalize">{complaint.serviceType}</td>
                       <td className="px-4 py-3 text-sm">{(complaint.description || '').substring(0, 40)}...</td>                      <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${complaint.status === 'open' ? 'bg-orange-100 text-orange-700' :
-                            complaint.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                              complaint.status === 'resolved' ? 'bg-green-100 text-green-700' :
-                                'bg-gray-100 text-gray-700'
+                          complaint.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                            complaint.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                              'bg-gray-100 text-gray-700'
                           }`}>
                           {complaint.status.replace('_', ' ')}
                         </span>
@@ -294,8 +302,8 @@ export function AdminDashboard() {
                       </div>
 
                       <div className={`px-4 py-2 rounded-lg text-sm font-bold ${kiosk.status === 'online'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
                         }`}>
                         {kiosk.status.toUpperCase()}
                       </div>
@@ -306,7 +314,120 @@ export function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* Device State / Offline Sync Tab */}
+        {activeTab === 'sync' && <DeviceStateView />}
       </main>
+    </div>
+  );
+}
+
+function DeviceStateView() {
+  const { syncQueue, syncStats, isOnline, isSyncing, refreshQueue, clearQueue } = useOfflineStore();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-full ${isOnline ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+            {isOnline ? <Wifi className="w-6 h-6" /> : <Wifi className="w-6 h-6 opacity-30" />}
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-[#212525]">Local Hardware Status</h3>
+            <p className="text-sm text-gray-600">
+              Connection is <span className={`font-bold ${isOnline ? 'text-green-600' : 'text-red-600'}`}>{isOnline ? 'Online' : 'Offline'}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              OfflineManager.triggerManualSync();
+              refreshQueue();
+            }}
+            disabled={isSyncing}
+            className={`flex items-center gap-2 px-4 py-2 ${isSyncing ? 'bg-gray-100 text-gray-400' : 'bg-[#0066CC] hover:bg-[#0052a3] text-white'} rounded-lg text-sm font-semibold transition-colors`}
+          >
+            <RefreshCcw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Syncing...' : 'Force Sync'}</span>
+          </button>
+          <button
+            onClick={clearQueue}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Clear Queue</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-blue-500">
+          <p className="text-sm text-gray-600 mb-1">Queue Size</p>
+          <p className="text-3xl font-bold text-[#212529]">{syncStats.pending}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-yellow-500">
+          <p className="text-sm text-gray-600 mb-1">Retrying</p>
+          <p className="text-3xl font-bold text-[#212529]">{syncStats.retrying}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-red-500">
+          <p className="text-sm text-gray-600 mb-1">Errors</p>
+          <p className="text-3xl font-bold text-[#212529]">{syncStats.failed}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-green-500">
+          <p className="text-sm text-gray-600 mb-1">Synced</p>
+          <p className="text-3xl font-bold text-[#212529]">{syncStats.synced}</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+          <h3 className="text-lg font-bold text-[#212529] flex items-center gap-2">
+            <Database className="w-5 h-5 text-[#0066CC]" />
+            Sync Queue
+          </h3>
+          <span className="text-sm bg-blue-100 text-blue-800 py-1 px-3 rounded-full font-semibold">
+            {syncQueue.length} Active Items
+          </span>
+        </div>
+        {syncQueue.length === 0 ? (
+          <div className="p-10 text-center">
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p className="text-lg font-bold text-gray-800">No Offline Work Pending</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Operation</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Attempts</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Created</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {syncQueue.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 uppercase text-xs font-bold">{item.operationType.replace('_', ' ')}</td>
+                    <td className="px-4 py-3 text-xs">
+                      <span className={`px-2 py-1 rounded font-bold ${item.status === 'queued' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">{item.attempts} / 3</td>
+                    <td className="px-4 py-3 text-sm flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {new Date(item.createdAt).toLocaleTimeString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -14,10 +14,13 @@ import {
 } from 'lucide-react';
 import { useKioskStore } from '../../store/useKioskStore';
 import { departmentService, complaintService } from '../../services/api';
+import { useOfflineStore } from '../../store/useOfflineStore';
 
 export function MunicipalDashboard() {
   const navigate = useNavigate();
   const user = useKioskStore((state) => state.user);
+  const networkStatus = useOfflineStore((state) => state.networkStatus);
+  const isOnline = networkStatus === 'online';
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -58,6 +61,13 @@ export function MunicipalDashboard() {
 
       try {
         setLoading(true);
+
+        if (!isOnline) {
+          console.log('[Offline] Skipping live data fetch for MunicipalDashboard');
+          setLoading(false);
+          return;
+        }
+
         console.log('🔍 Fetching municipal data for:', user.consumerId);
 
         // Parallel fetch for account details, alerts, and complaints

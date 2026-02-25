@@ -2,8 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
-import { CheckCircle, Printer, Mail, MessageSquare, QrCode, Home, AlertCircle } from 'lucide-react';
+import { CheckCircle, Printer, Mail, MessageSquare, QrCode, Home, AlertCircle, Database } from 'lucide-react';
 import { useKioskStore } from '../../store/useKioskStore';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import govtLogo from '../../assets/kiosk/Government_of_India_logo.svg';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -18,8 +19,10 @@ export function Receipt() {
   const { user, selectedService } = useKioskStore();
   const receiptDocRef = useRef(null);
 
-  const { bill, paymentDate } = location.state || {};
+  const { bill, paymentDate, isOfflinePayment: stateIsOfflinePayment } = location.state || {};
   const [uploadStatus, setUploadStatus] = useState('idle'); // 'idle', 'uploading', 'success', 'error'
+  const { isOnline } = useNetworkStatus();
+  const isOfflinePayment = stateIsOfflinePayment || !isOnline;
 
   const generateAndUploadReceipt = useCallback(async (isManual = false) => {
     try {
@@ -30,6 +33,18 @@ export function Receipt() {
       }
 
       if (!receiptDocRef.current) return;
+
+      // If offline, we can't upload.
+      if (!isOnline && !isManual) {
+        console.log(" [Receipt] Skipping auto-upload while offline");
+        return;
+      }
+
+      if (!isOnline && isManual) {
+        // For manual triggers (like download/print), we still generate PDF but skip API upload
+        // Actually, let's just generate the PDF for download but not call the service if offline.
+      }
+
       setUploadStatus('uploading');
 
       const element = receiptDocRef.current;
@@ -87,6 +102,18 @@ export function Receipt() {
       const pdfBlob = pdf.output('blob');
       const file = new File([pdfBlob], `Receipt_${transactionId}.pdf`, { type: 'application/pdf' });
 
+      // If manual trigger and offline, we just handle the PDF (e.g. download)
+      // But this function is primarily for uploading.
+      if (!isOnline) {
+        // If they click print, window.print handles it. 
+        // If they want to download, we could trigger download here.
+        if (isManual) {
+          pdf.save(`Receipt_${transactionId}.pdf`);
+        }
+        setUploadStatus('idle');
+        return;
+      }
+
       const citizenId = user?.aadhaarNumber || '111122223333';
       const relatedId = (bill.id || bill.billId || transactionId).toString();
 
@@ -115,14 +142,14 @@ export function Receipt() {
       console.error("❌ [Receipt] High-detail upload failed:", error);
       setUploadStatus('error');
     }
-  }, [transactionId, user, selectedService, bill, location.state?.department]);
+  }, [transactionId, user, selectedService, bill, location.state?.department, isOnline]);
 
   useEffect(() => {
-    if (bill && transactionId) {
+    if (bill && transactionId && isOnline) {
       const timer = setTimeout(() => generateAndUploadReceipt(false), 1500);
       return () => clearTimeout(timer);
     }
-  }, [bill, transactionId, user, generateAndUploadReceipt]);
+  }, [bill, transactionId, user, generateAndUploadReceipt, isOnline]);
 
   if (!bill) {
     return (
@@ -145,6 +172,7 @@ export function Receipt() {
       </KioskLayout>
     );
   }
+
 
   const handlePrint = () => {
     // Ensure it's uploaded when they print
@@ -314,7 +342,7 @@ export function Receipt() {
       <KioskLayout>
         <div className="max-w-5xl mx-auto">
           {/* Success Header */}
-          <div className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl shadow-lg p-8 mb-8 transform transition-all hover:scale-[1.01]">
+          <div className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl shadow-lg p-8 mb-4 transform transition-all hover:scale-[1.01]">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md animate-bounce-short">
                 <CheckCircle className="w-10 h-10 text-[#10B981]" />
@@ -324,11 +352,28 @@ export function Receipt() {
                   {t('bills.paymentSuccessful')}
                 </h2>
                 <p className="text-lg text-white opacity-90 font-medium">
-                  Your payment has been processed and your receipt is ready.
+                  {isOfflinePayment ? 'Transaction queued for offline synchronization.' : 'Your payment has been processed and your receipt is ready.'}
                 </p>
               </div>
             </div>
           </div>
+
+          {isOfflinePayment && (
+            <div className="bg-orange-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center justify-between border-2 border-orange-500 mb-8 overflow-hidden relative">
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <AlertCircle className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black uppercase tracking-wider text-sm">Offline Transaction Enqueued</h3>
+                  <p className="text-xs opacity-90">Your payment of ₹{bill.amount.toLocaleString()} will be synced once connection is restored.</p>
+                </div>
+              </div>
+              <div className="hidden md:block absolute -right-4 -bottom-4 opacity-10">
+                <Database className="w-24 h-24 text-white" />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-6">
             {/* Receipt Display */}

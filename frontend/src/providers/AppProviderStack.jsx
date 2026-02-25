@@ -20,6 +20,7 @@ import { AccessibilityProvider } from './AccessibilityProvider';
 import { validateEnv } from '../config/env';
 import { logFeatureFlags } from '../config/featureFlags';
 import { migrateFromLocalStorage } from '../core/security/storagePolicy';
+import { initA11yRouteAudit } from '../core/accessibility/AccessibilityAuditConfig';
 
 // ─── Root Error Boundary ────────────────────────────────────────────────────
 
@@ -96,6 +97,7 @@ class RootErrorBoundary extends Component {
 validateEnv();
 logFeatureFlags();
 migrateFromLocalStorage();
+initA11yRouteAudit(); // Phase 3: arms dev-mode WCAG audit on route change (no-op in prod)
 
 // ─── AppProviderStack ────────────────────────────────────────────────────────
 

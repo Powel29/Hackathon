@@ -20,7 +20,7 @@ const STATUS_CONFIG = {
     retrying: { icon: AlertTriangle, color: '#d97706', bg: '#fffbeb', borderColor: '#fde68a', hidden: false },
 };
 
-export function NetworkStatusBanner() {
+export function NetworkStatusBanner({ onOpenQueue }) {
     const { status, triggerSync } = useNetworkStatus();
     const pendingCount = useOfflineStore(s => s.getPendingCount());
     const { t } = useTranslation();
@@ -57,15 +57,24 @@ export function NetworkStatusBanner() {
             <span className="flex-1">{messages[status]}</span>
 
             {pendingCount > 0 && (
-                <span className="bg-white bg-opacity-60 px-2 py-0.5 rounded-full text-xs font-bold">
-                    {pendingCount} pending
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="bg-white bg-opacity-60 px-2 py-0.5 rounded-full text-xs font-bold">
+                        {pendingCount} pending
+                    </span>
+                    <button
+                        onClick={onOpenQueue}
+                        className="px-3 py-1 rounded-lg text-xs font-bold bg-white bg-opacity-80 hover:bg-opacity-100 transition-colors"
+                        style={{ color: config.color, touchAction: 'manipulation' }}
+                    >
+                        {t('network.viewQueue', 'View Queue')}
+                    </button>
+                </div>
             )}
 
             {(status === 'offline' || status === 'retrying') && (
                 <button
                     onClick={triggerSync}
-                    className="px-3 py-1 rounded-lg text-xs font-bold bg-white bg-opacity-80 hover:bg-opacity-100 transition-colors"
+                    className="px-3 py-1 rounded-lg text-xs font-bold bg-white bg-opacity-80 hover:bg-opacity-100 transition-colors border border-current border-opacity-20"
                     style={{ color: config.color, touchAction: 'manipulation' }}
                     aria-label={t('network.retryNow', 'Retry now')}
                 >

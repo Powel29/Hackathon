@@ -319,6 +319,7 @@ exports.verifyOTP = async (req, res) => {
                 token,
                 user: {
                     aadharNumber: citizen.aadharNumber,
+                    aadharHash: citizen.aadharHash,
                     name: citizen.fullName,
                     mobile: citizen.mobileNumber,
                     email: citizen.email,
@@ -536,6 +537,7 @@ exports.verifyOTP = async (req, res) => {
             token,
             user: {
                 aadharNumber: citizen.aadharNumber,
+                aadharHash: citizen.aadharHash,
                 name: citizen.fullName,
                 mobile: citizen.mobileNumber,
                 email: citizen.email,

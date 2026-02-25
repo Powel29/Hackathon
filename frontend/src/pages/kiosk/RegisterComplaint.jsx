@@ -12,7 +12,7 @@ import { complaintService, documentService } from '../../services/api';
 export function RegisterComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { addComplaint, selectedService, fetchComplaints } = useKioskStore();
+  const { addComplaint, selectedService, fetchComplaints, user } = useKioskStore();
   const { isOnline } = useNetworkStatus();
   const enqueue = useOfflineStore(s => s.enqueue);
   const [description, setDescription] = useState('');
@@ -252,6 +252,8 @@ export function RegisterComplaint() {
         complaintType,
         title: description.substring(0, 197) + (description.length > 197 ? '...' : ''),
         description: description,
+        // Attribution for offline sync
+        aadharHash: user?.aadharHash
       };
 
       if (!isOnline) {

@@ -6,11 +6,14 @@ import { TouchButton } from '../../components/kiosk/TouchButton';
 import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
 import * as authService from '../../services/api/auth.service';
 import { toast } from 'sonner';
-import { ArrowLeft, CreditCard } from 'lucide-react';
+import { ArrowLeft, CreditCard, WifiOff, ShieldOff } from 'lucide-react';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 
 export function AadhaarLogin() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isOnline } = useNetworkStatus();
+  const { setUser } = useKioskStore();
   const [aadhaar, setAadhaar] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +27,11 @@ export function AadhaarLogin() {
   const handleSubmit = useCallback(async () => {
     if (aadhaar.length !== 12) {
       setError(t('invalidAadhaar'));
+      return;
+    }
+
+    if (!isOnline) {
+      handleOfflineLogin();
       return;
     }
 
@@ -54,7 +62,19 @@ export function AadhaarLogin() {
     } finally {
       setIsLoading(false);
     }
-  }, [aadhaar, navigate, t]);
+  }, [aadhaar, navigate, t, isOnline]);
+
+  const handleOfflineLogin = () => {
+    const offlineUser = {
+      name: 'Offline Citizen',
+      aadhaarNumber: aadhaar,
+      citizenId: `OFFLINE-${aadhaar.slice(-4)}-${Date.now()}`,
+      isOfflineSession: true
+    };
+    setUser(offlineUser);
+    toast.info('Continuing in Offline Mode. Some features may be limited.');
+    navigate('/kiosk/service-selection');
+  };
 
   const formatAadhaar = (value) => {
     return value.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -141,14 +161,28 @@ export function AadhaarLogin() {
               )}
 
               <TouchButton
-                variant="primary"
+                variant={isOnline ? "primary" : "warning"}
                 size="large"
                 onClick={handleSubmit}
                 disabled={aadhaar.length !== 12}
                 className="w-full"
+                icon={!isOnline ? <WifiOff className="w-5 h-5" /> : null}
               >
-                {t('authentication.proceedToOTP')}
+                {isOnline ? t('authentication.proceedToOTP') : 'Continue Offline'}
               </TouchButton>
+
+              {!isOnline && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
+                  <ShieldOff className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-orange-800 uppercase tracking-tight">Offline Mode Active</p>
+                    <p className="text-[10px] text-orange-700 leading-relaxed mt-1">
+                      Internet connection is lost. You can continue as an offline user.
+                      Your identity will be verified once connection is restored.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-xs text-center text-gray-700">

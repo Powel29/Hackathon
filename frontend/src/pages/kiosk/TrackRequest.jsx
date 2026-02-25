@@ -3,13 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useKioskStore } from '../../store/useKioskStore';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
-import { ArrowLeft, Clock, CheckCircle, AlertCircle, FileText, Droplets } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, AlertCircle, FileText, Droplets, WifiOff, Flame, PenTool } from 'lucide-react';
 
 export function TrackRequest() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { selectedService } = useKioskStore();
+    const { selectedService, serviceRequests: cachedRequests } = useKioskStore();
+    const { isOnline } = useNetworkStatus();
+    const { syncQueue } = useOfflineStore();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState(null);
@@ -18,10 +22,48 @@ export function TrackRequest() {
 
     useEffect(() => {
         fetchRequests();
-    }, [targetDepartment]);
+    }, [targetDepartment, isOnline, syncQueue]);
 
     const fetchRequests = async () => {
         try {
+            // 1. Get queued items from Offline Store
+            const queuedItems = syncQueue
+                .filter(item =>
+                    item.status !== 'synced' &&
+                    (item.operationType === 'complaint' ||
+                        item.operationType === 'connection_req' ||
+                        item.operationType === 'pay_bill' ||
+                        item.operationType === 'tanker_booking' ||
+                        item.operationType === 'gas_booking')
+                )
+                .map(item => ({
+                    requestId: `QUEUED-${item.id.substring(0, 8).toUpperCase()}`,
+                    id: item.id,
+                    status: 'QUEUED',
+                    serviceType: item.payload.serviceType || 'MUNICIPAL',
+                    requestType: item.operationType === 'complaint' ? (item.payload.complaintType || 'COMPLAINT') :
+                        item.operationType === 'tanker_booking' ? 'WATER_TANKER' :
+                            item.operationType === 'gas_booking' ? 'GAS_CYLINDER_BOOKING' :
+                                item.operationType.toUpperCase(),
+                    createdAt: item.createdAt,
+                    details: item.payload,
+                    isQueued: true
+                }));
+
+            const deptQueued = targetDepartment !== 'ALL'
+                ? queuedItems.filter(req => req.serviceType?.toUpperCase() === targetDepartment)
+                : queuedItems;
+
+            if (!isOnline) {
+                let filtered = cachedRequests || [];
+                if (targetDepartment !== 'ALL') {
+                    filtered = filtered.filter(req => req.serviceType?.toUpperCase() === targetDepartment);
+                }
+                setRequests([...deptQueued, ...filtered]);
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             const data = await serviceRequestService.getAll();
             let allRequests = data.requests || [];
@@ -30,7 +72,11 @@ export function TrackRequest() {
                 allRequests = allRequests.filter(req => req.serviceType?.toUpperCase() === targetDepartment);
             }
 
-            setRequests(allRequests);
+            // Deduplicate: If an item is in both, backend version wins
+            const backendIds = new Set(allRequests.map(r => r.requestId));
+            const uniqueQueued = deptQueued.filter(q => !backendIds.has(q.requestId));
+
+            setRequests([...uniqueQueued, ...allRequests]);
         } catch (error) {
             console.error("Failed to fetch service requests", error);
         } finally {
@@ -40,6 +86,8 @@ export function TrackRequest() {
 
     const getStatusIcon = (status) => {
         switch (status?.toUpperCase()) {
+            case 'QUEUED':
+                return <Clock className="w-6 h-6 text-orange-500" />;
             case 'APPROVED':
             case 'COMPLETED':
                 return <CheckCircle className="w-6 h-6 text-green-500" />;
@@ -54,6 +102,8 @@ export function TrackRequest() {
 
     const getStatusColor = (status) => {
         switch (status?.toUpperCase()) {
+            case 'QUEUED':
+                return 'bg-orange-100 text-orange-700 border-orange-200';
             case 'APPROVED':
             case 'COMPLETED':
                 return 'bg-green-100 text-green-700 border-green-200';
@@ -96,6 +146,16 @@ export function TrackRequest() {
                         <p className="text-gray-600">View status of your submitted requests</p>
                     </div>
                 </div>
+
+                {!isOnline && (
+                    <div className="mb-6 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+                        <WifiOff className="w-5 h-5 text-orange-600" />
+                        <div>
+                            <p className="text-sm font-bold text-orange-800 uppercase tracking-tight">Offline Mode Active</p>
+                            <p className="text-xs text-orange-700">Displaying requests from your last online session. Real-time updates are temporarily unavailable.</p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* List of Requests */}

@@ -12,6 +12,8 @@ export const useKioskStore = create((set, get) => ({
     // Live data from API
     bills: [],
     complaints: [],
+    applications: [],
+    serviceRequests: [],
     loading: false,
 
     showSessionWarning: false,
@@ -19,12 +21,16 @@ export const useKioskStore = create((set, get) => ({
     setLanguage: (language) => set({ language }),
     setSelectedService: (service) => set({ selectedService: service }),
     setBills: (bills) => set({ bills }),
+    setApplications: (applications) => set({ applications }),
+    setServiceRequests: (serviceRequests) => set({ serviceRequests }),
 
     setUser: (user) => {
         set({ user, isAuthenticated: !!user });
         if (user) {
             get().fetchBills();
             get().fetchComplaints();
+            get().fetchApplications();
+            get().fetchServiceRequests();
         }
     },
 
@@ -33,7 +39,7 @@ export const useKioskStore = create((set, get) => ({
         if (!user) return;
         try {
             set({ loading: true });
-            const bills = await billService.getBills(); // Backend filters by logged-in user typically
+            const bills = await billService.getBills();
             set({ bills, loading: false });
         } catch (error) {
             console.error('Failed to fetch bills:', error);
@@ -54,15 +60,43 @@ export const useKioskStore = create((set, get) => ({
         }
     },
 
+    fetchApplications: async () => {
+        const { user } = get();
+        if (!user) return;
+        try {
+            set({ loading: true });
+            const { connectionService } = await import('../services/api');
+            const applications = await connectionService.getMyApplications();
+            set({ applications, loading: false });
+        } catch (error) {
+            console.error('Failed to fetch applications:', error);
+            set({ loading: false });
+        }
+    },
+
+    fetchServiceRequests: async () => {
+        const { user } = get();
+        if (!user) return;
+        try {
+            set({ loading: true });
+            const { serviceRequestService } = await import('../services/api/serviceRequest.service');
+            const data = await serviceRequestService.getAll();
+            set({ serviceRequests: data.requests || [], loading: false });
+        } catch (error) {
+            console.error('Failed to fetch service requests:', error);
+            set({ loading: false });
+        }
+    },
+
     setIsAuthenticated: (isAuth) => set({ isAuthenticated: isAuth }),
     setRegistrationData: (data) => set({ registrationData: data }),
 
     addBill: (bill) => set((state) => ({ bills: [...state.bills, bill] })),
 
     // Update local state AND persist to DB
-    updateBill: async (id, updates) => {
-        // If it's a payment, persist first
-        if (updates.status === 'paid') {
+    updateBill: async (id, updates, skipPersistence = false) => {
+        // If it's a payment, persist first (unless skipping for offline support)
+        if (updates.status === 'paid' && !skipPersistence) {
             try {
                 const bill = get().bills.find(b => b.id === id);
                 await billService.processPayment({
@@ -74,14 +108,11 @@ export const useKioskStore = create((set, get) => ({
                 console.error("Failed to pay bill in DB", e);
                 return; // Do not update local state if DB fails
             }
-            set((state) => ({
-                bills: state.bills.map(b => b.id === id ? { ...b, ...updates } : b)
-            }));
-        } else {
-            set((state) => ({
-                bills: state.bills.map(b => b.id === id ? { ...b, ...updates } : b)
-            }));
         }
+
+        set((state) => ({
+            bills: state.bills.map(b => b.id === id ? { ...b, ...updates } : b)
+        }));
     },
 
     addComplaint: async (complaint) => {

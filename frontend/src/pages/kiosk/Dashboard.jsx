@@ -21,11 +21,15 @@ import {
   Building2
 } from 'lucide-react';
 import { useEffect } from 'react';
+import { useOfflineStore } from '../../store/useOfflineStore';
+import { WifiOff, AlertCircle } from 'lucide-react';
 
 export function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, resetSession, isAuthenticated, selectedService } = useKioskStore();
+  const networkStatus = useOfflineStore((state) => state.networkStatus);
+  const isOnline = networkStatus === 'online';
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -141,6 +145,38 @@ export function Dashboard() {
   return (
     <KioskLayout>
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Offline Mode Banner */}
+        {!isOnline && (
+          <div className="bg-red-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center justify-between border-2 border-red-500 animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <WifiOff className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-black uppercase tracking-wider text-sm">Offline Mode Active</h3>
+                <p className="text-xs opacity-90">Hardware is disconnected. All transactions will be queued locally.</p>
+              </div>
+            </div>
+            <div className="bg-white/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/30 backdrop-blur-md">
+              Limited Preview
+            </div>
+          </div>
+        )}
+
+        {user.isOfflineSession && isOnline && (
+          <div className="bg-amber-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center justify-between border-2 border-amber-400">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-black uppercase tracking-wider text-sm">Unverified Session</h3>
+                <p className="text-xs opacity-90">You entered while offline. Some features may be restricted until your ID is verified.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* User Info Section with Department */}
         <div className={`bg-gradient-to-r ${getDepartmentColor()} border border-gray-200 rounded-xl shadow-sm p-6`}>
           <div className="flex items-center justify-between">

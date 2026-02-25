@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useKioskStore } from '../../store/useKioskStore';
 import { departmentService, billService } from '../../services/api';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, Home, FileText, IndianRupee, CreditCard, Building, MapPin, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
@@ -13,6 +15,8 @@ export function PropertyTaxPayment() {
     const navigate = useNavigate();
     const { billId } = useParams();
     const { user, updateBill } = useKioskStore();
+    const { isOnline } = useNetworkStatus();
+    const enqueue = useOfflineStore(s => s.enqueue);
 
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -71,11 +75,27 @@ export function PropertyTaxPayment() {
 
         // Simulate payment processing delay
         setTimeout(() => {
-            const transactionId = 'TXN' + Date.now();
+            const transactionId = (isOnline ? 'TXN' : 'OFFLINE-TXN-') + Date.now();
             const paymentDate = new Date().toISOString();
 
+            if (!isOnline) {
+                // Enqueue payment for later sync
+                enqueue({
+                    operationType: 'municipal_pay',
+                    payload: {
+                        billId: billDetails?.id,
+                        serviceType: 'MUNICIPAL',
+                        status: 'paid',
+                        transactionId,
+                        paymentMethod,
+                        consumerNumber: user?.consumerId || propertyId,
+                        aadharHash: user?.aadharHash
+                    }
+                });
+            }
+
             if (billDetails?.id) {
-                updateBill(billDetails.id, { status: 'paid' });
+                updateBill(billDetails.id, { status: 'paid' }, !isOnline);
             }
 
             setProcessing(false);
@@ -86,11 +106,12 @@ export function PropertyTaxPayment() {
                         ...billDetails,
                         transactionId,
                         status: 'paid',
-                        consumerNumber: user?.consumerId || 'N/A' // Ensure consumer number is passed
+                        consumerNumber: user?.consumerId || propertyId // Ensure consumer number is passed
                     },
                     paymentDate,
                     paymentMethod,
-                    department: 'Municipal'
+                    department: 'Municipal',
+                    isOfflinePayment: !isOnline
                 }
             });
         }, 2000);
@@ -253,6 +274,15 @@ export function PropertyTaxPayment() {
                                     <span className="font-bold text-xl text-blue-600">₹{totalAmount.toLocaleString()}</span>
                                 </div>
                             </div>
+
+                            {!isOnline && (
+                                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+                                    <p className="text-xs text-orange-800 font-medium flex gap-2">
+                                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                        <span>You are currently offline. Your payment will be recorded and processed automatically when the connection is restored.</span>
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-4">
                                 <h3 className="font-semibold text-gray-900">Select Payment Method</h3>

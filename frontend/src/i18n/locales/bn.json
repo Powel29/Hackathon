@@ -44,7 +44,18 @@
     "newUser": "নতুন ব্যবহারকারী?",
     "alreadyHaveAccount": "ইতিমধ্যে অ্যাকাউন্ট আছে?",
     "loginToContinue": "চালিয়ে যেতে লগইন করুন",
-    "createAccount": "অ্যাকাউন্ট তৈরি করুন"
+    "createAccount": "অ্যাকাউন্ট তৈরি করুন",
+    "errorSendingOTP": "Failed to send OTP",
+    "errorResendingOTP": "Failed to resend OTP",
+    "errorVerifyingOTP": "Failed to verify OTP",
+    "sendingOTP": "Sending OTP",
+    "registerOnceAccessServices": "Register once to access all services",
+    "otpSentSuccessfully": "OTP sent successfully",
+    "otpResentSuccessfully": "OTP resent successfully",
+    "registrationSuccessful": "Registration Successful",
+    "enterCredentials": "Enter Credentials",
+    "otpVerificationNote": "An OTP will be sent to your linked mobile number for verification.",
+    "otpSentTo": "OTP sent to"
   },
   "dashboard": {
     "welcome": "স্বাগতম",
@@ -65,7 +76,8 @@
     "municipalServices": "পৌর পরিষেবা",
     "changeDepartment": "বিভাগ পরিবর্তন",
     "quickServices": "দ্রুত পরিষেবা",
-    "trackConnection": "সংযোগ অনুসরণ"
+    "trackConnection": "সংযোগ অনুসরণ",
+    "trackRequests": "Track Requests"
   },
   "bills": {
     "viewBills": "বিল দেখুন",
@@ -121,7 +133,8 @@
     "open": "খোলা",
     "inProgress": "চলমান",
     "resolved": "সমাধান হয়েছে",
-    "closed": "বন্ধ"
+    "closed": "বন্ধ",
+    "adminNote": "Official Comment"
   },
   "newConnection": {
     "newConnectionApplication": "নতুন সংযোগ আবেদন",
@@ -287,7 +300,9 @@
     "retry": "আবার চেষ্টা করুন",
     "goBack": "পেছনে যান",
     "home": "হোম",
-    "changeLanguage": "ভাষা পরিবর্তন করুন"
+    "changeLanguage": "ভাষা পরিবর্তন করুন",
+    "login": "Login",
+    "all": "All"
   },
   "session": {
     "sessionWarning": "সেশন সময়সীমা সতর্কতা",
@@ -300,7 +315,41 @@
     "payElectricityBill": "বিদ্যুৎ বিল পরিশোধ করুন",
     "checkCurrentBill": "বর্তমান বিল পরীক্ষা করুন",
     "unitsConsumed": "ব্যবহৃত ইউনিট",
-    "amountDue": "বকেয়া পরিমাণ"
+    "amountDue": "বকেয়া পরিমাণ",
+    "active": "Active",
+    "kwhThisMonth": "kWh This Month",
+    "avgPerDay": "Avg/Day",
+    "kwhDailyAverage": "kWh Daily Average",
+    "peakLoad": "Peak Load",
+    "kwMaximumLoad": "kW Maximum Load",
+    "alert": "Alert",
+    "lastBillAmount": "Last Bill Amount",
+    "consumptionTrend": "Consumption Trend",
+    "last7DaysPattern": "Last 7 Days Pattern",
+    "mondayShort": "Mon",
+    "tuesdayShort": "Tue",
+    "wednesdayShort": "Wed",
+    "thursdayShort": "Thu",
+    "fridayShort": "Fri",
+    "saturdayShort": "Sat",
+    "sundayShort": "Sun",
+    "weeklyAverage": "Weekly Average",
+    "weeklyAverageValue": "{{value}}",
+    "powerAlerts": "Power Alerts",
+    "outagesAndMaintenance": "Outages & Maintenance",
+    "scheduledMaintenance": "Scheduled Maintenance",
+    "scheduledMaintenanceTime": "{{date}}, {{time}}",
+    "maintenanceArea": "Area: {{area}}",
+    "systemStatus": "System Status",
+    "allSystemsOperational": "All systems operational",
+    "uptimeThisMonth": "Uptime this month: {{percent}}%",
+    "smartMeterInfo": "Smart Meter Info",
+    "connectionTypeLabel": "Connection Type",
+    "sanctionedLoad": "Sanctioned Load",
+    "lastReadingDate": "Last Reading Date",
+    "energySavingTip": "Energy Saving Tip",
+    "energySavingPractices": "Energy Saving Practices",
+    "ledBulbTip": "Replacing old bulbs with LED bulbs can save {{min}}-{{max}} rupees per year."
   },
   "gas": {
     "meterId": "মিটার আইডি",
@@ -308,7 +357,8 @@
     "bookNewConnection": "নতুন সংযোগ বুক করুন",
     "safetyGuidelines": "নিরাপত্তা নির্দেশিকা",
     "emergencySupport": "জরুরি সহায়তা",
-    "turnOffCylinder": "ব্যবহার না করলে সর্বদা সিলিন্ডারের ভালভ বন্ধ রাখুন"
+    "turnOffCylinder": "ব্যবহার না করলে সর্বদা সিলিন্ডারের ভালভ বন্ধ রাখুন",
+    "bookCylinder": "Book Cylinder"
   },
   "waterSupply": {
     "waterSupplySchedule": "পানি সরবরাহের সময়সূচি",
@@ -343,7 +393,11 @@
     "facilityRequired": "অনুগ্রহ করে একটি জল ট্যাঙ্কার সুবিধা নির্বাচন করুন",
     "descriptionMinLength": "বর্ণনা কমপক্ষে ২০ অক্ষরের হতে হবে",
     "descriptionMaxLength": "বর্ণনা ৫০০ অক্ষর অতিক্রম করবে না",
-    "emailRequired": "বৈধ ইমেইল প্রয়োজন"
+    "emailRequired": "বৈধ ইমেইল প্রয়োজন",
+    "dateOfBirthRequired": "Date of Birth is required",
+    "genderRequired": "Gender is required",
+    "cylinderTypeRequired": "Cylinder type is required",
+    "addressRequired": "Address is required"
   },
   "trackNewConnection": {
     "pageTitle": "নতুন কনেকশন আবেদন ট্র্যাক করুন",
@@ -368,7 +422,21 @@
     "statusApprovedDesc": "আপনার আবেদন বিভাগ কর্তৃক অনুমোদিত হয়েছে",
     "statusActiveDesc": "আপনার কনেকশন এখন সক্রিয়",
     "smsEmailNotification": "আপনি SMS এবং ইমেইলের মাধ্যমে আপডেট পাবেন",
-    "enterApplicationId": "ট্র্যাক করতে আপনার আবেদন আইডি প্রবেশ করুন..."
+    "enterApplicationId": "ট্র্যাক করতে আপনার আবেদন আইডি প্রবেশ করুন...",
+    "backToList": "Back to list",
+    "status": "Status",
+    "applicationIdLabel": "APPLICATION ID",
+    "quickSummary": "Quick Summary",
+    "recentApplications": "Your Recent Applications",
+    "loading": "Loading applications...",
+    "noApplications": "No applications found",
+    "noApplicationsDesc": "You haven't submitted any connection requests yet.",
+    "appliedOn": "Applied on",
+    "categoryElectricity": "Electricity Department",
+    "categoryGas": "Gas Department",
+    "categoryWater": "Water Department",
+    "categoryMunicipal": "Municipal Services",
+    "categoryDefault": "Department"
   },
   "trackComplaint": {
     "complaintNotFound": "অভিযোগ পাওয়া যায়নি। অনুগ্রহ করে অভিযোগ আইডি পরীক্ষা করুন।"
@@ -399,5 +467,61 @@
     "approved": "অনুমোদিত",
     "active": "সক্রিয়",
     "rejected": "প্রত্যাখ্যাত"
+  },
+  "gasCylinderBooking": {
+    "title": "Gas Cylinder Booking",
+    "customerDetails": "Customer Details",
+    "deliveryAddress": "Delivery Address",
+    "bookingDetails": "Booking Details",
+    "cylinderType": "Cylinder Type",
+    "domestic14": "Domestic (14.2 kg)",
+    "commercial19": "Commercial (19 kg)",
+    "domestic5": "Domestic (5 kg)",
+    "deliveryType": "Delivery Type",
+    "scheduled": "Scheduled Delivery",
+    "urgent": "Urgent (Within 4 hours)",
+    "preferredDate": "Preferred Date",
+    "preferredTime": "Preferred Time Slot",
+    "bookingSuccess": "Booking Confirmed!",
+    "bookingId": "Booking ID",
+    "successMessage": "Your gas cylinder has been booked successfully. You will receive an SMS confirmation shortly.",
+    "printReceipt": "Print Receipt",
+    "viewReceipt": "View Receipt",
+    "downloadReceipt": "Download Receipt",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "a11y": {
+    "accessibilitySettings": "Accessibility Settings",
+    "textSize": "Text Size",
+    "standard": "Standard",
+    "large": "Large",
+    "extraLarge": "Extra Large",
+    "contrast": "Contrast",
+    "default": "Default",
+    "highContrast": "High Contrast",
+    "easyMode": "Easy Mode",
+    "easyModeDesc": "Simpler screens, fewer choices",
+    "voiceGuidance": "Voice Guidance",
+    "voiceDesc": "Spoken instructions each step",
+    "screenReaderHints": "Screen Reader Hints",
+    "resetDefaults": "Reset to Defaults"
+  },
+  "errors": {
+    "apiErrorTitle": "Something went wrong",
+    "apiErrorMessage": "We could not complete your request. Please try again.",
+    "validationTitle": "Please check your input",
+    "validationMessage": "Some fields need your attention before continuing.",
+    "offlineTitle": "You are offline",
+    "offlineMessage": "This action has been saved and will sync automatically when you are back online.",
+    "fatalTitle": "Unable to continue",
+    "fatalMessage": "A critical error occurred. Please restart your session or contact support.",
+    "retry": "Try Again",
+    "retryNow": "Retry Now",
+    "fixInput": "Check again",
+    "goHome": "Go to Home",
+    "goBack": "Go Back",
+    "continueOffline": "Continue Offline",
+    "startOver": "Start Over",
+    "contactSupport": "Contact Support"
   }
 }

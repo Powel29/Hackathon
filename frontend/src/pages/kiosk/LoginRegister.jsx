@@ -5,14 +5,16 @@ import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { SuccessScreen } from '../../components/kiosk/SuccessScreen';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, WifiOff, ShieldOff } from 'lucide-react';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import * as authService from '../../services/api/auth.service';
 import { toast } from 'sonner';
 
 export function LoginRegister() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { setRegistrationData } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const { setRegistrationData, setUser } = useKioskStore();
   const [mode, setMode] = useState('choice');
   const [step, setStep] = useState(1);
   const [loginType, setLoginType] = useState(null);
@@ -345,11 +347,11 @@ export function LoginRegister() {
 
               <div className="grid grid-cols-2 gap-6">
                 <button
-                  onClick={() => setMode('login')}
-                  className="bg-white border-2 border-gray-200 rounded-xl p-8 hover:border-[#3B82F6] hover:shadow-md transition-all group"
+                  onClick={() => isOnline ? setMode('login') : toast.error('Login unavailable offline. Please use Offline Mode.')}
+                  className={`bg-white border-2 rounded-xl p-8 transition-all group ${isOnline ? 'border-gray-200 hover:border-[#3B82F6] hover:shadow-md' : 'border-gray-100 opacity-60 cursor-not-allowed'}`}
                 >
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 bg-[#3B82F6] rounded-full flex items-center justify-center group-hover:bg-[#1E40AF] transition-all">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isOnline ? 'bg-[#3B82F6] group-hover:bg-[#1E40AF]' : 'bg-gray-400'}`}>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-8 h-8">
                         <path d="M13 2C10.2386 2 8 4.23858 8 7C8 7.55228 8.44772 8 9 8C9.55228 8 10 7.55228 10 7C10 5.34315 11.3431 4 13 4H17C18.6569 4 20 5.34315 20 7V17C20 18.6569 18.6569 20 17 20H13C11.3431 20 10 18.6569 10 17C10 16.4477 9.55228 16 9 16C8.44772 16 8 16.4477 8 17C8 19.7614 10.2386 22 13 22H17C19.7614 22 22 19.7614 22 17V7C22 4.23858 19.7614 2 17 2H13Z" fill="#FFFFFF" />
                         <path d="M3 11C2.44772 11 2 11.4477 2 12C2 12.5523 2.44772 13 3 13H11.2821C11.1931 13.1098 11.1078 13.2163 11.0271 13.318C10.7816 13.6277 10.5738 13.8996 10.427 14.0945C10.3536 14.1921 10.2952 14.2705 10.255 14.3251L10.2084 14.3884L10.1959 14.4055L10.1915 14.4115C10.1914 14.4116 10.191 14.4122 11 15L10.1915 14.4115C9.86687 14.8583 9.96541 15.4844 10.4122 15.809C10.859 16.1336 11.4843 16.0346 11.809 15.5879L11.8118 15.584L11.822 15.57L11.8638 15.5132C11.9007 15.4632 11.9553 15.3897 12.0247 15.2975C12.1637 15.113 12.3612 14.8546 12.5942 14.5606C13.0655 13.9663 13.6623 13.2519 14.2071 12.7071L14.9142 12L14.2071 11.2929C13.6623 10.7481 13.0655 10.0337 12.5942 9.43937C12.3612 9.14542 12.1637 8.88702 12.0247 8.7025C11.9553 8.61033 11.9007 8.53682 11.8638 8.48679L11.822 8.43002L11.8118 8.41602L11.8095 8.41281C11.4848 7.96606 10.859 7.86637 10.4122 8.19098C9.96541 8.51561 9.86636 9.14098 10.191 9.58778L11 9C10.191 9.58778 10.1909 9.58773 10.191 9.58778L10.1925 9.58985L10.1959 9.59454L10.2084 9.61162L10.255 9.67492C10.2952 9.72946 10.3536 9.80795 10.427 9.90549C10.5738 10.1004 10.7816 10.3723 11.0271 10.682C11.1078 10.7837 11.1931 10.8902 11.2821 11H3Z" fill="#FFFFFF" />
@@ -363,11 +365,11 @@ export function LoginRegister() {
                 </button>
 
                 <button
-                  onClick={() => setMode('register')}
-                  className="bg-white border-2 border-gray-200 rounded-xl p-8 hover:border-[#10B981] hover:shadow-md transition-all group"
+                  onClick={() => isOnline ? setMode('register') : toast.error('Registration unavailable offline. Please use Offline Mode.')}
+                  className={`bg-white border-2 rounded-xl p-8 transition-all group ${isOnline ? 'border-gray-200 hover:border-[#10B981] hover:shadow-md' : 'border-gray-100 opacity-60 cursor-not-allowed'}`}
                 >
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 bg-[#10B981] rounded-full flex items-center justify-center group-hover:bg-[#047857] transition-all">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isOnline ? 'bg-[#10B981] group-hover:bg-[#047857]' : 'bg-gray-400'}`}>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 469.74" className="w-8 h-8">
                         <path d="M412.27 270.29c55.1 0 99.73 44.66 99.73 99.72 0 55.1-44.66 99.73-99.73 99.73-55.09 0-99.72-44.65-99.72-99.73 0-55.1 44.65-99.72 99.72-99.72zM232.93 0c31.47 0 61.6 6.3 89.09 17.69l.91.42c28.11 11.79 53.42 28.94 74.62 50.15 21.54 21.56 38.85 47.2 50.62 75.61 11.4 27.49 17.69 57.61 17.69 89.06 0 8.19-.43 16.3-1.27 24.27a122.985 122.985 0 0 0-34.04-10.18c.33-4.65.49-9.35.49-14.09 0-26.89-5.32-52.48-14.97-75.74a198.26 198.26 0 0 0-43.01-64.33c-18.1-18.13-39.61-32.72-63.49-42.74l-.87-.33c-23.27-9.65-48.85-14.97-75.77-14.97-26.91 0-52.5 5.32-75.76 14.97-24.26 10.02-46.07 24.74-64.31 43.01-18.13 18.1-32.72 39.63-42.74 63.5l-.33.87c-9.65 23.26-14.97 48.85-14.97 75.76 0 26.92 5.32 52.51 14.97 75.77a196.78 196.78 0 0 0 22.99 40.95c20.35-12.65 69.85-20.22 90.3-26.7 20.41-6.48 22.39-8.05 28.13-25.13-7.37-6.3-14.49-16.16-15.68-29.16l-.98.01c-2.24-.02-4.4-.54-6.42-1.69-3.24-1.85-5.52-5.01-7.06-8.58-5.2-10.26-11.3-35.05 2.36-32.81l-1.7-3.2c-.32-3.97-.4-8.76-.49-13.8-.29-18.51-.67-40.95-15.55-45.45l-6.39-1.93c32.31-40.07 90.88-98.25 137.91-40.99 47.49 4.62 62.64 75.91 30.06 107.38 1.95.07 3.8.53 5.43 1.4 6.2 3.32 6.4 10.52 4.77 16.59-1.61 5.05-3.65 10.91-5.59 15.83-2.35 6.66-5.78 7.9-12.42 7.18-.29 14.38-9.63 21.25-18.81 29.22 7.43 10.67 9.92 15.37 18.73 20.06-7.33 15.86-11.44 33.52-11.44 52.13 0 17.78 3.73 34.69 10.46 49.99l.23.52.13.28.1.22.24.52.07.15.15.35.24.51.02.03.22.47.19.42.05.09.24.5.25.51.25.51.07.15.17.34.25.5.01.04.25.46.2.41.05.08.25.49.16.29.11.22.26.48.09.17.17.32.27.5.01.03.26.46.21.4.06.08.27.48.16.29c3.79 6.68 8.17 12.99 13.12 18.84a232.552 232.552 0 0 1-84.25 15.76c-31.45 0-61.58-6.3-89.08-17.7l-.92-.41c-28.12-11.79-53.42-28.95-74.62-50.15-21.49-21.5-38.79-47.14-50.59-75.6C6.3 294.53 0 264.41 0 232.93c0-31.47 6.3-61.59 17.69-89.08l.41-.92c11.8-28.11 28.95-53.42 50.16-74.61 21.5-21.5 47.12-38.8 75.6-50.6C171.34 6.3 201.46 0 232.93 0zm162.75 326.72c-.04-4.9-.49-8.4 5.58-8.31l19.68.24c6.34-.04 8.03 1.97 7.95 7.93v26.83h26.68c4.89-.05 8.39-.49 8.3-5.58l-.24 19.67c.04 6.35-1.97 8.03-7.92 7.96h-26.82v26.81c.08 5.96-1.61 7.97-7.95 7.93l-19.68.24c-6.07.09-5.62-3.41-5.58-8.31v-26.67h-26.83c-5.95.07-7.96-1.61-7.92-7.96l-.24-19.67c-.09-6.07 3.41-5.63 8.3-5.58h26.69v-26.69z" fill="#FFFFFF" />
                       </svg>
@@ -379,6 +381,29 @@ export function LoginRegister() {
                   </div>
                 </button>
               </div>
+
+              {!isOnline && (
+                <div className="mt-8 border-2 border-orange-200 bg-orange-50 rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="bg-orange-600 p-2.5 rounded-xl shadow-lg shadow-orange-200">
+                      <WifiOff className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-orange-900 uppercase tracking-tight">Offline Mode Available</h3>
+                      <p className="text-xs text-orange-700 font-medium italic">Hardware is disconnected. You can continue as a guest for local transactions.</p>
+                    </div>
+                  </div>
+                  <TouchButton
+                    variant="warning"
+                    size="large"
+                    onClick={handleOfflineLogin}
+                    className="w-full shadow-lg shadow-orange-100"
+                    icon={<ShieldOff className="w-5 h-5" />}
+                  >
+                    Continue as Guest (Offline)
+                  </TouchButton>
+                </div>
+              )}
 
               <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-center text-gray-700">

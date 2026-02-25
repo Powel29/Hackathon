@@ -145,7 +145,15 @@ exports.getBillByNumber = async (req, res) => {
 
 exports.payBill = async (req, res) => {
     try {
-        const { billId, serviceType } = req.body;
+        const { billId, serviceType, aadharHash } = req.body;
+
+        // Security: If payload specifies an owner hash, it must match current token
+        if (aadharHash && aadharHash !== req.user.aadharHash) {
+            return res.status(403).json({
+                success: false,
+                message: "Attribution mismatch: Queued payment does not belong to current session."
+            });
+        }
 
         if (!billId || !serviceType) {
             return res.status(400).json({ success: false, message: 'billId and serviceType are required' });

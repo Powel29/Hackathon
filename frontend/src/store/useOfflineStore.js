@@ -16,6 +16,9 @@ export const useOfflineStore = create((set, get) => ({
     /** Current network status */
     networkStatus: navigator.onLine ? 'online' : 'offline',
 
+    /** Whether sync is currently running */
+    isSyncing: false,
+
     /** Live sync queue items (mirrors localStorage via SyncQueueService) */
     syncQueue: SyncQueueService.getAll(),
 
@@ -37,6 +40,15 @@ export const useOfflineStore = create((set, get) => ({
         if (status === 'online') {
             set({ lastSyncAt: Date.now() });
         }
+        set({ isSyncing: status === 'syncing' });
+    },
+
+    /**
+     * Clear all items from the sync queue local storage.
+     */
+    clearQueue() {
+        SyncQueueService.clearAll();
+        get().refreshQueue();
     },
 
     /**

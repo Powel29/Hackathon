@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import {
@@ -12,14 +13,18 @@ import {
   AlertCircle,
   User,
   Phone,
-  MessageSquare
+  MessageSquare,
+  WifiOff
 } from 'lucide-react';
 import { complaintService } from '../../services/api';
+import { useOfflineStore } from '../../store/useOfflineStore';
 
 export function TrackComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { complaints, selectedService } = useKioskStore();
+  const { complaints: cachedComplaints, selectedService } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const { syncQueue } = useOfflineStore();
   const [complaintId, setComplaintId] = useState('');
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [error, setError] = useState('');
@@ -30,6 +35,37 @@ export function TrackComplaint() {
 
   const handleSearch = useCallback(async () => {
     if (!complaintId) return;
+
+    // Check offline queue first
+    const queuedMatch = syncQueue.find(item =>
+      item.operationType === 'complaint' &&
+      (item.id === complaintId || `QUEUED-${item.id.substring(0, 8).toUpperCase()}` === complaintId)
+    );
+
+    if (queuedMatch) {
+      setSelectedComplaint({
+        complaintId: `QUEUED-${queuedMatch.id.substring(0, 8).toUpperCase()}`,
+        status: 'queued',
+        serviceType: queuedMatch.payload.serviceType,
+        description: queuedMatch.payload.description,
+        createdAt: queuedMatch.createdAt,
+        updatedAt: queuedMatch.createdAt,
+        ...queuedMatch.payload,
+        isQueued: true
+      });
+      setError('');
+      return;
+    }
+
+    if (!isOnline) {
+      const match = (cachedComplaints || []).find(c => c.complaintId === complaintId);
+      if (match) {
+        setSelectedComplaint(match);
+      } else {
+        setError('Complaint not found in offline cache. Connect to internet for live lookup.');
+      }
+      return;
+    }
 
     try {
       setError('');
@@ -46,7 +82,7 @@ export function TrackComplaint() {
       console.error("Track complaint failed", e);
       setError('Complaint not found or system error. Please try again.');
     }
-  }, [complaintId]);
+  }, [complaintId, isOnline, cachedComplaints]);
 
   // Keyboard support
   useEffect(() => {
@@ -66,14 +102,49 @@ export function TrackComplaint() {
 
   useEffect(() => {
     fetchUserComplaints();
-  }, [targetDepartment]);
+  }, [targetDepartment, isOnline, syncQueue]);
 
   const fetchUserComplaints = async () => {
+    let filtered = [];
+
+    // 1. Get queued items
+    const queuedComplaints = syncQueue
+      .filter(item => item.operationType === 'complaint' && item.status !== 'synced')
+      .map(item => ({
+        complaintId: `QUEUED-${item.id.substring(0, 8).toUpperCase()}`,
+        id: item.id,
+        status: 'queued',
+        serviceType: item.payload.serviceType,
+        description: item.payload.description,
+        createdAt: item.createdAt,
+        updatedAt: item.createdAt,
+        isQueued: true,
+        ...item.payload
+      }));
+
+    // 2. Filter by department
+    const deptQueued = targetDepartment !== 'ALL'
+      ? queuedComplaints.filter(c => c.serviceType?.toUpperCase() === targetDepartment)
+      : queuedComplaints;
+
+    if (!isOnline) {
+      const cached = targetDepartment !== 'ALL'
+        ? (cachedComplaints || []).filter(c => c.serviceType?.toUpperCase() === targetDepartment)
+        : (cachedComplaints || []);
+      setRecentComplaints([...deptQueued, ...cached]);
+      return;
+    }
+
     try {
       setLoading(true);
       const filters = targetDepartment !== 'ALL' ? { serviceType: targetDepartment } : {};
       const data = await complaintService.getUserComplaints(filters);
-      setRecentComplaints(data);
+
+      // Merge unique ones
+      const existingIds = new Set(data.map(c => c.complaintId));
+      const uniqueQueued = deptQueued.filter(q => !existingIds.has(q.complaintId));
+
+      setRecentComplaints([...uniqueQueued, ...data]);
     } catch (error) {
       console.error("Failed to fetch user complaints", error);
     } finally {
@@ -82,7 +153,9 @@ export function TrackComplaint() {
   };
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
+      case 'queued':
+        return <Clock className="w-5 h-5 text-orange-500" />;
       case 'open':
         return <Clock className="w-5 h-5 text-[#FF9800]" />;
       case 'in_progress':
@@ -97,7 +170,9 @@ export function TrackComplaint() {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
+      case 'queued':
+        return 'bg-orange-500';
       case 'open':
         return 'bg-[#FF9800]';
       case 'in_progress':
@@ -118,6 +193,7 @@ export function TrackComplaint() {
   };
 
   const statusColors = {
+    queued: 'bg-orange-100 text-orange-800 border-orange-200',
     open: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
     resolved: 'bg-green-100 text-green-800 border-green-200',
@@ -146,6 +222,16 @@ export function TrackComplaint() {
               </h2>
             </div>
           </div>
+
+          {!isOnline && (
+            <div className="mb-6 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3 shadow-md">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <div>
+                <p className="text-sm font-bold text-orange-800 uppercase tracking-tight">Offline Mode: Cached Data</p>
+                <p className="text-xs text-orange-700">Showing complaints from your last online session. Search and status updates are limited until reconnected.</p>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <input

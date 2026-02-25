@@ -381,7 +381,9 @@ export function NewConnection() {
         state: formData.state,
         pincode: formData.pincode,
         connectionType: formData.connectionType,
-        serviceDetails
+        serviceDetails,
+        // Non-PII link for offline sync attribute
+        aadharHash: user?.aadharHash
       };
 
       if (!isOnline) {

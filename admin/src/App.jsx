@@ -12,6 +12,7 @@ import { DeptAlertsModule } from './screens/DeptAlertsModule';
 import { UsersModule } from './screens/UsersModule';
 import { AccountApprovals } from './screens/AccountApprovals';
 import { KioskMonitor } from './screens/KioskMonitor';
+import { DeviceState } from './screens/DeviceState';
 function AdminApp() {
     const [activeRoute, setActiveRoute] = useState('dashboard');
     const renderScreen = () => {
@@ -25,6 +26,7 @@ function AdminApp() {
             case 'users': return <UsersModule />;
             case 'account-approvals': return <AccountApprovals />;
             case 'kiosks': return <KioskMonitor />;
+            case 'device-state': return <DeviceState />;
             default: return <OverviewDashboard />;
         }
     };

@@ -134,7 +134,7 @@ export function GasCylinderBooking() {
         }
     };
 
-    const generateAndUploadReceipt = async (requestId, serviceRequestId) => {
+    const generateAndUploadReceipt = async (requestId, serviceRequestId, isOffline = false) => {
         if (!receiptRef.current) return;
 
         try {
@@ -159,6 +159,14 @@ export function GasCylinderBooking() {
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
             const pdfBlob = pdf.output('blob');
+            const blobUrl = URL.createObjectURL(pdfBlob);
+            setReceiptUrl(blobUrl);
+
+            if (isOffline) {
+                console.log('Local receipt generated for offline booking');
+                return;
+            }
+
             const pdfFile = new File([pdfBlob], `Receipt_${requestId}.pdf`, { type: 'application/pdf' });
 
             // Upload to server
@@ -166,19 +174,16 @@ export function GasCylinderBooking() {
             const uploadResponse = await documentService.uploadDocument(pdfFile, {
                 citizenId: citizenId,
                 relatedEntity: 'SERVICE_REQUEST',
-                relatedId: serviceRequestId, // Use UUID from backend
+                relatedId: serviceRequestId,
                 documentType: 'GAS_BOOKING_RECEIPT',
                 department: 'GAS'
             });
 
             if (uploadResponse.success) {
                 console.log('Receipt uploaded successfully');
-                // You would typically get a public URL or similar
-                const blobUrl = URL.createObjectURL(pdfBlob);
-                setReceiptUrl(blobUrl);
             }
         } catch (error) {
-            console.error('Error generating or uploading receipt:', error);
+            console.error('Error generating receipt:', error);
         }
     };
 
@@ -188,7 +193,9 @@ export function GasCylinderBooking() {
             const payload = {
                 serviceType: 'GAS',
                 requestType: 'GAS_CYLINDER_BOOKING',
-                details: formData
+                details: formData,
+                // Non-PII link for offline sync attribute
+                aadharHash: user?.aadharHash
             };
 
             if (!isOnline) {
@@ -196,9 +203,15 @@ export function GasCylinderBooking() {
                     operationType: 'gas_booking',
                     payload
                 });
-                setBookingId(`QUEUED-${tempId.substring(0, 6).toUpperCase()}`);
-                setBookingSuccess(true);
-                setIsSaving(false);
+                const displayId = `QUEUED-${tempId.substring(0, 6).toUpperCase()}`;
+                setBookingId(displayId);
+
+                // Still generate the receipt locally so it can be downloaded
+                setTimeout(async () => {
+                    await generateAndUploadReceipt(displayId, null, true);
+                    setBookingSuccess(true);
+                    setIsSaving(false);
+                }, 500);
                 return;
             }
 

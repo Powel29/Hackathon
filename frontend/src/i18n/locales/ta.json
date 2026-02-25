@@ -44,7 +44,18 @@
     "newUser": "புதிய பயனரா?",
     "alreadyHaveAccount": "ஏற்கனவே கணக்கு உள்ளதா?",
     "loginToContinue": "தொடர உள்நுழையவும்",
-    "createAccount": "கணக்கை உருவாக்கவும்"
+    "createAccount": "கணக்கை உருவாக்கவும்",
+    "errorSendingOTP": "Failed to send OTP",
+    "errorResendingOTP": "Failed to resend OTP",
+    "errorVerifyingOTP": "Failed to verify OTP",
+    "sendingOTP": "Sending OTP",
+    "registerOnceAccessServices": "Register once to access all services",
+    "otpSentSuccessfully": "OTP sent successfully",
+    "otpResentSuccessfully": "OTP resent successfully",
+    "registrationSuccessful": "Registration Successful",
+    "enterCredentials": "Enter Credentials",
+    "otpVerificationNote": "An OTP will be sent to your linked mobile number for verification.",
+    "otpSentTo": "OTP sent to"
   },
   "dashboard": {
     "welcome": "வரவேற்கிறோம்",
@@ -65,7 +76,8 @@
     "municipalServices": "நகராட்சி சேவைகள்",
     "changeDepartment": "துறையை மாற்றவும்",
     "quickServices": "வேகமான சேவைகள்",
-    "trackConnection": "இணைப்பு கண்காணிக்கவும்"
+    "trackConnection": "இணைப்பு கண்காணிக்கவும்",
+    "trackRequests": "Track Requests"
   },
   "bills": {
     "viewBills": "பில்ல்களை காண்க",
@@ -121,7 +133,8 @@
     "open": "திறந்தது",
     "inProgress": "நடைபெற்று வருகிறது",
     "resolved": "தீர்க்கப்பட்டது",
-    "closed": "மூடப்பட்டது"
+    "closed": "மூடப்பட்டது",
+    "adminNote": "Official Comment"
   },
   "newConnection": {
     "newConnectionApplication": "புதிய இணைப்பு விண்ணப்பம்",
@@ -287,7 +300,9 @@
     "retry": "மீண்டும் முயற்சிக்கவும்",
     "goBack": "திரும்ப செல்லவும்",
     "home": "முகப்பு",
-    "changeLanguage": "மொழியை மாற்றவும்"
+    "changeLanguage": "மொழியை மாற்றவும்",
+    "login": "Login",
+    "all": "All"
   },
   "session": {
     "sessionWarning": "அமர்வு காலாவதி எச்சரிக்கை",
@@ -300,7 +315,41 @@
     "payElectricityBill": "மின்சார பில் செலுத்தவும்",
     "checkCurrentBill": "தற்போதைய பிலை சரிபார்க்கவும்",
     "unitsConsumed": "பயன்படுத்தப்பட்ட அலகுகள்",
-    "amountDue": "செலுத்த வேண்டிய தொகை"
+    "amountDue": "செலுத்த வேண்டிய தொகை",
+    "active": "Active",
+    "kwhThisMonth": "kWh This Month",
+    "avgPerDay": "Avg/Day",
+    "kwhDailyAverage": "kWh Daily Average",
+    "peakLoad": "Peak Load",
+    "kwMaximumLoad": "kW Maximum Load",
+    "alert": "Alert",
+    "lastBillAmount": "Last Bill Amount",
+    "consumptionTrend": "Consumption Trend",
+    "last7DaysPattern": "Last 7 Days Pattern",
+    "mondayShort": "Mon",
+    "tuesdayShort": "Tue",
+    "wednesdayShort": "Wed",
+    "thursdayShort": "Thu",
+    "fridayShort": "Fri",
+    "saturdayShort": "Sat",
+    "sundayShort": "Sun",
+    "weeklyAverage": "Weekly Average",
+    "weeklyAverageValue": "{{value}}",
+    "powerAlerts": "Power Alerts",
+    "outagesAndMaintenance": "Outages & Maintenance",
+    "scheduledMaintenance": "Scheduled Maintenance",
+    "scheduledMaintenanceTime": "{{date}}, {{time}}",
+    "maintenanceArea": "Area: {{area}}",
+    "systemStatus": "System Status",
+    "allSystemsOperational": "All systems operational",
+    "uptimeThisMonth": "Uptime this month: {{percent}}%",
+    "smartMeterInfo": "Smart Meter Info",
+    "connectionTypeLabel": "Connection Type",
+    "sanctionedLoad": "Sanctioned Load",
+    "lastReadingDate": "Last Reading Date",
+    "energySavingTip": "Energy Saving Tip",
+    "energySavingPractices": "Energy Saving Practices",
+    "ledBulbTip": "Replacing old bulbs with LED bulbs can save {{min}}-{{max}} rupees per year."
   },
   "gas": {
     "meterId": "மீட்டர் ஐடி",
@@ -308,7 +357,8 @@
     "bookNewConnection": "புதிய இணைப்பை பதிவு செய்யவும்",
     "safetyGuidelines": "பாதுகாப்பு வழிகாட்டுதல்கள்",
     "emergencySupport": "அவசர உதவி",
-    "turnOffCylinder": "பயன்பாட்டில் இல்லாத போது சிலிண்டர் வால்வை அணைக்கவும்"
+    "turnOffCylinder": "பயன்பாட்டில் இல்லாத போது சிலிண்டர் வால்வை அணைக்கவும்",
+    "bookCylinder": "Book Cylinder"
   },
   "waterSupply": {
     "waterSupplySchedule": "நீர்விநியோக அட்டவணை",
@@ -343,7 +393,11 @@
     "facilityRequired": "தயவுசெய்து நீர் டேங்கர் வசதியை தேர்வு செய்யவும்",
     "descriptionMinLength": "விளக்கம் குறைந்தது 20 எழுத்துக்கள் இருக்க வேண்டும்",
     "descriptionMaxLength": "விளக்கம் 500 எழுத்துக்களுக்கு மேல் இருக்கக்கூடாது",
-    "emailRequired": "செல்லுபடியாகும் மின்னஞ்சல் அவசியம்"
+    "emailRequired": "செல்லுபடியாகும் மின்னஞ்சல் அவசியம்",
+    "dateOfBirthRequired": "Date of Birth is required",
+    "genderRequired": "Gender is required",
+    "cylinderTypeRequired": "Cylinder type is required",
+    "addressRequired": "Address is required"
   },
   "trackNewConnection": {
     "pageTitle": "புதிய இணைப்பு விண்ணப்பத்தை கண்காணிக்கவும்",
@@ -368,7 +422,21 @@
     "statusApprovedDesc": "உங்கள் விண்ணப்பம் துறையால் அங்கீகரிக்கப்பட்டுள்ளது",
     "statusActiveDesc": "உங்கள் இணைப்பு இப்போது செயலில் உள்ளது",
     "smsEmailNotification": "நீங்கள் SMS மற்றும் மின்னஞ்சல் வழியாக புதுப்பிப்புகளைப் பெறுவீர்கள்",
-    "enterApplicationId": "கண்காணிக்க உங்கள் விண்ணப்ப ஐடியை உள்ளிடவும்..."
+    "enterApplicationId": "கண்காணிக்க உங்கள் விண்ணப்ப ஐடியை உள்ளிடவும்...",
+    "backToList": "Back to list",
+    "status": "Status",
+    "applicationIdLabel": "APPLICATION ID",
+    "quickSummary": "Quick Summary",
+    "recentApplications": "Your Recent Applications",
+    "loading": "Loading applications...",
+    "noApplications": "No applications found",
+    "noApplicationsDesc": "You haven't submitted any connection requests yet.",
+    "appliedOn": "Applied on",
+    "categoryElectricity": "Electricity Department",
+    "categoryGas": "Gas Department",
+    "categoryWater": "Water Department",
+    "categoryMunicipal": "Municipal Services",
+    "categoryDefault": "Department"
   },
   "trackComplaint": {
     "complaintNotFound": "புகார் கிடைக்கவில்லை. புகார் ஐடியை சரிபார்க்கவும்."
@@ -399,5 +467,61 @@
     "approved": "அங்கீகரிக்கப்பட்டது",
     "active": "செயலில்",
     "rejected": "நிராகரிக்கப்பட்டது"
+  },
+  "gasCylinderBooking": {
+    "title": "Gas Cylinder Booking",
+    "customerDetails": "Customer Details",
+    "deliveryAddress": "Delivery Address",
+    "bookingDetails": "Booking Details",
+    "cylinderType": "Cylinder Type",
+    "domestic14": "Domestic (14.2 kg)",
+    "commercial19": "Commercial (19 kg)",
+    "domestic5": "Domestic (5 kg)",
+    "deliveryType": "Delivery Type",
+    "scheduled": "Scheduled Delivery",
+    "urgent": "Urgent (Within 4 hours)",
+    "preferredDate": "Preferred Date",
+    "preferredTime": "Preferred Time Slot",
+    "bookingSuccess": "Booking Confirmed!",
+    "bookingId": "Booking ID",
+    "successMessage": "Your gas cylinder has been booked successfully. You will receive an SMS confirmation shortly.",
+    "printReceipt": "Print Receipt",
+    "viewReceipt": "View Receipt",
+    "downloadReceipt": "Download Receipt",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "a11y": {
+    "accessibilitySettings": "Accessibility Settings",
+    "textSize": "Text Size",
+    "standard": "Standard",
+    "large": "Large",
+    "extraLarge": "Extra Large",
+    "contrast": "Contrast",
+    "default": "Default",
+    "highContrast": "High Contrast",
+    "easyMode": "Easy Mode",
+    "easyModeDesc": "Simpler screens, fewer choices",
+    "voiceGuidance": "Voice Guidance",
+    "voiceDesc": "Spoken instructions each step",
+    "screenReaderHints": "Screen Reader Hints",
+    "resetDefaults": "Reset to Defaults"
+  },
+  "errors": {
+    "apiErrorTitle": "Something went wrong",
+    "apiErrorMessage": "We could not complete your request. Please try again.",
+    "validationTitle": "Please check your input",
+    "validationMessage": "Some fields need your attention before continuing.",
+    "offlineTitle": "You are offline",
+    "offlineMessage": "This action has been saved and will sync automatically when you are back online.",
+    "fatalTitle": "Unable to continue",
+    "fatalMessage": "A critical error occurred. Please restart your session or contact support.",
+    "retry": "Try Again",
+    "retryNow": "Retry Now",
+    "fixInput": "Check again",
+    "goHome": "Go to Home",
+    "goBack": "Go Back",
+    "continueOffline": "Continue Offline",
+    "startOver": "Start Over",
+    "contactSupport": "Contact Support"
   }
 }

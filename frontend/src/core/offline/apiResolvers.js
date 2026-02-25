@@ -5,7 +5,7 @@
  * This file maps queue operation types to their actual API calls.
  * Used by OfflineManager to process the sync queue.
  */
-import { complaintService, connectionService } from '../../services/api';
+import { complaintService, connectionService, billService } from '../../services/api';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
 
 export const offlineApiResolvers = {
@@ -37,6 +37,20 @@ export const offlineApiResolvers = {
 
     gas_booking: async (payload, idempotencyKey) => {
         await serviceRequestService.create({
+            ...payload,
+            _idempotencyKey: idempotencyKey
+        });
+    },
+
+    pay_bill: async (payload, idempotencyKey) => {
+        await billService.processPayment({
+            ...payload,
+            _idempotencyKey: idempotencyKey
+        });
+    },
+
+    municipal_pay: async (payload, idempotencyKey) => {
+        await billService.processPayment({
             ...payload,
             _idempotencyKey: idempotencyKey
         });

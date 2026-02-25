@@ -3,14 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { billService } from '../../services/api';
 import { useKioskStore } from '../../store/useKioskStore';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
-import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock, WifiOff } from 'lucide-react';
 
 export function ViewBills() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedService, setBills: setStoreBills } = useKioskStore();
+  const { selectedService, setBills: setStoreBills, bills: cachedBills } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,6 +21,16 @@ export function ViewBills() {
 
   useEffect(() => {
     const fetchBills = async () => {
+      if (!isOnline) {
+        // Use cached bills when offline
+        const filtered = targetDepartment !== 'ALL'
+          ? cachedBills.filter(b => (b.serviceType || b.type)?.toUpperCase() === targetDepartment)
+          : cachedBills;
+        setBills(filtered);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const filters = targetDepartment !== 'ALL' ? { serviceType: targetDepartment } : {};
@@ -37,7 +49,7 @@ export function ViewBills() {
     };
 
     fetchBills();
-  }, [targetDepartment]);
+  }, [targetDepartment, isOnline]);
   const getStatusIcon = (status) => {
     const statusLower = status?.toLowerCase();
     switch (statusLower) {
@@ -98,6 +110,16 @@ export function ViewBills() {
               </h2>
             </div>
           </div>
+
+          {!isOnline && (
+            <div className="mb-6 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3 shadow-md">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <div>
+                <p className="text-sm font-bold text-orange-800 uppercase tracking-tight">Offline Mode: Cached Data</p>
+                <p className="text-xs text-orange-700">Showing bills from your last online session. Payment processing will be queued locally.</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {error ? (

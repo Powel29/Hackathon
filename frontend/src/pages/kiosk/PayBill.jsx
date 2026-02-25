@@ -2,16 +2,20 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
-import { ArrowLeft, CreditCard, FileText } from 'lucide-react';
+import { ArrowLeft, CreditCard, FileText, WifiOff } from 'lucide-react';
 
 export function PayBill() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { billId } = useParams();
   const { bills, updateBill } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const enqueue = useOfflineStore(s => s.enqueue);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const bill = bills.find(b => b.id === billId);
@@ -37,10 +41,26 @@ export function PayBill() {
 
     // Simulate payment processing
     setTimeout(() => {
-      const transactionId = 'TXN' + Date.now();
+      const transactionId = isOnline ? 'TXN' + Date.now() : 'OFFLINE-TXN-' + Date.now();
 
-      // Update bill status to paid
-      updateBill(bill.id, { status: 'paid' });
+      if (!isOnline) {
+        // Enqueue payment for later sync
+        enqueue({
+          operationType: 'pay_bill',
+          payload: {
+            billId: bill.id,
+            serviceType: bill.type || bill.serviceType,
+            status: 'paid',
+            transactionId,
+            paymentMethod: 'Card',
+            // Non-PII link for offline sync attribute
+            aadharHash: user?.aadharHash
+          }
+        });
+      }
+
+      // Update bill status to paid locally
+      updateBill(bill.id, { status: 'paid' }, !isOnline);
 
       setIsProcessing(false);
       navigate(`/kiosk/receipt/${transactionId}`, {
@@ -48,7 +68,8 @@ export function PayBill() {
           bill: { ...bill, status: 'paid' },
           transactionId,
           paymentDate: new Date().toISOString(),
-          paymentMethod: 'Card'
+          paymentMethod: 'Card',
+          isOfflinePayment: !isOnline
         }
       });
     }, 2000);
@@ -127,9 +148,12 @@ export function PayBill() {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-center text-gray-700">
-              ⓘ Your payment will be processed securely
+          <div className={`${isOnline ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} border rounded-lg p-4 mb-6`}>
+            <p className="text-sm text-center text-gray-700 flex items-center justify-center gap-2">
+              {!isOnline && <WifiOff className="w-4 h-4 text-orange-600" />}
+              {isOnline
+                ? t('bills.securePayment', 'Your payment will be processed securely')
+                : 'Device is offline. Payment will be recorded locally and synced when online.'}
             </p>
           </div>
 
