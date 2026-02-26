@@ -13,15 +13,21 @@ import {
   Shield
 } from 'lucide-react';
 import { useKioskStore } from '../../store/useKioskStore';
+<<<<<<< HEAD
 import { useOfflineStore } from '../../store/useOfflineStore';
+=======
+>>>>>>> origin/nayan
 import { departmentService } from '../../services/api';
 
 export function WaterDashboard() {
   const navigate = useNavigate();
   const safetyCenterRef = useRef(null);
   const { user } = useKioskStore();
+<<<<<<< HEAD
   const networkStatus = useOfflineStore((state) => state.networkStatus);
   const isOnline = networkStatus === 'online';
+=======
+>>>>>>> origin/nayan
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -63,12 +69,15 @@ export function WaterDashboard() {
       }
 
       try {
+<<<<<<< HEAD
         if (!isOnline) {
           console.log('[Offline] Skipping live data fetch for WaterDashboard');
           setLoading(false);
           return;
         }
 
+=======
+>>>>>>> origin/nayan
         console.log('🔍 Fetching water data for:', user.consumerId);
 
         // Parallel fetch for account details and alerts

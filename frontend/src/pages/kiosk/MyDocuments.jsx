@@ -136,7 +136,6 @@ export function MyDocuments() {
                         </div>
                     </div>
                 )}
-
                 {/* Filters */}
                 <div className="flex flex-wrap gap-3 mb-8">
                     {filterOptions.map(option => (

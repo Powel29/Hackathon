@@ -66,7 +66,6 @@ export function TrackComplaint() {
       }
       return;
     }
-
     try {
       setError('');
       setSelectedComplaint(null);
@@ -134,12 +133,10 @@ export function TrackComplaint() {
       setRecentComplaints([...deptQueued, ...cached]);
       return;
     }
-
     try {
       setLoading(true);
       const filters = targetDepartment !== 'ALL' ? { serviceType: targetDepartment } : {};
       const data = await complaintService.getUserComplaints(filters);
-
       // Merge unique ones
       const existingIds = new Set(data.map(c => c.complaintId));
       const uniqueQueued = deptQueued.filter(q => !existingIds.has(q.complaintId));
@@ -232,7 +229,6 @@ export function TrackComplaint() {
               </div>
             </div>
           )}
-
           <div className="flex gap-3">
             <input
               type="text"

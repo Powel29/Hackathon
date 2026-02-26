@@ -64,7 +64,6 @@ export function ElectricityDashboard() {
           setLoading(false);
           return;
         }
-
         // Parallel fetch for account details and alerts
         const [accountResponse, alertsResponse] = await Promise.all([
           departmentService.getAccountDetails('ELECTRICITY', user.consumerId),

@@ -6,14 +6,21 @@ import { TouchButton } from '../../components/kiosk/TouchButton';
 import { LoadingScreen } from '../../components/kiosk/LoadingScreen';
 import * as authService from '../../services/api/auth.service';
 import { toast } from 'sonner';
+<<<<<<< HEAD
 import { ArrowLeft, CreditCard, WifiOff, ShieldOff } from 'lucide-react';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+=======
+import { ArrowLeft, CreditCard } from 'lucide-react';
+>>>>>>> origin/nayan
 
 export function AadhaarLogin() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+<<<<<<< HEAD
   const { isOnline } = useNetworkStatus();
   const { setUser } = useKioskStore();
+=======
+>>>>>>> origin/nayan
   const [aadhaar, setAadhaar] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,11 +37,14 @@ export function AadhaarLogin() {
       return;
     }
 
+<<<<<<< HEAD
     if (!isOnline) {
       handleOfflineLogin();
       return;
     }
 
+=======
+>>>>>>> origin/nayan
     setIsLoading(true);
     setError('');
 
@@ -62,6 +72,7 @@ export function AadhaarLogin() {
     } finally {
       setIsLoading(false);
     }
+<<<<<<< HEAD
   }, [aadhaar, navigate, t, isOnline]);
 
   const handleOfflineLogin = () => {
@@ -75,6 +86,9 @@ export function AadhaarLogin() {
     toast.info('Continuing in Offline Mode. Some features may be limited.');
     navigate('/kiosk/service-selection');
   };
+=======
+  }, [aadhaar, navigate, t]);
+>>>>>>> origin/nayan
 
   const formatAadhaar = (value) => {
     return value.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -161,11 +175,16 @@ export function AadhaarLogin() {
               )}
 
               <TouchButton
+<<<<<<< HEAD
                 variant={isOnline ? "primary" : "warning"}
+=======
+                variant="primary"
+>>>>>>> origin/nayan
                 size="large"
                 onClick={handleSubmit}
                 disabled={aadhaar.length !== 12}
                 className="w-full"
+<<<<<<< HEAD
                 icon={!isOnline ? <WifiOff className="w-5 h-5" /> : null}
               >
                 {isOnline ? t('authentication.proceedToOTP') : 'Continue Offline'}
@@ -184,6 +203,12 @@ export function AadhaarLogin() {
                 </div>
               )}
 
+=======
+              >
+                {t('authentication.proceedToOTP')}
+              </TouchButton>
+
+>>>>>>> origin/nayan
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-xs text-center text-gray-700">
                   {t('authentication.aadhaarSecurityNote')}

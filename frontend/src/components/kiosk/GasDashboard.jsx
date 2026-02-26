@@ -5,7 +5,10 @@ import { useKioskStore } from '../../store/useKioskStore';
 import { departmentService } from '../../services/api';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { useOfflineStore } from '../../store/useOfflineStore';
+=======
+>>>>>>> origin/nayan
 import {
   Flame,
   Package,
@@ -19,8 +22,11 @@ import {
 export function GasDashboard() {
   const navigate = useNavigate();
   const { user, selectedService } = useKioskStore();
+<<<<<<< HEAD
   const networkStatus = useOfflineStore((state) => state.networkStatus);
   const isOnline = networkStatus === 'online';
+=======
+>>>>>>> origin/nayan
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -36,6 +42,7 @@ export function GasDashboard() {
 
       try {
         setLoading(true);
+<<<<<<< HEAD
 
         if (!isOnline) {
           console.log('[Offline] Skipping live data fetch for GasDashboard');
@@ -43,6 +50,8 @@ export function GasDashboard() {
           return;
         }
 
+=======
+>>>>>>> origin/nayan
         // Parallel fetch for account details and alerts
         const [accountResponse, alertsResponse] = await Promise.all([
           departmentService.getAccountDetails('GAS', user.consumerId),
@@ -100,7 +109,11 @@ export function GasDashboard() {
     : 'N/A';
 
   // Format consumption history for PNG users
+<<<<<<< HEAD
   const consumptionData = accountData?.consumptionHistory?.slice(0, 6).reverse().map(item => ({
+=======
+  const consumptionData = accountData?.consumptionHistory?.slice(0, 6).map(item => ({
+>>>>>>> origin/nayan
     value: item.value,
     month: new Date(item.date).toLocaleDateString('en-US', { month: 'short' })
   })) || [];

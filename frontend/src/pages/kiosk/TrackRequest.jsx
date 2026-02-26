@@ -63,7 +63,6 @@ export function TrackRequest() {
                 setLoading(false);
                 return;
             }
-
             setLoading(true);
             const data = await serviceRequestService.getAll();
             let allRequests = data.requests || [];
@@ -156,7 +155,6 @@ export function TrackRequest() {
                         </div>
                     </div>
                 )}
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* List of Requests */}
                     <div className="lg:col-span-1 space-y-4">

@@ -266,7 +266,6 @@ export function RegisterComplaint() {
         setShowSuccess(true);
         return;
       }
-
       const response = await complaintService.submit(complaintData);
 
       if (response && response.success) {

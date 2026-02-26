@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
+<<<<<<< HEAD
 import { useOfflineStore } from '../../store/useOfflineStore';
+=======
+>>>>>>> origin/nayan
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
 import { ArrowLeft, Shield, Zap, Flame, Droplets, Building2, Bell } from 'lucide-react';
@@ -15,8 +18,11 @@ export function DepartmentVerification() {
   const selectedService = useKioskStore((state) => state.selectedService);
   const setUser = useKioskStore((state) => state.setUser);
   const user = useKioskStore((state) => state.user);
+<<<<<<< HEAD
   const networkStatus = useOfflineStore((state) => state.networkStatus);
   const isOnline = networkStatus === 'online';
+=======
+>>>>>>> origin/nayan
   const [departmentId, setDepartmentId] = useState('');
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -115,6 +121,7 @@ export function DepartmentVerification() {
         return;
       }
 
+<<<<<<< HEAD
       if (!isOnline) {
         console.warn('[Offline] Bypassing server verification for:', departmentId);
         setUser({
@@ -130,6 +137,8 @@ export function DepartmentVerification() {
         return;
       }
 
+=======
+>>>>>>> origin/nayan
       const response = await departmentService.verifyAccount(
         selectedService,
         departmentId.trim()
@@ -141,6 +150,7 @@ export function DepartmentVerification() {
           consumerId: response.account.consumerNumber,
           accountId: response.account.accountId,
           ownerName: response.account.ownerName,
+<<<<<<< HEAD
           connectionType: response.account.connectionType,
           isOfflineSession: false
         });
@@ -150,11 +160,33 @@ export function DepartmentVerification() {
         setError(response.error?.message || 'Account not found');
       } else {
         setError(response.error?.message || 'Failed to verify account');
+=======
+          connectionType: response.account.connectionType
+        });
+        navigate('/kiosk/dashboard');
+>>>>>>> origin/nayan
       }
     } catch (err) {
       console.error('Verification error:', err);
       const msg = err.message || 'Failed to verify account. Please try again.';
+<<<<<<< HEAD
       setError(msg);
+=======
+      // If account not found, show the request-approval button
+      if (
+        msg.toLowerCase().includes('not found') ||
+        msg.toLowerCase().includes('no water') ||
+        msg.toLowerCase().includes('no electricity') ||
+        msg.toLowerCase().includes('no gas') ||
+        msg.toLowerCase().includes('no municipal') ||
+        err.code === 'NOT_FOUND'
+      ) {
+        setNotFound(true);
+        setError(msg);
+      } else {
+        setError(msg);
+      }
+>>>>>>> origin/nayan
     } finally {
       setIsVerifying(false);
     }
@@ -306,7 +338,11 @@ export function DepartmentVerification() {
                   className="flex-1"
                   disabled={isVerifying || requestSubmitted}
                 >
+<<<<<<< HEAD
                   {isVerifying ? 'Verifying...' : (!isOnline ? 'Continue Offline' : 'Verify & Continue')}
+=======
+                  {isVerifying ? 'Verifying...' : 'Verify & Continue'}
+>>>>>>> origin/nayan
                 </TouchButton>
               </div>
             </div>

@@ -6,7 +6,8 @@ import { useKioskStore } from '../../store/useKioskStore';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { KioskLayout } from '../../components/kiosk/KioskLayout';
 import { TouchButton } from '../../components/kiosk/TouchButton';
-import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock, WifiOff } from 'lucide-react';
+import { BillFilterModal } from '../../components/kiosk/BillFilterModal';
+import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock, WifiOff, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 
 export function ViewBills() {
   const { t } = useTranslation();
@@ -16,6 +17,10 @@ export function ViewBills() {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedBill, setExpandedBill] = useState(null);
+  const [filteredBills, setFilteredBills] = useState([]);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilter, setActiveFilter] = useState(null);
 
   const targetDepartment = selectedService ? selectedService.toUpperCase() : 'ALL';
 
@@ -27,6 +32,7 @@ export function ViewBills() {
           ? cachedBills.filter(b => (b.serviceType || b.type)?.toUpperCase() === targetDepartment)
           : cachedBills;
         setBills(filtered);
+        setFilteredBills(filtered);
         setLoading(false);
         return;
       }
@@ -37,6 +43,7 @@ export function ViewBills() {
         const fetchedBills = await billService.getUserBills(filters);
         console.log('📋 Fetched bills:', fetchedBills);
         setBills(fetchedBills || []);
+        setFilteredBills(fetchedBills || []);
         if (setStoreBills) {
           setStoreBills(fetchedBills || []);
         }
@@ -50,6 +57,27 @@ export function ViewBills() {
 
     fetchBills();
   }, [targetDepartment, isOnline]);
+
+  // Apply date filters
+  useEffect(() => {
+    let result = bills;
+
+    if (activeFilter && activeFilter.startDate && activeFilter.endDate) {
+      const start = new Date(activeFilter.startDate);
+      const end = new Date(activeFilter.endDate);
+      // Set end date to end of day
+      end.setHours(23, 59, 59, 999);
+
+      result = bills.filter(bill => {
+        const billDueDate = new Date(bill.dueDate);
+        return billDueDate >= start && billDueDate <= end;
+      });
+    }
+
+    setFilteredBills(result);
+    setExpandedBill(null); // Reset expanded bill when filtering
+  }, [activeFilter, bills]);
+
   const getStatusIcon = (status) => {
     const statusLower = status?.toLowerCase();
     switch (statusLower) {
@@ -109,10 +137,18 @@ export function ViewBills() {
                 {t('bills.viewBills')}
               </h2>
             </div>
+
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Filter bills"
+            >
+              <Filter className="w-6 h-6 text-gray-600" />
+            </button>
           </div>
 
           {!isOnline && (
-            <div className="mb-6 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3 shadow-md">
+            <div className="mt-6 bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center gap-3 shadow-md">
               <WifiOff className="w-5 h-5 text-orange-600" />
               <div>
                 <p className="text-sm font-bold text-orange-800 uppercase tracking-tight">Offline Mode: Cached Data</p>
@@ -126,116 +162,149 @@ export function ViewBills() {
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
             <p className="text-red-600">{error}</p>
           </div>
-        ) : bills.length === 0 ? (
+        ) : filteredBills.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <p className="text-gray-600">{t('bills.noBills')}</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {bills.map((bill) => (
+            {filteredBills.map((bill) => (
               <div
                 key={bill.id}
                 className={`bg-white rounded-xl shadow-sm border-2 ${getStatusBgColor(bill.status)} overflow-hidden`}
               >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-3">
-                      {getStatusIcon(bill.status)}
-                      <div>
-                        <h3 className="text-lg font-bold text-[#212529]">
-                          {bill.billNumber}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {bill.billingPeriod}
-                        </p>
+                {/* Bill Header - Always Visible */}
+                <button
+                  onClick={() => setExpandedBill(expandedBill === bill.id ? null : bill.id)}
+                  className="w-full p-6 flex items-start justify-between hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start gap-3 flex-1">
+                    {getStatusIcon(bill.status)}
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-[#212529]">
+                        {bill.billNumber}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                        <span>{bill.billingPeriod}</span>
+                        <span>₹{Number(bill.amount).toLocaleString()}</span>
+                        <span>
+                          {new Date(bill.dueDate).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </span>
                       </div>
                     </div>
+                  </div>
 
-                    <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${bill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-700' :
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                    <span className={`px-3 py-1 rounded-lg text-sm font-semibold whitespace-nowrap ${bill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-700' :
                       bill.status?.toLowerCase() === 'pending' ? 'bg-orange-100 text-orange-700' :
                         'bg-red-100 text-red-700'
                       }`}>
                       {bill.status}
                     </span>
+                    {expandedBill === bill.id ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    )}
                   </div>
+                </button>
 
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <p className="text-xs text-gray-600 mb-1">{t('bills.amount')}</p>
-                      <p className="text-xl font-bold text-[#212529]">
-                        ₹{Number(bill.amount).toLocaleString()}
-                      </p>
+                {/* Bill Details - Expanded */}
+                {expandedBill === bill.id && (
+                  <div className="border-t border-gray-200 bg-gray-50 p-6 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <p className="text-xs text-gray-600 mb-2 font-semibold">{t('bills.amount')}</p>
+                        <p className="text-2xl font-bold text-[#212529]">
+                          ₹{Number(bill.amount).toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <p className="text-xs text-gray-600 mb-2 font-semibold">{t('bills.dueDate')}</p>
+                        <p className="text-lg font-semibold text-[#212529]">
+                          {new Date(bill.dueDate).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <p className="text-xs text-gray-600 mb-2 font-semibold">Type</p>
+                        <p className="text-lg font-semibold text-[#212529]">
+                          {bill.type || bill.serviceType || 'N/A'}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <p className="text-xs text-gray-600 mb-1">{t('bills.dueDate')}</p>
-                      <p className="text-sm font-semibold text-[#212529]">
-                        {new Date(bill.dueDate).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <p className="text-xs text-gray-600 mb-1">Type</p>
-                      <p className="text-sm font-semibold text-[#212529]">
-                        {bill.type || bill.serviceType || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {bill.status?.toLowerCase() !== 'paid' ? (
-                    <div className="flex justify-end">
-                      <TouchButton
-                        variant="primary"
-                        size="medium"
-                        onClick={() => {
-                          if (bill.serviceType === 'MUNICIPAL' || bill.type === 'MUNICIPAL') {
-                            navigate(`/kiosk/pay-property-tax/${bill.id}`);
-                          } else {
-                            navigate(`/kiosk/pay-bill/${bill.id}`);
-                          }
-                        }}
-                      >
-                        {t('bills.payNow')}
-                      </TouchButton>
-                    </div>
-                  ) : (
-                    <div className="flex justify-end">
-                      <TouchButton
-                        variant="secondary"
-                        size="medium"
-                        onClick={async () => {
-                          try {
-                            const apiModule = await import('../../services/api');
-                            const res = await apiModule.documentService.getRelatedDocuments(bill.billId || bill.id);
-                            if (res.success && res.documents?.length > 0) {
-                              const receipt = res.documents.find(d => d.documentType === 'PAYMENT_RECEIPT');
-                              if (receipt && receipt.url) {
-                                window.open(receipt.url, '_blank');
-                              } else {
-                                alert("Receipt document is still processing. Please try again later.");
-                              }
+                    {/* Action Buttons */}
+                    {bill.status?.toLowerCase() !== 'paid' ? (
+                      <div className="flex justify-end gap-3">
+                        <TouchButton
+                          variant="primary"
+                          size="medium"
+                          onClick={() => {
+                            if (bill.serviceType === 'MUNICIPAL' || bill.type === 'MUNICIPAL') {
+                              navigate(`/kiosk/pay-property-tax/${bill.id}`);
                             } else {
-                              alert("Receipt document not found.");
+                              navigate(`/kiosk/pay-bill/${bill.id}`);
                             }
-                          } catch (err) {
-                            console.error("Failed to fetch receipt:", err);
-                            alert("Failed to load receipt.");
-                          }
-                        }}
-                      >
-                        Download Receipt
-                      </TouchButton>
-                    </div>
-                  )}
-                </div>
+                          }}
+                        >
+                          {t('bills.payNow')}
+                        </TouchButton>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end gap-3">
+                        <TouchButton
+                          variant="secondary"
+                          size="medium"
+                          onClick={async () => {
+                            try {
+                              const apiModule = await import('../../services/api');
+                              const res = await apiModule.documentService.getRelatedDocuments(bill.billId || bill.id);
+                              if (res.success && res.documents?.length > 0) {
+                                const receipt = res.documents.find(d => d.documentType === 'PAYMENT_RECEIPT');
+                                if (receipt && receipt.url) {
+                                  window.open(receipt.url, '_blank');
+                                } else {
+                                  alert("Receipt document is still processing. Please try again later.");
+                                }
+                              } else {
+                                alert("Receipt document not found.");
+                              }
+                            } catch (err) {
+                              console.error("Failed to fetch receipt:", err);
+                              alert("Failed to load receipt.");
+                            }
+                          }}
+                        >
+                          Download Receipt
+                        </TouchButton>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
+
+        {/* Filter Modal */}
+        <BillFilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={(filter) => {
+            setActiveFilter(filter);
+          }}
+          activeFilter={activeFilter}
+        />
       </div>
     </KioskLayout>
   );

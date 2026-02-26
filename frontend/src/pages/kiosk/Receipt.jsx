@@ -33,7 +33,6 @@ export function Receipt() {
       }
 
       if (!receiptDocRef.current) return;
-
       // If offline, we can't upload.
       if (!isOnline && !isManual) {
         console.log(" [Receipt] Skipping auto-upload while offline");
@@ -44,7 +43,6 @@ export function Receipt() {
         // For manual triggers (like download/print), we still generate PDF but skip API upload
         // Actually, let's just generate the PDF for download but not call the service if offline.
       }
-
       setUploadStatus('uploading');
 
       const element = receiptDocRef.current;
@@ -113,7 +111,6 @@ export function Receipt() {
         setUploadStatus('idle');
         return;
       }
-
       const citizenId = user?.aadhaarNumber || '111122223333';
       const relatedId = (bill.id || bill.billId || transactionId).toString();
 
@@ -374,7 +371,6 @@ export function Receipt() {
               </div>
             </div>
           )}
-
           <div className="grid grid-cols-3 gap-6">
             {/* Receipt Display */}
             <div className="col-span-2">

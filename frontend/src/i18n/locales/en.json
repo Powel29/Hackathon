@@ -489,6 +489,7 @@
     "approved": "Approved",
     "active": "Active",
     "rejected": "Rejected"
+<<<<<<< HEAD
   },
   "a11y": {
     "accessibilitySettings": "Accessibility Settings",
@@ -567,3 +568,7 @@
     "contactSupport": "Contact Support"
   }
 }
+=======
+  }
+}
+>>>>>>> origin/nayan

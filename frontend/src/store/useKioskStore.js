@@ -153,4 +153,3 @@ export const useKioskStore = create((set, get) => ({
         });
     }
 }));
-
