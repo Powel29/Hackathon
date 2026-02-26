@@ -16,16 +16,72 @@ async function loadTesseract() {
   tesseractLoaded = true;
 }
 
-async function runOCR(file, onProgress) {
-  await loadTesseract();
-  const worker = await window.Tesseract.createWorker("eng", 1, {
-    logger: m => {
-      if (m.status === "recognizing text") onProgress(Math.round(m.progress * 100));
-    },
+// Load PDF.js from CDN on demand
+let pdfjsLoaded = false;
+async function loadPdfJs() {
+  if (pdfjsLoaded || window.pdfjsLib) { pdfjsLoaded = true; return; }
+  await new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
   });
-  const { data: { text } } = await worker.recognize(file);
-  await worker.terminate();
-  return text.trim();
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLoaded = true;
+}
+
+async function pdfToImage(file) {
+  await loadPdfJs();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const page = await pdf.getPage(1); // Render first page
+  const viewport = page.getViewport({ scale: 2.0 });
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.height = viewport.height;
+  canvas.width = viewport.width;
+  await page.render({ canvasContext: context, viewport: viewport }).promise;
+  return canvas.toDataURL('image/png');
+}
+
+async function runOCR(file, onProgress) {
+  try {
+    let source = file;
+    if (file.type === "application/pdf") {
+      onProgress(2); // PDF loading started
+      source = await pdfToImage(file);
+    }
+
+    onProgress(5);
+    await loadTesseract();
+    if (!window.Tesseract) throw new Error("Tesseract.js failed to load. Please check your internet connection.");
+
+    console.log("Starting Tesseract.recognize...");
+
+    // In v5, Tesseract.recognize handles worker lifecycle automatically
+    const { data: { text } } = await window.Tesseract.recognize(source, 'eng', {
+      logger: m => {
+        console.log("OCR Status:", m.status, m.progress);
+        let p = 5;
+        if (m.status === "loading tesseract core") p = 5 + (m.progress * 15);
+        else if (m.status === "loading language traineddata") p = 20 + (m.progress * 15);
+        else if (m.status === "initializing api") p = 35 + (m.progress * 10);
+        else if (m.status === "recognizing text") p = 45 + (m.progress * 55);
+        else p = m.progress * 100;
+        onProgress(Math.round(Math.max(p, 5)));
+      },
+    });
+
+    if (!text || text.trim().length === 0) {
+      throw new Error("No text found in this document. Please ensure it's a clear scan.");
+    }
+
+    return text.trim();
+  } catch (err) {
+    console.error("OCR Final Error:", err);
+    throw err;
+  }
 }
 
 async function sendChatMessage({ message, history, userToken }) {
@@ -207,7 +263,8 @@ export default function BillingChatbot() {
         return;
       }
 
-      const trimmedText = extractedText.slice(0, 1500); const ocrMessage = `I uploaded a document called "${file.name}". Here is the text extracted via OCR (first 1500 chars):\n\n---\n${trimmedText}\n---\n\nPlease analyze this and help me with any billing information, invoice details, or payment proof it contains.`;
+      const trimmedText = extractedText.slice(0, 1000);
+      const ocrMessage = `I uploaded a document called "${file.name}". Here is the text extracted via OCR (first 1000 chars):\n\n---\n${trimmedText}\n---\n\nPlease analyze this and help me with any billing information, invoice details, or payment proof it contains.`;
       const previewText = `📄 Uploaded: ${file.name}\n${extractedText.length} characters extracted. Analyzing with AI...`;
 
       const userMsg = { role: "human", content: previewText, ocrFile: file.name };
@@ -222,7 +279,8 @@ export default function BillingChatbot() {
       }, 1800);
 
       try {
-        const data = await sendChatMessage({ message: ocrMessage, history: messages, userToken: null });
+        const updatedHistory = [...messages, userMsg];
+        const data = await sendChatMessage({ message: ocrMessage, history: updatedHistory, userToken: null });
         setMessages(prev => [...prev, { role: "assistant", content: data.reply, toolCalls: data.tool_calls || [] }]);
       } catch (err) {
         setError(typeof err.message === "string" ? err.message : JSON.stringify(err.message));
@@ -254,7 +312,8 @@ export default function BillingChatbot() {
     }, 1800);
 
     try {
-      const data = await sendChatMessage({ message: text, history: messages, userToken: null });
+      const updatedHistory = [...messages, userMsg];
+      const data = await sendChatMessage({ message: text, history: updatedHistory, userToken: null });
       setMessages(prev => [...prev, { role: "assistant", content: data.reply, toolCalls: data.tool_calls || [] }]);
     } catch (err) {
       setError(typeof err.message === "string" ? err.message : JSON.stringify(err.message));
@@ -356,7 +415,7 @@ export default function BillingChatbot() {
               <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: "linear-gradient(135deg, #1a56a0, #4a90d9)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>💳</div>
               <div style={{ background: "#1e2635", borderRadius: "18px 18px 18px 4px", border: "1px solid #252d3d", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ display: "flex", gap: 4 }}>
-                  {[0,1,2].map(i => <div key={i} className="dot" style={{ width:7, height:7, borderRadius:"50%", background:"#4a5568" }} />)}
+                  {[0, 1, 2].map(i => <div key={i} className="dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "#4a5568" }} />)}
                 </div>
                 <span style={{ color: "#4a5568", fontSize: 12, fontFamily: "'DM Mono', monospace" }}>{loadingLabel}</span>
               </div>

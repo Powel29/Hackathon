@@ -203,26 +203,77 @@ def get_municipal_bills(citizen_id: str) -> list:
 # PAYMENTS
 # ─────────────────────────────────────────────────────────────
 def get_payments(citizen_id: str) -> list:
-    """Gets recent payments for a citizen across all bill types."""
+    """Gets recent payments for a citizen across all bill types (electricity, water, gas, municipal)."""
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
-        SELECT
-            p."paymentId", p."transactionRef", p.gateway,
-            p.amount, p.status, p."paidAt", p."billType",
-            p."electricityBillId", p."gasBillId",
-            p."municipalBillId", p."waterBillId"
+        WITH citizen_accounts AS (
+            SELECT "accountId" FROM electricity_accounts WHERE "citizenId" = %s
+            UNION SELECT "accountId" FROM water_accounts WHERE "citizenId" = %s
+            UNION SELECT "accountId" FROM gas_accounts WHERE "citizenId" = %s
+            UNION SELECT "accountId" FROM municipal_accounts WHERE "citizenId" = %s
+        )
+        SELECT 
+            p."paymentId", p."transactionRef", p.gateway, 
+            p.amount, p.status, p."paidAt", p."billType"
         FROM payments p
         JOIN bills b ON p."billId" = b."billId"
-        JOIN electricity_accounts ea ON b."accountId" = ea."accountId"
-        WHERE ea."citizenId" = %s
-        ORDER BY p."paidAt" DESC
-        LIMIT 10;
-    """, (citizen_id,))
+        WHERE b."accountId" IN (SELECT "accountId" FROM citizen_accounts)
+        ORDER BY p."paidAt" DESC 
+        LIMIT 15;
+    """, (citizen_id, citizen_id, citizen_id, citizen_id))
     payments = [dict(row) for row in cur.fetchall()]
     cur.close()
     conn.close()
     return payments
+
+
+def get_connection_applications(citizen_id: str) -> list:
+    """Gets status of new connection applications for a citizen."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT "id", "serviceType", status, "appliedAt"
+        FROM connection_applications
+        WHERE "citizenId" = %s
+        ORDER BY "appliedAt" DESC;
+    """, (citizen_id,))
+    apps = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return apps
+
+
+def get_complaints(citizen_id: str) -> list:
+    """Gets history of complaints/tickets for a citizen."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT "complaintNumber", "serviceType", title, status, "createdAt"
+        FROM complaints
+        WHERE "citizenId" = %s
+        ORDER BY "createdAt" DESC;
+    """, (citizen_id,))
+    rows = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return rows
+
+
+def get_active_alerts() -> list:
+    """Gets currently active department alerts/announcements."""
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT department, title, message, severity, "createdAt"
+        FROM alerts
+        WHERE status = 'active'
+        ORDER BY "createdAt" DESC;
+    """)
+    alerts = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return alerts
 
 
 def get_payment_by_transaction(transaction_ref: str) -> dict:

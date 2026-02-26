@@ -35,10 +35,10 @@ def _get_citizen_id() -> str:
 # ─────────────────────────────────────────────────────────────
 
 @tool
-def get_electricity_bills(_: str = "") -> dict:
+def get_electricity_bills(reason: str) -> dict:
     """
-    Fetch electricity bills for the currently logged-in citizen.
-    Returns recent bills including units consumed, charges, due date, and status.
+    Fetch electricity bills for the currently logged-in citizen. 
+    Provide a reason (e.g. 'user requested summary').
     """
     try:
         from database import get_electricity_bills as db_get
@@ -51,10 +51,10 @@ def get_electricity_bills(_: str = "") -> dict:
 
 
 @tool
-def get_electricity_account(_: str = "") -> dict:
+def get_electricity_account(reason: str) -> dict:
     """
     Fetch electricity account details for the currently logged-in citizen.
-    Returns consumer number, connection type, current month usage, and status.
+    Provide a reason (e.g. 'checking service status').
     """
     try:
         from database import get_electricity_account as db_get
@@ -71,11 +71,10 @@ def get_electricity_account(_: str = "") -> dict:
 # ─────────────────────────────────────────────────────────────
 
 @tool
-def get_water_bills(_: str = "") -> dict:
+def get_water_bills(reason: str) -> dict:
     """
     Fetch water bills for the currently logged-in citizen.
-    Returns recent bills including units consumed, water charges,
-    sewerage charges, total amount, due date, and payment status.
+    Provide a reason (e.g. 'checking payment status').
     """
     try:
         from database import get_water_bills as db_get
@@ -92,11 +91,10 @@ def get_water_bills(_: str = "") -> dict:
 # ─────────────────────────────────────────────────────────────
 
 @tool
-def get_gas_bills(_: str = "") -> dict:
+def get_gas_bills(reason: str) -> dict:
     """
     Fetch gas bills for the currently logged-in citizen.
-    Returns recent bills including units consumed, gas charges,
-    total amount, due date, and payment status.
+    Provide a reason (e.g. 'verifying usage').
     """
     try:
         from database import get_gas_bills as db_get
@@ -113,11 +111,10 @@ def get_gas_bills(_: str = "") -> dict:
 # ─────────────────────────────────────────────────────────────
 
 @tool
-def get_municipal_bills(_: str = "") -> dict:
+def get_municipal_bills(reason: str) -> dict:
     """
     Fetch municipal/property tax bills for the currently logged-in citizen.
-    Returns property tax, water tax, sewerage tax, garbage tax,
-    education cess, total amount, due date, and payment status.
+    Provide a reason (e.g. 'tax assessment').
     """
     try:
         from database import get_municipal_bills as db_get
@@ -134,11 +131,10 @@ def get_municipal_bills(_: str = "") -> dict:
 # ─────────────────────────────────────────────────────────────
 
 @tool
-def get_payment_history(_: str = "") -> dict:
+def get_payment_history(reason: str) -> dict:
     """
     Fetch recent payment history for the currently logged-in citizen.
-    Returns payments across all bill types including transaction reference,
-    gateway, amount, status, and payment date.
+    Provide a reason (e.g. 'checking recent transactions').
     """
     try:
         from database import get_payments as db_get
@@ -171,10 +167,10 @@ def check_payment_by_transaction(transaction_ref: str) -> dict:
 # ─────────────────────────────────────────────────────────────
 
 @tool
-def get_service_requests(_: str = "") -> dict:
+def get_service_requests(reason: str) -> dict:
     """
     Fetch all service requests raised by the currently logged-in citizen.
-    Returns request type, service type, status, and creation date.
+    Provide a reason (e.g. 'checking ticket status').
     """
     try:
         from database import get_service_requests as db_get
@@ -184,6 +180,52 @@ def get_service_requests(_: str = "") -> dict:
         return {"requests": _serialize(requests), "total": len(requests)}
     except Exception as e:
         return {"error": f"Could not fetch service requests: {str(e)}"}
+
+
+@tool
+def get_complaints(reason: str) -> dict:
+    """
+    Fetch history of complaints or support tickets raised by the currently logged-in citizen.
+    Used to check the status of previously reported issues.
+    """
+    try:
+        from database import get_complaints as db_get
+        rows = db_get(_get_citizen_id())
+        if not rows:
+            return {"message": "No complaints found.", "complaints": []}
+        return {"complaints": _serialize(rows), "total": len(rows)}
+    except Exception as e:
+        return {"error": f"Could not fetch complaints: {str(e)}"}
+
+
+@tool
+def get_connection_applications(reason: str) -> dict:
+    """
+    Fetch status of new utility connection applications (Electricity, Water, Gas) for the citizen.
+    """
+    try:
+        from database import get_connection_applications as db_get
+        apps = db_get(_get_citizen_id())
+        if not apps:
+            return {"message": "No connection applications found.", "applications": []}
+        return {"applications": _serialize(apps), "total": len(apps)}
+    except Exception as e:
+        return {"error": f"Could not fetch connection applications: {str(e)}"}
+
+
+@tool
+def get_active_alerts(reason: str) -> dict:
+    """
+    Fetch active department alerts, announcements, or service disruptions (e.g. power outages, water maintenance).
+    """
+    try:
+        from database import get_active_alerts as db_get
+        alerts = db_get()
+        if not alerts:
+            return {"message": "No active alerts at this time."}
+        return {"alerts": _serialize(alerts), "total": len(alerts)}
+    except Exception as e:
+        return {"error": f"Could not fetch alerts: {str(e)}"}
 
 
 @tool
@@ -263,6 +305,9 @@ ALL_TOOLS = [
     get_payment_history,
     check_payment_by_transaction,
     get_service_requests,
+    get_complaints,
+    get_connection_applications,
+    get_active_alerts,
     create_service_request,
     create_support_ticket,
 ]

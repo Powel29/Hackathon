@@ -6,6 +6,7 @@ import { SessionWarning } from './components/kiosk/SessionWarning';
 import { kioskService } from './services/api/kiosk.service';
 import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
+import ChatWidget from './components/kiosk/ChatWidget';
 import './i18n';
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
     return (
         <>
             <RouterProvider router={router} />
+            <ChatWidget />
             <Toaster richColors position="top-right" />
             {showSessionWarning && <SessionWarning />}
         </>

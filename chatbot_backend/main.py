@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 from agent import build_agent, deserialize_history
+from tools import current_citizen_id, current_account_id
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -113,8 +114,17 @@ async def chat(
 
     logger.info(f"[{user['account_id']}] User: {request.message[:80]}")
 
+    # Set context for tools based on the actual logged-in citizen from frontend
+    # In a real system, verify_token would provide the verified ID. 
+    # For the hackathon, we use the account_id passed from the secure frontend.
+    citizen_id = request.account_id if request.account_id != "DEMO-USER" else "111122223333"
+    current_citizen_id.set(citizen_id)
+    current_account_id.set(request.account_id)
+
     try:
-        chat_history = deserialize_history([m.model_dump() for m in request.history])
+        # Keep only the last 10 messages (5 exchanges) to stay within free tier token limits
+        history_subset = request.history[-10:]
+        chat_history = deserialize_history([m.model_dump() for m in history_subset])
 
         response = agent_executor.invoke({
             "input": request.message,
@@ -137,6 +147,15 @@ async def chat(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        # Check for Rate Limit Error specifically
+        err_str = str(e).lower()
+        if "rate_limit_exceeded" in err_str or "429" in err_str:
+            logger.warning(f"Rate limit hit: {e}")
+            raise HTTPException(
+                status_code=429, 
+                detail="The AI is currently at its free-tier capacity. Please wait about 30-60 seconds and try again."
+            )
+        
         logger.error(f"Agent error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 

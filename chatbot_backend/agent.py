@@ -41,23 +41,15 @@ The authenticated citizen is: {user_name} (Account: {account_id})"""
 def build_agent(groq_api_key: str) -> AgentExecutor:
     """
     Builds a LangChain AgentExecutor using Groq's free API.
-
-    Steps:
-      1. ChatGroq             - LLM backed by Groq (Llama 3.3 70B, free)
-      2. ChatPromptTemplate   - system prompt + history + scratchpad
-      3. create_tool_calling_agent - binds tools to the LLM
-      4. AgentExecutor        - runs the think -> tool -> observe loop
     """
 
-    # 1. Groq LLM - llama-3.3-70b-versatile is free and supports tool calling
     llm = ChatGroq(
         model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
         groq_api_key=groq_api_key,
         temperature=0,
         max_tokens=1024,
-    )
+    )   
 
-    # 2. Prompt - must include agent_scratchpad for the tool call loop
     prompt = ChatPromptTemplate.from_messages([
         ("system", SYSTEM_PROMPT),
         MessagesPlaceholder(variable_name="chat_history"),
@@ -65,23 +57,21 @@ def build_agent(groq_api_key: str) -> AgentExecutor:
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
 
-    # 3. Agent - LangChain wires tool schemas into the LLM automatically
+    # create_tool_calling_agent is more robust for Groq than create_openai_tools_agent
     agent = create_tool_calling_agent(
         llm=llm,
         tools=ALL_TOOLS,
         prompt=prompt,
     )
 
-    # 4. Executor - handles the agentic loop (tool call -> observe -> next step)
     executor = AgentExecutor(
         agent=agent,
         tools=ALL_TOOLS,
         verbose=True,
-        max_iterations=6,
+        max_iterations=10,
         return_intermediate_steps=True,
         handle_parsing_errors=True,
-    )
-
+    )   
     return executor
 
 
