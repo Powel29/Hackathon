@@ -20,6 +20,8 @@ import { TrackRequest } from "./pages/kiosk/TrackRequest";
 import { AdminDashboard } from "./pages/kiosk/AdminDashboard";
 import { PropertyTaxPayment } from "./pages/kiosk/PropertyTaxPayment";
 import { MyDocuments } from "./pages/kiosk/MyDocuments";
+import { MunicipalServiceRequests } from "./pages/kiosk/MunicipalServiceRequests";
+import { TrackServiceRequest } from "./pages/kiosk/TrackServiceRequest";
 
 export const router = createBrowserRouter([
     {
@@ -131,6 +133,22 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <MyDocuments />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/kiosk/municipal-service-requests",
+        element: (
+            <ProtectedRoute>
+                <MunicipalServiceRequests />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/kiosk/track-service-request",
+        element: (
+            <ProtectedRoute>
+                <TrackServiceRequest />
             </ProtectedRoute>
         ),
     },

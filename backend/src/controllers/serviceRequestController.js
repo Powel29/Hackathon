@@ -36,6 +36,7 @@ exports.createServiceRequest = async (req, res) => {
                 data: {
                     requestTypeCode: requestType,
                     description: `${requestType.replace('_', ' ')} Service Request`,
+                    department: serviceType,
                     isActive: true
                 }
             });

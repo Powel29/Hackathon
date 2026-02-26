@@ -262,9 +262,7 @@ export function LoginRegister() {
         const { setUser } = useKioskStore.getState();
         setUser(verifyResponse.user);
 
-        // Store token
-        localStorage.setItem('token', verifyResponse.token);
-        localStorage.setItem('user', JSON.stringify(verifyResponse.user));
+        // Token storage is handled by authService
 
         toast.success('Login successful!');
 
