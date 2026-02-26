@@ -129,6 +129,22 @@ export function Dashboard() {
       title: t('dashboard.trackRequests') || 'Track Requests',
       route: '/kiosk/track-request'
     }] : []),
+    ...(selectedService === 'municipal' ? [
+      {
+        id: 'municipal-service-requests',
+        icon: <FileText className="w-8 h-8" />,
+        color: '#6f42c1',
+        title: 'Service Requests',
+        route: '/kiosk/municipal-service-requests'
+      },
+      {
+        id: 'track-municipal-request',
+        icon: <Search className="w-8 h-8" />,
+        color: '#8A2BE2',
+        title: 'Track Request',
+        route: '/kiosk/track-service-request'
+      }
+    ] : []),
     {
       id: 'my-documents',
       icon: <FileText className="w-8 h-8" />,

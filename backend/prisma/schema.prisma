@@ -21,6 +21,7 @@ model Citizen {
   isVerified             Boolean                 @default(false)
   lastLoginAt            DateTime?
   updatedAt              DateTime                @updatedAt
+  accountRequests        AccountRequest[]
   auditLogs              AuditLog[]
   authSessions           AuthSession[]
   complaints             Complaint[]
@@ -34,7 +35,6 @@ model Citizen {
   serviceAccounts        ServiceAccount[]
   serviceRequests        ServiceRequest[]
   waterAccounts          WaterAccount?
-  accountRequests        AccountRequest[]
 
   @@index([aadharHash])
   @@index([mobileNumber])
@@ -173,9 +173,9 @@ model ComplaintStatusHistory {
   oldStatus      String?   @db.VarChar(20)
   newStatus      String    @db.VarChar(20)
   changedBy      String?   @db.VarChar(12)
-  notes          String?   @db.Text // Internal Notes
-  citizenMessage String?   @db.Text // Visible to Citizen
+  notes          String?
   changedAt      DateTime  @default(now())
+  citizenMessage String?
   complaint      Complaint @relation(fields: [complaintId], references: [complaintId], onDelete: Cascade)
 
   @@index([complaintId])
@@ -186,6 +186,7 @@ model ServiceRequestType {
   requestTypeCode String           @id @db.VarChar(30)
   description     String?
   isActive        Boolean          @default(true)
+  department      String           @db.VarChar
   serviceRequests ServiceRequest[]
 
   @@map("service_request_types")
@@ -254,12 +255,12 @@ model KioskLog {
 model Kiosk {
   id              String   @id @db.VarChar(30)
   location        String   @db.VarChar(150)
-  status          String   @default("online") @db.VarChar(20) // online, offline, maintenance
+  status          String   @default("online") @db.VarChar(20)
   lastTransaction String?  @db.VarChar(50)
   todayCount      Int      @default(0)
   uptime          String?  @db.VarChar(10)
-  printer         String   @default("ok") @db.VarChar(20) // ok, low_paper, error
-  network         String   @default("excellent") @db.VarChar(20) // excellent, good, poor
+  printer         String   @default("ok") @db.VarChar(20)
+  network         String   @default("excellent") @db.VarChar(20)
   lastSeen        DateTime @default(now())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -275,7 +276,7 @@ model ConnectionApplication {
   applicantName   String   @db.VarChar(150)
   mobileNumber    String   @db.VarChar(10)
   email           String   @db.VarChar(150)
-  address         String   @db.Text
+  address         String
   city            String   @db.VarChar(100)
   state           String   @db.VarChar(100)
   pincode         String   @db.VarChar(10)
@@ -546,14 +547,13 @@ model WaterConsumption {
 model AccountRequest {
   id             String    @id @default(uuid()) @db.Uuid
   citizenId      String    @db.VarChar(12)
-  serviceType    String    @db.VarChar(20) // ELECTRICITY, WATER, GAS, MUNICIPAL
+  serviceType    String    @db.VarChar(20)
   consumerNumber String    @db.VarChar(50)
-  status         String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  status         String    @default("PENDING") @db.VarChar(20)
   adminNotes     String?
   requestedAt    DateTime  @default(now())
   resolvedAt     DateTime?
-
-  citizen Citizen @relation(fields: [citizenId], references: [aadharNumber])
+  citizen        Citizen   @relation(fields: [citizenId], references: [aadharNumber])
 
   @@index([citizenId])
   @@index([status])
@@ -575,4 +575,31 @@ model Admin {
 
   @@index([departmentId])
   @@map("admins")
+}
+
+model chat_sessions {
+  id         String   @id
+  user_id    String
+  messages   Json     @default("[]")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model ocr_uploads {
+  id              Int      @id @default(autoincrement())
+  user_id         String
+  file_name       String
+  chars_extracted Int?
+  uploaded_at     DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model support_tickets {
+  id         String   @id
+  user_id    String
+  account_id String
+  issue      String
+  priority   String   @default("medium")
+  status     String   @default("open")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
 }
