@@ -14,6 +14,9 @@ router.use(verifyToken);
 router.get('/complaints', adminController.getComplaints);
 router.put('/complaints/:id', adminController.updateComplaint);
 
+// Citizens routes
+router.get('/citizens/search', adminController.searchCitizens);
+
 // Connections routes
 router.get('/connections', adminController.getConnections);
 router.put('/connections/:id', adminController.updateConnection);

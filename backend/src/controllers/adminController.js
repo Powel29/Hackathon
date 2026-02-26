@@ -87,6 +87,91 @@ exports.updateComplaint = async (req, res) => {
     }
 };
 
+exports.searchCitizens = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) {
+            return res.json({ success: true, data: [] });
+        }
+
+        const query = q.toLowerCase();
+
+        // Search Citizen table
+        const citizens = await prisma.citizen.findMany({
+            where: {
+                OR: [
+                    { mobileNumber: { contains: query } },
+                    { aadharNumber: { contains: query } },
+                    { fullName: { contains: query, mode: 'insensitive' } },
+                ]
+            },
+            take: 10,
+            include: {
+                _count: {
+                    select: {
+                        complaints: true
+                    }
+                },
+                electricityAccounts: { include: { bills: { where: { status: 'pending' } } } },
+                waterAccounts: { include: { bills: { where: { status: 'pending' } } } },
+                gasAccounts: { include: { bills: { where: { status: 'pending' } } } },
+                municipalAccounts: { include: { taxBills: { where: { status: 'pending' } } } },
+                kioskLogs: {
+                    orderBy: { timestamp: 'desc' },
+                    take: 1,
+                    select: {
+                        kioskId: true,
+                        timestamp: true
+                    }
+                }
+            }
+        });
+
+        const formatted = citizens.map(c => {
+            // Calculate total pending bills
+            let pendingBills = 0;
+            if (c.electricityAccounts) pendingBills += c.electricityAccounts.bills.length;
+            if (c.waterAccounts) pendingBills += c.waterAccounts.bills.length;
+            if (c.gasAccounts) pendingBills += c.gasAccounts.bills.length;
+            if (c.municipalAccounts) pendingBills += c.municipalAccounts.taxBills.length;
+
+            // Determine consumer ID by priority
+            let consumerId = c.aadharNumber;
+            let dept = 'registered';
+
+            if (c.electricityAccounts) { consumerId = c.electricityAccounts.consumerNumber; dept = 'electricity'; }
+            else if (c.waterAccounts) { consumerId = c.waterAccounts.consumerNumber; dept = 'water'; }
+            else if (c.gasAccounts) { consumerId = c.gasAccounts.consumerNumber; dept = 'gas'; }
+            else if (c.municipalAccounts) { consumerId = c.municipalAccounts.propertyTaxNumber; dept = 'municipal'; }
+
+            // Last Kiosk
+            const lastKioskLog = c.kioskLogs && c.kioskLogs.length > 0 ? c.kioskLogs[0] : null;
+            const lastKiosk = lastKioskLog ? `Kiosk ${lastKioskLog.kioskId}` : 'Never used a Kiosk';
+            const lastActive = lastKioskLog
+                ? new Date(lastKioskLog.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+                : new Date(c.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+            return {
+                id: c.aadharNumber.substring(0, 4) + '...' + c.aadharNumber.slice(-4), // Mask ID for safety
+                rawId: c.aadharNumber,
+                name: c.fullName,
+                mobile: c.mobileNumber,
+                consumerId,
+                dept,
+                lastActive,
+                complaints: c._count.complaints,
+                bills: pendingBills,
+                lastKiosk
+            };
+        });
+
+        res.json({ success: true, data: formatted });
+    } catch (error) {
+        console.error('searchCitizens error:', error);
+        res.status(500).json({ success: false, message: 'Failed to search citizens' });
+    }
+};
+
 exports.getConnections = async (req, res) => {
     try {
         const connections = await prisma.connectionApplication.findMany({

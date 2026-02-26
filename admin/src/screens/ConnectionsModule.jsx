@@ -303,9 +303,11 @@ export function ConnectionsModule() {
                         setSelected(c); if (!c.checked)
                             markAsChecked('connection', c.id);
                     }} style={{ cursor: 'pointer' }}>
-                        <td style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            {!c.checked && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' }} title="Unread" />}
-                            {c.applicationId}
+                        <td style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600, fontSize: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                {!c.checked && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' }} title="Unread" />}
+                                {c.applicationId}
+                            </div>
                         </td>
                         <td><span title={c.serviceType} style={{ fontSize: 16 }}>{DEPT_ICONS[c.serviceType]}</span></td>
                         <td>

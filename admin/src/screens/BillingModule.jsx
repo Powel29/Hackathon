@@ -380,9 +380,11 @@ export function BillingModule() {
                             <tr key={b.id} onClick={() => {
                                 if (!b.checked) markAsChecked('bill', b.id);
                             }} style={{ cursor: 'pointer' }}>
-                                <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    {!b.checked && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' }} title="Unread" />}
-                                    {b.billNumber}
+                                <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--primary)', fontWeight: 600 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        {!b.checked && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' }} title="Unread" />}
+                                        {b.billNumber}
+                                    </div>
                                 </td>
                                 <td><span title={b.serviceType} style={{ fontSize: 16 }}>{DEPT_ICONS[b.serviceType]}</span></td>
                                 <td><div style={{ fontWeight: 600, fontSize: 12 }}>{b.citizenName}</div></td>

@@ -225,9 +225,11 @@ export function ServiceRequests() {
                         setSelected(r); if (!r.checked)
                             markAsChecked('request', r.id);
                     }} style={{ cursor: 'pointer' }}>
-                        <td style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            {!r.checked && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' }} title="Unread" />}
-                            {r.requestId}
+                        <td style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 600, fontSize: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                {!r.checked && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' }} title="Unread" />}
+                                {r.requestId}
+                            </div>
                         </td>
                         <td><span style={{ fontSize: 16 }}>{DEPT_ICONS[r.serviceType]}</span></td>
                         <td>

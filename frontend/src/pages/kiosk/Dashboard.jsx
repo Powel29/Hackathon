@@ -122,13 +122,13 @@ export function Dashboard() {
       title: t('dashboard.trackConnection'),
       route: '/kiosk/track-new-connection'
     },
-    {
+    ...(selectedService !== 'electricity' && selectedService !== 'municipal' ? [{
       id: 'track-request',
       icon: <Search className="w-8 h-8" />,
       color: '#6f42c1',
       title: t('dashboard.trackRequests') || 'Track Requests',
       route: '/kiosk/track-request'
-    },
+    }] : []),
     {
       id: 'my-documents',
       icon: <FileText className="w-8 h-8" />,
