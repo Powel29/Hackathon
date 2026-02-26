@@ -217,7 +217,6 @@
     }
 }
 
-<<<<<<< HEAD
 /* ==========================================================================
    PHASE 0 — DESIGN TOKEN SYSTEM & ACCESSIBILITY CLASSES
    Applied by AccessibilityProvider to <html> element.
@@ -356,10 +355,6 @@ body.kiosk-lockdown a[target="_blank"] {
     pointer-events: none;
     opacity: 0.4;
 }
-
-
-=======
->>>>>>> origin/nayan
 /**
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */
