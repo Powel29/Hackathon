@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import axios from 'axios';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 // ─── Initial Mock Data ────────────────────────────────────
 const INITIAL_COMPLAINTS = [];
 const INITIAL_BILLS = [];
@@ -123,6 +124,18 @@ export const useAdminStore = create()(persist((set, get) => {
             return false;
         },
         setActiveDept: (dept) => set({ activeDept: dept }),
+        searchCitizen: async (query) => {
+            try {
+                if (!query || !query.trim()) return [];
+                const resp = await axios.get(`/api/admin/citizens/search?q=${encodeURIComponent(query)}`);
+                if (resp.data && resp.data.success) {
+                    return resp.data.data || [];
+                }
+            } catch (err) {
+                console.error("Failed to search citizens", err);
+            }
+            return [];
+        },
         updateComplaintStatus: async (id, status, adminNotes, citizenMessage, by, assignedTo) => {
             set((state) => {
                 const updated = state.complaints.map(c => {

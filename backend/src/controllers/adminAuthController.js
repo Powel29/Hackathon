@@ -45,7 +45,6 @@ exports.login = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
 };
-
 /**
  * Middleware: verify admin JWT attached on Authorization header
  * Adds req.admin = { id, departmentId, department, role }
