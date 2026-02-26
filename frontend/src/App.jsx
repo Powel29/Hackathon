@@ -1,74 +1,83 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './routes';
+import { useEffect } from 'react';
+import { useKioskStore } from './store/useKioskStore';
+import { SessionWarning } from './components/kiosk/SessionWarning';
+import { kioskService } from './services/api/kiosk.service';
+import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
-import { useState } from 'react';
-import './i18n/config';
-
-import HomePage from './pages/HomePage';
-import ServiceDashboard from './pages/ServiceDashboard';
-import BillPayment from './pages/BillPayment';
-import ComplaintRegistration from './pages/ComplaintRegistration';
-// import NewConnection from './pages/NewConnection';
-// import TrackStatus from './pages/TrackStatus';
+import './i18n';
 
 function App() {
-    const [user, setUser] = useState(null);
-    const [selectedService, setSelectedService] = useState(null);
+    const { resetSession, showSessionWarning, setShowSessionWarning, language } = useKioskStore();
+    const { i18n } = useTranslation();
+
+    // Sync language with i18n on app load and whenever language changes
+    useEffect(() => {
+        if (language && i18n.language !== language) {
+            i18n.changeLanguage(language);
+        }
+    }, [language, i18n]);
+
+    useEffect(() => {
+        let inactivityTimer;
+        let warningTimer;
+
+        const resetTimers = () => {
+            clearTimeout(inactivityTimer);
+            clearTimeout(warningTimer);
+
+            // Hide any existing session warning when timers are reset
+            setShowSessionWarning(false);
+
+            // Show warning at 15 minutes (900000ms)
+            warningTimer = setTimeout(() => {
+                setShowSessionWarning(true);
+            }, 900000);
+
+            // Auto logout at 16 minutes (960000ms)
+            inactivityTimer = setTimeout(() => {
+                resetSession();
+                window.location.href = '/kiosk';
+            }, 960000);
+        };
+
+        // Reset timers on user activity
+        const events = ['mousedown', 'touchstart', 'keypress', 'scroll'];
+        events.forEach(event => {
+            window.addEventListener(event, resetTimers);
+        });
+
+        resetTimers();
+
+        return () => {
+            clearTimeout(inactivityTimer);
+            clearTimeout(warningTimer);
+            events.forEach(event => {
+                window.removeEventListener(event, resetTimers);
+            });
+        };
+    }, [resetSession, setShowSessionWarning]);
+
+    // Kiosk Background Heartbeat
+    useEffect(() => {
+        // Initial ping
+        kioskService.sendHeartbeat();
+
+        // Every 30 seconds
+        const interval = setInterval(() => {
+            kioskService.sendHeartbeat();
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
-        <BrowserRouter>
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-                <Toaster position="top-center" richColors />
-
-                <Routes>
-                    <Route
-                        path="/"
-                        element={
-                            <HomePage
-                                onSelectService={setSelectedService}
-                                onLogin={setUser}
-                            />
-                        }
-                    />
-
-                    <Route
-                        path="/dashboard"
-                        element={
-                            user ? (
-                                <ServiceDashboard
-                                    user={user}
-                                    service={selectedService}
-                                />
-                            ) : (
-                                <Navigate to="/" />
-                            )
-                        }
-                    />
-
-                    <Route
-                        path="/bill-payment"
-                        element={<BillPayment user={user} />}
-                    />
-
-                    <Route
-                        path="/complaints"
-                        element={
-                            <ComplaintRegistration utilityType={selectedService} />
-                        }
-                    />
-
-                    {/* <Route
-                        path="/new-connection"
-                        element={<NewConnection utilityType={selectedService} />}
-                    /> 
-
-                    <Route
-                        path="/track-status"
-                        element={<TrackStatus />}
-                    />
-                    */}
-                </Routes>
-            </div>
-        </BrowserRouter>
+        <>
+            <RouterProvider router={router} />
+            <Toaster richColors position="top-right" />
+            {showSessionWarning && <SessionWarning />}
+        </>
     );
 }
 
