@@ -111,9 +111,7 @@ export function AppProviderStack({ children }) {
         <RootErrorBoundary>
             <NetworkStatusProvider>
                 <AccessibilityProvider>
-                    <VoiceAssistProvider>
-                        {children}
-                    </VoiceAssistProvider>
+                    {children}
                 </AccessibilityProvider>
             </NetworkStatusProvider>
         </RootErrorBoundary>
