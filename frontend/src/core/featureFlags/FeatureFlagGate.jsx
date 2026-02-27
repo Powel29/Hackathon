@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Feature Flag Gate Component
+ * NextGen Seva Kiosk - Feature Flag Gate Component
  * Phase 0: Foundation & Architecture Alignment
  *
  * Wrap any feature with this component to safely gate it behind a flag.

@@ -30,7 +30,7 @@ api.interceptors.response.use(
             if (!currentPath.includes('/login') && !currentPath.includes('/auth')) {
                 console.warn('Session expired or invalid. Redirecting to login...');
                 tokenStrategy.securityWipe();
-                window.location.href = '/kiosk/login-register';
+                window.location.href = '/nextgen-seva/login-register';
             }
         }
         return Promise.reject(error);

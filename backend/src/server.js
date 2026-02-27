@@ -118,11 +118,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log(`🚀 SUVIDHA Backend running on port ${PORT}`);
+        console.log(`🚀 NextGen Seva Backend running on port ${PORT}`);
         console.log(`📝 Environment: ${process.env.NODE_ENV}`);
     });
 }

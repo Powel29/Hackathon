@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Offline Queue Type Definitions & Constants
+ * NextGen Seva Kiosk - Offline Queue Type Definitions & Constants
  * Phase 0: Foundation & Architecture Alignment (FR-OFF-002)
  *
  * Shared constants used by OfflineManager and SyncQueueService.

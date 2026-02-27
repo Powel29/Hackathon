@@ -226,15 +226,26 @@
 html.a11y-text-large {
     font-size: 18px;
 }
+
 html.a11y-text-large body,
 html.a11y-text-large p,
 html.a11y-text-large span,
 html.a11y-text-large label {
     font-size: 1.125rem;
 }
-html.a11y-text-large h1 { font-size: 2rem; }
-html.a11y-text-large h2 { font-size: 1.75rem; }
-html.a11y-text-large h3 { font-size: 1.5rem; }
+
+html.a11y-text-large h1 {
+    font-size: 2rem;
+}
+
+html.a11y-text-large h2 {
+    font-size: 1.75rem;
+}
+
+html.a11y-text-large h3 {
+    font-size: 1.5rem;
+}
+
 html.a11y-text-large button,
 html.a11y-text-large input,
 html.a11y-text-large select,
@@ -246,15 +257,26 @@ html.a11y-text-large textarea {
 html.a11y-text-xl {
     font-size: 20px;
 }
+
 html.a11y-text-xl body,
 html.a11y-text-xl p,
 html.a11y-text-xl span,
 html.a11y-text-xl label {
     font-size: 1.25rem;
 }
-html.a11y-text-xl h1 { font-size: 2.25rem; }
-html.a11y-text-xl h2 { font-size: 2rem; }
-html.a11y-text-xl h3 { font-size: 1.75rem; }
+
+html.a11y-text-xl h1 {
+    font-size: 2.25rem;
+}
+
+html.a11y-text-xl h2 {
+    font-size: 2rem;
+}
+
+html.a11y-text-xl h3 {
+    font-size: 1.75rem;
+}
+
 html.a11y-text-xl button,
 html.a11y-text-xl input,
 html.a11y-text-xl select,
@@ -277,9 +299,11 @@ html.a11y-high-contrast {
     --destructive: #aa0000;
     --input-background: #f8f8f8;
 }
+
 html.a11y-high-contrast * {
     border-color: #000000 !important;
 }
+
 html.a11y-high-contrast button:focus-visible,
 html.a11y-high-contrast a:focus-visible,
 html.a11y-high-contrast input:focus-visible,
@@ -293,14 +317,17 @@ html.a11y-high-contrast select:focus-visible {
 html.a11y-easy-mode .easy-mode-hide {
     display: none !important;
 }
+
 /* Easy mode shows simplified alternatives */
 html.a11y-easy-mode .easy-mode-show {
     display: block;
 }
+
 /* Limit screen to 3 choices max (enforced via component logic + this class) */
 html.a11y-easy-mode .kiosk-choice-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
 html.a11y-easy-mode .kiosk-choice-grid .kiosk-choice:nth-child(n+4) {
     display: none;
 }
@@ -329,16 +356,42 @@ textarea:focus-visible,
 
 /* ── Network State Indicators ──────────────────────────────────────────── */
 /* Used by NetworkStatusBanner (Phase 2) */
-.network-online   { --network-color: #16a34a; --network-bg: #f0fdf4; }
-.network-offline  { --network-color: #dc2626; --network-bg: #fef2f2; }
-.network-syncing  { --network-color: #2563eb; --network-bg: #eff6ff; }
-.network-retrying { --network-color: #d97706; --network-bg: #fffbeb; }
+.network-online {
+    --network-color: #16a34a;
+    --network-bg: #f0fdf4;
+}
+
+.network-offline {
+    --network-color: #dc2626;
+    --network-bg: #fef2f2;
+}
+
+.network-syncing {
+    --network-color: #2563eb;
+    --network-bg: #eff6ff;
+}
+
+.network-retrying {
+    --network-color: #d97706;
+    --network-bg: #fffbeb;
+}
 
 /* ── Sync Queue Item States ────────────────────────────────────────────── */
-.sync-queued   { color: #6b7280; }
-.sync-retrying { color: #d97706; }
-.sync-synced   { color: #16a34a; }
-.sync-failed   { color: #dc2626; }
+.sync-queued {
+    color: #6b7280;
+}
+
+.sync-retrying {
+    color: #d97706;
+}
+
+.sync-synced {
+    color: #16a34a;
+}
+
+.sync-failed {
+    color: #dc2626;
+}
 
 /* ── Double-submit Prevention (FR-UX-002) ──────────────────────────────── */
 /* Applied programmatically when a form is being submitted */
@@ -355,6 +408,7 @@ body.kiosk-lockdown a[target="_blank"] {
     pointer-events: none;
     opacity: 0.4;
 }
+
 /**
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */
@@ -2221,6 +2275,7 @@ html {
         -webkit-text-decoration: inherit;
         text-decoration: inherit;
     }
+
     b,
     strong {
         font-weight: bolder;
@@ -2513,8 +2568,6 @@ html {
         font-weight: var(--font-weight-normal);
         line-height: 1.5;
     }
-<<<<<<< HEAD
-=======
 }
 
 /* ============================================================================
@@ -2523,11 +2576,13 @@ html {
    ============================================================================ */
 
 @media (max-width: 768px) {
+
     /* VIEWPORT & SAFE AREAS
        - Ensure notched devices are handled properly
        - Prevent horizontal overflow
     */
-    html, body {
+    html,
+    body {
         overflow-x: hidden;
         width: 100vw;
         max-width: 100%;
@@ -2551,7 +2606,7 @@ html {
        - Dashboard actions: grid-cols-5 → responsive columns
        - Reduce gap for better spacing
     */
-    
+
     /* 5-column grid (Language Selection) → 2-3 columns on mobile */
     .grid.grid-cols-5 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2702,16 +2757,16 @@ html {
     }
 
     /* Header layout (logo + text) → vertical stack */
-    [class*="flex"] > [class*="w-16"],
-    [class*="flex"] > [class*="w-14"],
-    [class*="flex"] > [class*="w-12"],
-    [class*="flex"] > [class*="w-10"] {
+    [class*="flex"]>[class*="w-16"],
+    [class*="flex"]>[class*="w-14"],
+    [class*="flex"]>[class*="w-12"],
+    [class*="flex"]>[class*="w-10"] {
         /* These are kept as-is in flex context, flex handles wrapping */
     }
 
     /* Side-by-side buttons → stack vertically on mobile */
-    [class*="flex"] > [class*="gap-"] > button,
-    [class*="flex"] > [class*="gap-"] > [role="button"] {
+    [class*="flex"]>[class*="gap-"]>button,
+    [class*="flex"]>[class*="gap-"]>[role="button"] {
         /* Allows wrapping in flex containers */
     }
 
@@ -2805,6 +2860,7 @@ html {
    ============================================================================ */
 
 @media (max-width: 1024px) and (min-width: 769px) {
+
     /* Grid layout adjustments for tablet */
     .grid.grid-cols-5 {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2821,6 +2877,7 @@ html {
    ============================================================================ */
 
 @media (max-width: 768px) {
+
     /* Remove hover states on touch, keep focus visible */
     button:focus-visible,
     [role="button"]:focus-visible {
@@ -2835,7 +2892,9 @@ html {
     }
 
     /* Disable double-tap zoom on buttons */
-    button, [role="button"], a {
+    button,
+    [role="button"],
+    a {
         touch-action: manipulation;
     }
 
@@ -2894,35 +2953,35 @@ html {
     }
 
     /* LOGIN BUTTON - PRIMARY STYLE */
-    .grid.grid-cols-2.gap-6 > button:first-child {
+    .grid.grid-cols-2.gap-6>button:first-child {
         border: 2px solid #d1d5db !important;
         background-color: #ffffff !important;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
     }
 
-    .grid.grid-cols-2.gap-6 > button:first-child:hover {
+    .grid.grid-cols-2.gap-6>button:first-child:hover {
         border-color: #3B82F6 !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
     }
 
     /* Login button padding: Compact but touchable (44px min) */
-    .grid.grid-cols-2.gap-6 > button:first-child {
+    .grid.grid-cols-2.gap-6>button:first-child {
         padding: 1rem !important;
         min-height: 100px !important;
     }
 
     /* REGISTER BUTTON - SECONDARY STYLE */
-    .grid.grid-cols-2.gap-6 > button:nth-child(2) {
+    .grid.grid-cols-2.gap-6>button:nth-child(2) {
         border: 2px solid #d1d5db !important;
         background-color: #ffffff !important;
     }
 
-    .grid.grid-cols-2.gap-6 > button:nth-child(2):hover {
+    .grid.grid-cols-2.gap-6>button:nth-child(2):hover {
         border-color: #10B981 !important;
         background-color: #f0fdf4 !important;
     }
 
-    .grid.grid-cols-2.gap-6 > button:nth-child(2) {
+    .grid.grid-cols-2.gap-6>button:nth-child(2) {
         padding: 1rem !important;
         min-height: 100px !important;
     }
@@ -3112,7 +3171,7 @@ html {
        HEADER LAYOUT FIX - Compact Mobile App Bar Style
        Keep header horizontal and compact like a native mobile app
        ================================================================ */
-    
+
     /* Header container: Keep horizontal, reduce padding for compact feel */
     header.bg-white {
         padding-top: 0.5rem;
@@ -3145,7 +3204,7 @@ html {
         font-size: 1rem !important;
     }
 
-    /* SUVIDHA title: Smaller on mobile */
+    /* NextGen Seva title: Smaller on mobile */
     header h1 {
         font-size: 1.125rem !important;
         line-height: 1.5rem !important;
@@ -3230,7 +3289,7 @@ html {
         width: 100%;
     }
 
-    form > * {
+    form>* {
         width: 100%;
     }
 
@@ -3249,27 +3308,27 @@ html {
        ACTION BUTTONS REFINEMENT - Mobile Style
        Reduce visual heaviness and make buttons feel lighter
        ================================================================ */
-    
+
     /* SERVICE CARD ICON ALIGNMENT FIX
        - Ensure colored icon boxes are horizontally and vertically centered
        - Fix alignment issues on mobile
     */
-    
-    button.bg-white.rounded-xl > div:first-child {
+
+    button.bg-white.rounded-xl>div:first-child {
         margin: 0 auto;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
 
-    button.bg-white.rounded-xl > div:first-child > div {
+    button.bg-white.rounded-xl>div:first-child>div {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
-    
+
     /* Reduce button padding for less bulky appearance */
-    div.bg-gradient-to-r > .flex.items-center.justify-between > .flex.gap-3 > button {
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.gap-3>button {
         padding: 0.625rem 1.25rem !important;
         min-height: 2.625rem !important;
         font-size: 0.8125rem !important;
@@ -3322,16 +3381,16 @@ html {
     button.flex {
         gap: 0.375rem !important;
     }
-    
+
     /* Main container fix: Row layout → Column layout */
-    div.bg-gradient-to-r > .flex.items-center.justify-between {
+    div.bg-gradient-to-r>.flex.items-center.justify-between {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 1.5rem !important;
     }
 
     /* User info group: Keep in row, constrain width */
-    div.bg-gradient-to-r > .flex.items-center.justify-between > .flex.items-center.gap-4 {
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4 {
         flex-direction: row !important;
         flex-wrap: wrap;
         gap: 1rem !important;
@@ -3339,20 +3398,20 @@ html {
     }
 
     /* Icon stays fixed size */
-    div.bg-gradient-to-r > .flex.items-center.justify-between > .flex.items-center.gap-4 > [class*="w-14"],
-    div.bg-gradient-to-r > .flex.items-center.justify-between > .flex.items-center.gap-4 > [class*="w-10"] {
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4>[class*="w-14"],
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4>[class*="w-10"] {
         flex-shrink: 0;
     }
 
     /* User details text group wraps and takes available space */
-    div.bg-gradient-to-r > .flex.items-center.justify-between > .flex.items-center.gap-4 > div {
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4>div {
         flex: 1;
         min-width: 0;
         width: 100%;
     }
 
     /* Button group: Horizontal → Vertical stack */
-    div.bg-gradient-to-r > .flex.items-center.justify-between > .flex.gap-3 {
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.gap-3 {
         flex-direction: column !important;
         width: 100%;
         gap: 0.75rem !important;
@@ -3360,7 +3419,7 @@ html {
     }
 
     /* Make all buttons in the group full width and properly sized */
-    div.bg-gradient-to-r > .flex.items-center.justify-between > .flex.gap-3 > button {
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.gap-3>button {
         width: 100% !important;
         min-height: 2.75rem !important;
         padding: 0.75rem 1.5rem !important;
@@ -3381,16 +3440,16 @@ html {
        TRACK CONNECTION SEARCH FORM FIX
        Fix input + button layout on mobile
        ================================================================ */
-    
+
     /* Search form: Input + Button side-by-side desktop → stacked mobile */
-    .rounded-xl.shadow-sm.p-6 > .flex.gap-3 {
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3 {
         flex-direction: column !important;
         gap: 0.75rem !important;
         width: 100%;
     }
 
     /* Input takes full width in search form */
-    .rounded-xl.shadow-sm.p-6 > .flex.gap-3 > input[type="text"] {
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>input[type="text"] {
         width: 100% !important;
         flex: 0 0 auto !important;
         padding: 0.75rem 1rem !important;
@@ -3399,7 +3458,7 @@ html {
     }
 
     /* Button in form takes full width */
-    .rounded-xl.shadow-sm.p-6 > .flex.gap-3 > button {
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>button {
         width: 100% !important;
         min-height: 2.75rem !important;
         padding: 0.75rem 1.5rem !important;
@@ -3411,12 +3470,12 @@ html {
     }
 
     /* Search icon sizes on mobile */
-    .rounded-xl.shadow-sm.p-6 > .flex.gap-3 > button svg {
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>button svg {
         width: 1rem !important;
         height: 1rem !important;
     }
 
-    .rounded-xl.shadow-sm.p-6 > .flex.gap-3 > button svg.w-4 {
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>button svg.w-4 {
         width: 1rem !important;
         height: 1rem !important;
     }
@@ -3425,7 +3484,7 @@ html {
        TRACK NEW CONNECTION APPLICATION DETAILS LAYOUT FIX
        Fix 3-column grid layout to single column on mobile
        ================================================================ */
-    
+
     /* Main application details grid: 3 columns → 1 column */
     div.grid.grid-cols-3 {
         grid-template-columns: 1fr !important;
@@ -3433,19 +3492,19 @@ html {
     }
 
     /* Application details section: Remove col-span-2, let it take full width */
-    div.grid.grid-cols-3 > div.col-span-2 {
+    div.grid.grid-cols-3>div.col-span-2 {
         grid-column: auto !important;
         width: 100%;
     }
 
     /* Summary card: Adjust height and width for mobile */
-    div.grid.grid-cols-3 > div.bg-white.rounded-xl.shadow-sm.border.border-gray-200.p-6 {
+    div.grid.grid-cols-3>div.bg-white.rounded-xl.shadow-sm.border.border-gray-200.p-6 {
         height: auto !important;
         width: 100%;
     }
 
     /* Ensure good spacing in application details */
-    .space-y-4 > div.bg-white {
+    .space-y-4>div.bg-white {
         width: 100%;
         box-sizing: border-box;
     }
@@ -3466,7 +3525,7 @@ html {
        BILLS DROPDOWN AND FILTER STYLING
        Make bill cards responsive with dropdown and filter controls
        ================================================================ */
-    
+
     /* Bill header button styling */
     div.space-y-3 button.w-full.p-6.flex {
         flex-direction: column !important;
@@ -3475,13 +3534,13 @@ html {
     }
 
     /* Bill header details layout on mobile */
-    div.space-y-3 button.w-full.p-6.flex > div.flex.items-start.gap-3 {
+    div.space-y-3 button.w-full.p-6.flex>div.flex.items-start.gap-3 {
         width: 100%;
         flex-direction: column !important;
     }
 
     /* Bill details mobile layout */
-    div.space-y-3 button.w-full.p-6.flex > div.flex.items-center.gap-3 {
+    div.space-y-3 button.w-full.p-6.flex>div.flex.items-center.gap-3 {
         width: 100%;
         flex-direction: row !important;
         gap: 0.75rem !important;
@@ -3506,14 +3565,14 @@ html {
        BILL FILTER MODAL STYLES
        Modern modal/bottom sheet filter dialog
        ================================================================ */
-    
+
     /* Modal container positioning for mobile (bottom sheet) */
     div.fixed.inset-0.z-50.flex {
         align-items: flex-end !important;
     }
 
     /* Modal wrapper with rounded corners for bottom sheet */
-    div.fixed.inset-0.z-50.flex > div.bg-white {
+    div.fixed.inset-0.z-50.flex>div.bg-white {
         width: 100vw !important;
         border-top-left-radius: 1.5rem !important;
         border-top-right-radius: 1.5rem !important;
@@ -3532,7 +3591,7 @@ html {
     }
 
     /* Quick filter buttons stacking */
-    div.space-y-2 > button {
+    div.space-y-2>button {
         width: 100% !important;
         text-align: left !important;
         padding: 0.75rem !important;
@@ -3550,7 +3609,7 @@ html {
     }
 
     /* Modal action buttons stack properly */
-    div.sticky.bottom-0.bg-white.border-t .space-y-3 > button {
+    div.sticky.bottom-0.bg-white.border-t .space-y-3>button {
         width: 100% !important;
         min-height: 2.75rem !important;
         padding: 0.75rem 1.5rem !important;
@@ -3566,7 +3625,7 @@ html {
        GAS CYLINDER BOOKING RECEIPT - MOBILE LAYOUT
        Responsive receipt display for mobile view
        ================================================================ */
-    
+
     /* Receipt grid: 2 columns → 1 column on mobile */
     div.w-\[210mm\] .grid.grid-cols-2 {
         grid-template-columns: 1fr !important;
@@ -3580,7 +3639,7 @@ html {
     }
 
     /* Receipt address styling on mobile */
-    div.w-\[210mm\] .text-right > div {
+    div.w-\[210mm\] .text-right>div {
         text-align: left !important;
     }
 
@@ -3602,7 +3661,7 @@ html {
     }
 
     /* Each bar + label column container */
-    .flex.items-end.justify-between.gap-3.h-40 > .flex-1.flex.flex-col.items-center.gap-2 {
+    .flex.items-end.justify-between.gap-3.h-40>.flex-1.flex.flex-col.items-center.gap-2 {
         flex: 1 !important;
         display: flex !important;
         flex-direction: column !important;
@@ -3612,7 +3671,7 @@ html {
     }
 
     /* Bar styling */
-    .flex.items-end.justify-between.gap-3.h-40 > .flex-1.flex.flex-col.items-center.gap-2 > div {
+    .flex.items-end.justify-between.gap-3.h-40>.flex-1.flex.flex-col.items-center.gap-2>div {
         width: 100% !important;
         min-height: 2px !important;
     }
@@ -3668,12 +3727,11 @@ html {
        GENERIC BUTTON TEXT & LAYOUT FIXES
        Ensure button text and layouts remain readable and accessible
        ================================================================ */
-    
+
     /* Button text wrapping */
     button {
         white-space: normal !important;
         word-break: break-word !important;
         overflow-wrap: break-word !important;
     }
->>>>>>> origin/nayan
 }

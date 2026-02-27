@@ -9,9 +9,9 @@ const generateSignedUrl = async (key, fileName = null) => {
     };
 
     if (fileName) {
-        // Forces browser to download file instead of rendering it inline
+        // Allows browser to render file inline instead of forcing download
         // Must encode filename to handle spaces properly
-        params.ResponseContentDisposition = `attachment; filename="${encodeURIComponent(fileName)}"`;
+        params.ResponseContentDisposition = `inline; filename="${encodeURIComponent(fileName)}"`;
     }
 
     const command = new GetObjectCommand(params);

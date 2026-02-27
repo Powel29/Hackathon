@@ -133,37 +133,6 @@ function OCRProgress({ fileName, progress }) {
   );
 }
 
-function ToolCallBadge({ toolCall }) {
-  const [open, setOpen] = useState(false);
-  const icons = {
-    get_invoice: "🧾", check_payment_status: "🔍",
-    get_payment_methods: "💳", get_account_balance: "💰",
-    upload_invoice_proof: "📤", create_support_ticket: "🎫",
-    retry_payment: "🔄",
-  };
-  return (
-    <div onClick={() => setOpen(o => !o)} style={{
-      background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
-      borderRadius: 8, padding: "5px 10px", marginBottom: 4,
-      cursor: "pointer", fontSize: 12, color: "#7fb3e0", fontFamily: "'DM Mono', monospace",
-    }}>
-      <span style={{ marginRight: 6 }}>{icons[toolCall.tool] || "🔧"}</span>
-      {toolCall.tool}
-      <span style={{ float: "right", opacity: 0.6 }}>{open ? "▲" : "▼"}</span>
-      {open && (
-        <pre style={{
-          marginTop: 6, fontSize: 11, color: "#a0aec0",
-          whiteSpace: "pre-wrap", wordBreak: "break-all",
-          background: "rgba(0,0,0,0.2)", borderRadius: 4, padding: 6,
-        }}>
-          IN:  {JSON.stringify(toolCall.input, null, 2)}{"\n"}
-          OUT: {toolCall.output.slice(0, 300)}{toolCall.output.length > 300 ? "..." : ""}
-        </pre>
-      )}
-    </div>
-  );
-}
-
 function Message({ msg }) {
   const isUser = msg.role === "human";
   return (
@@ -187,11 +156,6 @@ function Message({ msg }) {
             color: "#b794f4", fontFamily: "'DM Mono', monospace", textAlign: "right",
           }}>
             📄 OCR: {msg.ocrFile}
-          </div>
-        )}
-        {!isUser && msg.toolCalls?.length > 0 && (
-          <div style={{ marginBottom: 4 }}>
-            {msg.toolCalls.map((tc, i) => <ToolCallBadge key={i} toolCall={tc} />)}
           </div>
         )}
         <div style={{

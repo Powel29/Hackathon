@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Network Status Provider
+ * NextGen Seva Kiosk - Network Status Provider
  * Phase 0: Foundation & Architecture Alignment (FR-OFF-001)
  *
  * React context provider that:

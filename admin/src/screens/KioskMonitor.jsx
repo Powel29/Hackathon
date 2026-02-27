@@ -18,7 +18,7 @@ export function KioskMonitor() {
         <div className="page-header">
             <div>
                 <h1 className="page-title">Kiosk Network Monitor</h1>
-                <p className="page-subtitle">Real-time status of all SUVIDHA kiosk units</p>
+                <p className="page-subtitle">Real-time status of all NextGen Seva kiosk units</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#fff', border: '1px solid var(--border)', borderRadius: 8 }}>
                 <Activity size={13} color="var(--success)" />

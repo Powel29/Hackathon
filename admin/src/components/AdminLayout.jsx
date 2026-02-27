@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAdminStore } from '../store/adminStore';
 import { LayoutDashboard, FileText, Zap, Receipt, GitBranch, Bell, LogOut, ChevronDown, Search, Users, Shield, RefreshCw, ClipboardList, Monitor, Database } from 'lucide-react';
 import { canApproveConnections, canSwitchAllDepartments, canViewAnalytics } from '../utils/permissions';
+import logo from '../assets/logo2.png';
 const DEPT_COLORS = {
     electricity: '#D97706',
     water: '#0369A1',
@@ -145,11 +146,11 @@ export function AdminLayout({ children, activeRoute, onNavigate }) {
         <aside className="admin-sidebar">
             <div className="sidebar-logo">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#0066CC,#004499)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>S</span>
+                    <div style={{ width: 60, height: 60, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img src={logo} alt="NextGen Seva Admin" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                     <div>
-                        <div className="sidebar-logo-title">SUVIDHA</div>
+                        <div className="sidebar-logo-title">NextGen Seva</div>
                         <div className="sidebar-logo-sub">Admin Portal</div>
                     </div>
                 </div>
@@ -183,7 +184,7 @@ export function AdminLayout({ children, activeRoute, onNavigate }) {
         <div className="admin-content">
             <header className="admin-topbar">
                 <div className="topbar-left">
-                    <span className="topbar-breadcrumb">SUVIDHA /</span>
+                    <span className="topbar-breadcrumb">NextGen Seva /</span>
                     <span className="topbar-title" style={{ textTransform: 'capitalize' }}>{activeRoute.replace('-', ' ')}</span>
                 </div>
                 <div className="topbar-right">

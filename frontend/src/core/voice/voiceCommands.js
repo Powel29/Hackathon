@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Voice Command Parser
+ * NextGen Seva Kiosk - Voice Command Parser
  * Phase 4: Voice Navigation (FR-VOICE-001..003)
  *
  * Multilingual intent parser that maps raw STT transcripts
@@ -72,14 +72,14 @@ const MULTILINGUAL_COMMANDS = {
  * Maps routes to available intents for smarter fallback parsing.
  */
 const ROUTE_HINTS = {
-  '/kiosk': { hints: ['home', 'help', 'change-language'], ambiguous: false },
-  '/kiosk/language-selection': { hints: ['next', 'back', 'help', 'select-number'], ambiguous: true },
-  '/kiosk/login-register': { hints: ['next', 'back', 'help', 'select-number'], ambiguous: true },
-  '/kiosk/dashboard': { hints: ['pay-bill', 'register-complaint', 'track-request', 'help', 'logout', 'select-number'], ambiguous: true },
-  '/kiosk/bills': { hints: ['next', 'back', 'submit', 'help'], ambiguous: true },
-  '/kiosk/register-complaint': { hints: ['next', 'back', 'submit', 'help'] },
-  '/kiosk/track-request': { hints: ['next', 'back', 'submit', 'help', 'select-number'] },
-  '/kiosk/new-connection': { hints: ['next', 'back', 'submit', 'help'] },
+  '/nextgen-seva': { hints: ['home', 'help', 'change-language'], ambiguous: false },
+  '/nextgen-seva/language-selection': { hints: ['next', 'back', 'help', 'select-number'], ambiguous: true },
+  '/nextgen-seva/login-register': { hints: ['next', 'back', 'help', 'select-number'], ambiguous: true },
+  '/nextgen-seva/dashboard': { hints: ['pay-bill', 'register-complaint', 'track-request', 'help', 'logout', 'select-number'], ambiguous: true },
+  '/nextgen-seva/bills': { hints: ['next', 'back', 'submit', 'help'], ambiguous: true },
+  '/nextgen-seva/register-complaint': { hints: ['next', 'back', 'submit', 'help'] },
+  '/nextgen-seva/track-request': { hints: ['next', 'back', 'submit', 'help', 'select-number'] },
+  '/nextgen-seva/new-connection': { hints: ['next', 'back', 'submit', 'help'] },
 };
 
 /**
@@ -88,7 +88,7 @@ const ROUTE_HINTS = {
 function extractNumber(text) {
   const match = text.match(/\b([0-5])\b/);
   if (match) return parseInt(match[1]);
-  
+
   const words = {
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
     'first': 0, 'second': 1, 'third': 2, 'fourth': 3, 'fifth': 4,

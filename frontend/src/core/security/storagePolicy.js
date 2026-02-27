@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Token Storage Security Policy
+ * NextGen Seva Kiosk - Token Storage Security Policy
  * Phase 0: Foundation & Architecture Alignment (FR-SEC-001)
  *
  * DECISION: sessionStorage for auth tokens (approved by user).
@@ -19,13 +19,13 @@
 
 export const STORAGE_KEYS = {
     // sessionStorage — cleared on tab close
-    AUTH_TOKEN: 'suvidha_auth_token',
-    CURRENT_USER: 'suvidha_current_user',
+    AUTH_TOKEN: 'NextGen Seva_auth_token',
+    CURRENT_USER: 'NextGen Seva_current_user',
 
     // localStorage — persists across sessions (accessibility, queue)
-    A11Y_PREFERENCES: 'suvidha_a11y_prefs',
-    SYNC_QUEUE: 'suvidha_sync_queue',
-    LANGUAGE_PREFERENCE: 'suvidha_language',
+    A11Y_PREFERENCES: 'NextGen Seva_a11y_prefs',
+    SYNC_QUEUE: 'NextGen Seva_sync_queue',
+    LANGUAGE_PREFERENCE: 'NextGen Seva_language',
 };
 
 // ─── PII Scrub List ──────────────────────────────────────────────────────────

@@ -1,7 +1,70 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAdminStore } from '../store/adminStore';
-import { Search, Download, ChevronDown, X, Clock, MessageSquare, User, FileText, Send, CheckCircle } from 'lucide-react';
+import { Search, Download, ChevronDown, X, Clock, MessageSquare, User, FileText, Send, CheckCircle, ExternalLink } from 'lucide-react';
 import { canAssignComplaints } from '../utils/permissions';
+
+function DocumentViewer({ doc, onClose }) {
+    const isPDF = doc.type === 'pdf' || (doc.name && doc.name.toLowerCase().endsWith('.pdf'));
+    const isUrl = doc.dataUrl && (doc.dataUrl.startsWith('http') || doc.dataUrl.startsWith('https'));
+
+    const displayUrl = isPDF && !isUrl
+        ? `data:application/pdf;base64,${doc.dataUrl.replace(/^data:[^;]+;base64,/, '')}`
+        : doc.dataUrl;
+
+    return (<div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+        <div className="modal modal-lg" style={{ maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header">
+                <span className="modal-title">📄 {doc.name}</span>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    {isUrl && (
+                        <>
+                            <a href={doc.dataUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>
+                                <ExternalLink size={14} /> View Full
+                            </a>
+                            <a href={doc.dataUrl} download={doc.name} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>
+                                <Download size={14} /> Download
+                            </a>
+                        </>
+                    )}
+                    <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={17} /></button>
+                </div>
+            </div>
+            <div className="doc-viewer" style={{ flex: 1, minHeight: '70vh', borderRadius: 0, display: 'flex', flexDirection: 'column' }}>
+                <div className="doc-viewer-toolbar" style={{ background: '#2D2D3F', padding: '8px 16px' }}>
+                    <span style={{ fontSize: 12, color: '#94A3B8' }}>{doc.name}</span>
+                    <span style={{ fontSize: 11, color: '#64748B', padding: '3px 8px', background: 'rgba(255,255,255,0.1)', borderRadius: 4 }}>
+                        {isPDF ? 'PDF Document' : 'Image'}
+                    </span>
+                </div>
+                <div className="doc-viewer-content" style={{ flex: 1, padding: 0, background: '#F1F5F9', overflow: 'auto' }}>
+                    {doc.dataUrl ? (
+                        isPDF ? (
+                            <iframe
+                                src={displayUrl}
+                                style={{ width: '100%', height: '70vh', border: 'none' }}
+                                title={doc.name}
+                            />
+                        ) : (
+                            <img
+                                src={doc.dataUrl}
+                                alt={doc.name}
+                                style={{ maxWidth: '100%', display: 'block', margin: '0 auto', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
+                            />
+                        )
+                    ) : (
+                        <div style={{ textAlign: 'center', color: '#64748B', padding: 40 }}>
+                            <div style={{ fontSize: 60, marginBottom: 16 }}>{isPDF ? '📄' : '🖼️'}</div>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: '#94A3B8', marginBottom: 8 }}>{doc.name}</div>
+                            <div style={{ fontSize: 13, color: '#475569' }}>
+                                No document data available.
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    </div>);
+}
 function ComplaintDetailModal({ complaint, onClose }) {
     const { adminUser, updateComplaintStatus } = useAdminStore();
     const [status, setStatus] = useState(complaint.status);
@@ -9,6 +72,7 @@ function ComplaintDetailModal({ complaint, onClose }) {
     const [citizenMsg, setCitizenMsg] = useState(complaint.citizenUpdateMessage);
     const [saved, setSaved] = useState(false);
     const [assignedTo, setAssignedTo] = useState(complaint.assignedTo || '');
+    const [viewDoc, setViewDoc] = useState(null);
     const canEditComplaint = canAssignComplaints(adminUser?.role);
     const handleSave = () => {
         updateComplaintStatus(complaint.id, status, adminNotes, citizenMsg, adminUser?.name || 'Admin', assignedTo);
@@ -99,7 +163,7 @@ function ComplaintDetailModal({ complaint, onClose }) {
                 {complaint.attachments?.length > 0 && (<div style={{ marginBottom: 20 }}>
                     <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>📎 Attachments</div>
                     <div style={{ display: 'flex', gap: 10 }}>
-                        {complaint.attachments.map((att, i) => (<div key={i} style={{ padding: '8px 14px', background: 'var(--primary-light)', borderRadius: 8, border: '1px solid #bfdbfe', fontSize: 12, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer' }}>
+                        {complaint.attachments.map((att, i) => (<div key={i} onClick={() => setViewDoc(att)} style={{ padding: '8px 14px', background: 'var(--primary-light)', borderRadius: 8, border: '1px solid #bfdbfe', fontSize: 12, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer' }}>
                             📄 {att.name}
                         </div>))}
                     </div>
@@ -166,6 +230,7 @@ function ComplaintDetailModal({ complaint, onClose }) {
                 </button>
             </div>
         </div>
+        {viewDoc && <DocumentViewer doc={viewDoc} onClose={() => setViewDoc(null)} />}
     </div>);
 }
 // ─── Main Complaints Module ─────────────────────────────────

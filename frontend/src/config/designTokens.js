@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Design Token System
+ * NextGen Seva Kiosk - Design Token System
  * Phase 0: Foundation & Architecture Alignment
  *
  * Semantic token layer. All components must reference tokens,

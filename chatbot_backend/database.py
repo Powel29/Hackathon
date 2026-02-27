@@ -236,7 +236,8 @@ def get_connection_applications(citizen_id: str) -> list:
         SELECT "id", "serviceType", status, "appliedAt"
         FROM connection_applications
         WHERE "citizenId" = %s
-        ORDER BY "appliedAt" DESC;
+        ORDER BY "appliedAt" DESC
+        LIMIT 10;
     """, (citizen_id,))
     apps = [dict(row) for row in cur.fetchall()]
     cur.close()
@@ -252,7 +253,8 @@ def get_complaints(citizen_id: str) -> list:
         SELECT "complaintNumber", "serviceType", title, status, "createdAt"
         FROM complaints
         WHERE "citizenId" = %s
-        ORDER BY "createdAt" DESC;
+        ORDER BY "createdAt" DESC
+        LIMIT 10;
     """, (citizen_id,))
     rows = [dict(row) for row in cur.fetchall()]
     cur.close()

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * SUVIDHA Kiosk - i18n Translation Coverage Enforcement
+ * NextGen Seva Kiosk - i18n Translation Coverage Enforcement
  * Phase 3: Accessibility & Inclusion (FR-A11Y-004)
  *
  * Validates that all non-English locale files contain every key
@@ -73,7 +73,7 @@ function loadLocale(locale) {
 // ─── Main ──────────────────────────────────────────────────────────────────
 
 function main() {
-    console.log('\n🌐 SUVIDHA i18n Coverage Report');
+    console.log('\n🌐 NextGen Seva i18n Coverage Report');
     console.log(`   Source locale : ${SOURCE_LOCALE}`);
     console.log(`   Required coverage : ${REQUIRED_COVERAGE}%`);
     console.log('─'.repeat(60));

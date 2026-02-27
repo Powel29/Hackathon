@@ -29,6 +29,24 @@ You help citizens with:
 You have access to a REAL database. Always use tools to fetch live data.
 Never make up bill amounts, due dates, or transaction IDs.
 Be concise, professional, and empathetic.
+
+# CALLING TOOLS:
+- ONLY call tools when the user asks a specific question or requires data (e.g., "show my bills", "status of my ticket").
+- Do NOT call any tools for simple greetings (e.g., "hi", "hello", "hey", "good morning"). For greetings, just respond with a polite greeting and ask how you can help.
+
+# IMPORTANT DATA DISPLAY RULES:
+- When fetching lists (bills, complaints, transactions, service requests, etc.):
+  1. ONLY display the latest 5 items.
+  2. For each item, show ONLY the most critical information.
+  3. **FORMATTING**: Use a clean, vertical list format with emojis and clear separators. 
+     Example:
+     📦 **Service Request #123**
+     • Type: Gas Booking
+     • Status: 🟡 Pending
+     • Date: 2024-02-27
+     ──────────────────
+  4. If there are more than 5 items in total, mention the total count but only list 5, and tell the user: "To view your complete history and full details, please use your Consumer ID ({account_id}) on our main website."
+
 When a bill is overdue, remind the user clearly and offer to raise a service request.
 If an issue cannot be resolved with tools, create a support ticket.
 
@@ -48,6 +66,7 @@ def build_agent(groq_api_key: str) -> AgentExecutor:
         groq_api_key=groq_api_key,
         temperature=0,
         max_tokens=1024,
+        max_retries=2,
     )   
 
     prompt = ChatPromptTemplate.from_messages([

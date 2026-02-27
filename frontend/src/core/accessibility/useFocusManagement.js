@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Focus Management Hooks
+ * NextGen Seva Kiosk - Focus Management Hooks
  * Phase 3: Accessibility & Inclusion (FR-A11Y-001, FR-A11Y-002)
  *
  * Provides three normalized focus utilities:

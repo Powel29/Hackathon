@@ -10,7 +10,7 @@ const prisma = require('../utils/prismaClient');
  * Helper: Hashing for OTP-like data
  */
 const hashOTP = (otp) => {
-    return crypto.createHash('sha256').update(otp + (process.env.OTP_SALT || 'suvidha_salt')).digest('hex');
+    return crypto.createHash('sha256').update(otp + (process.env.OTP_SALT || 'NextGen Seva_salt')).digest('hex');
 };
 
 /**

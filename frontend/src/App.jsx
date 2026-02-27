@@ -2,11 +2,11 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './routes';
 import { useEffect } from 'react';
 import { useKioskStore } from './store/useKioskStore';
-import { SessionWarning } from './components/kiosk/SessionWarning';
+import { SessionWarning } from './components/nextgen-seva/SessionWarning';
 import { kioskService } from './services/api/kiosk.service';
 import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
-import ChatWidget from './components/kiosk/ChatWidget';
+import ChatWidget from './components/nextgen-seva/ChatWidget';
 import './i18n';
 
 function App() {
@@ -39,7 +39,7 @@ function App() {
             // Auto logout at 16 minutes (960000ms)
             inactivityTimer = setTimeout(() => {
                 resetSession();
-                window.location.href = '/kiosk';
+                window.location.href = '/nextgen-seva';
             }, 960000);
         };
 

@@ -98,7 +98,8 @@ class ChatResponse(BaseModel):
 # Auth dependency (replace with real JWT in production)
 # ─────────────────────────────────────────────────────────────
 async def verify_token(authorization: Optional[str] = Header(None)):
-    return {"user_id": "usr_demo", "user_name": "John Doe", "account_id": "ACC-10042"}
+    # For the hackathon, we return a mock user that matches our demo data
+    return {"user_id": "usr_demo", "user_name": "John Doe", "account_id": "111122223333"}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -155,7 +156,7 @@ async def chat(
                 status_code=429, 
                 detail="The AI is currently at its free-tier capacity. Please wait about 30-60 seconds and try again."
             )
-        
+            
         logger.error(f"Agent error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 

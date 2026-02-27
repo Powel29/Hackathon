@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Offline Manager
+ * NextGen Seva Kiosk - Offline Manager
  * Phase 0: Foundation & Architecture Alignment (FR-OFF-001, FR-OFF-002, FR-OFF-004)
  *
  * Singleton manager that:
