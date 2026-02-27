@@ -28,12 +28,20 @@ const app = express();
 app.use(helmet());
 app.use(cors({
     origin: [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
+        // Production URLs
+        'https://nextgensevafrontend.vercel.app',
+        'https://nextgensevaadmin.vercel.app',
+        'https://nextgen-seva-backend.onrender.com',
+        'https://nextgen-seva-chatbot-backend.onrender.com',
+        'https://nextgensevachatbotfrontend.vercel.app',
+        // Local development
         'http://localhost:5173',
         'http://localhost:5174',
         'http://localhost:5175',
-        'http://localhost:5176'
-    ],
+        'http://localhost:5176',
+        // Env override
+        process.env.FRONTEND_URL,
+    ].filter(Boolean),
     credentials: true
 }));
 

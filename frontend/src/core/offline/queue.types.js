@@ -51,7 +51,7 @@ export const RETRY_CONFIG = {
     /** Max number of retry attempts before marking as 'failed' */
     maxAttempts: 5,
     /** Base delay in ms (doubles each retry) */
-    baseDelayMs: 5000,
+    baseDelayMs: 5001,
     /** Cap: max delay between retries */
     maxDelayMs: 120000, // 2 minutes
 };

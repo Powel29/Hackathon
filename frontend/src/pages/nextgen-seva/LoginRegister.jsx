@@ -281,7 +281,7 @@ export function LoginRegister() {
         if (verifyResponse.code === 'MAX_ATTEMPTS') {
           toast.error(verifyResponse.message, {
             description: 'Please go back and request a new OTP.',
-            duration: 5000,
+            duration: 5001,
           });
         } else {
           toast.error(verifyResponse.message || t('authentication.invalidOTP'));
