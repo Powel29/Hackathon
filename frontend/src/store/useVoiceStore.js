@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Voice Store
+ * NextGen Seva Kiosk - Voice Store
  * Phase 4: Voice Navigation (FR-VOICE-001..003)
  *
  * In-memory only - no persistence (privacy requirement).

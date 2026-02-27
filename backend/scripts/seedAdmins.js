@@ -7,7 +7,7 @@ const ADMINS = [
     {
         departmentId: 'SUPER-ADMIN-000',
         name: 'Super Admin',
-        email: 'admin@suvidha.gov.in',
+        email: 'admin@NextGen Seva.gov.in',
         password: 'admin@123',   // ← change before production
         department: 'all',
         role: 'super_admin',
@@ -16,7 +16,7 @@ const ADMINS = [
     {
         departmentId: 'ELEC-ADMIN-001',
         name: 'Electricity Admin',
-        email: 'elec@suvidha.gov.in',
+        email: 'elec@NextGen Seva.gov.in',
         password: 'admin@123',
         department: 'electricity',
         role: 'dept_admin',
@@ -25,7 +25,7 @@ const ADMINS = [
     {
         departmentId: 'WATER-ADMIN-002',
         name: 'Water Admin',
-        email: 'water@suvidha.gov.in',
+        email: 'water@NextGen Seva.gov.in',
         password: 'admin@123',
         department: 'water',
         role: 'dept_admin',
@@ -34,7 +34,7 @@ const ADMINS = [
     {
         departmentId: 'GAS-ADMIN-003',
         name: 'Gas Admin',
-        email: 'gas@suvidha.gov.in',
+        email: 'gas@NextGen Seva.gov.in',
         password: 'admin@123',
         department: 'gas',
         role: 'dept_admin',
@@ -43,7 +43,7 @@ const ADMINS = [
     {
         departmentId: 'MUNI-ADMIN-004',
         name: 'Municipal Admin',
-        email: 'muni@suvidha.gov.in',
+        email: 'muni@NextGen Seva.gov.in',
         password: 'admin@123',
         department: 'municipal',
         role: 'dept_admin',

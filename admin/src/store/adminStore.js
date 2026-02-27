@@ -19,7 +19,7 @@ const INITIAL_KIOSKS = [];
 export const useAdminStore = create()(persist((set, get) => {
     // Restore JWT from localStorage on page load / hot-reload
     if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('suvidha_admin_token');
+        const token = localStorage.getItem('nextgen_seva_admin_token');
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
@@ -28,14 +28,14 @@ export const useAdminStore = create()(persist((set, get) => {
     // Listen for storage events across tabs (native Zustand persist doesn't auto-sync other tabs without this)
     if (typeof window !== 'undefined') {
         window.addEventListener('storage', (e) => {
-            if (e.key === 'suvidha_admin_state' && e.newValue) {
+            if (e.key === 'NextGen Seva_admin_state' && e.newValue) {
                 try {
                     const state = JSON.parse(e.newValue).state;
                     set(state);
                 }
                 catch (err) { }
             }
-            else if (e.key === 'suvidha_connections' && e.newValue) {
+            else if (e.key === 'NextGen Seva_connections' && e.newValue) {
                 try {
                     set({ connections: JSON.parse(e.newValue) });
                 }
@@ -98,7 +98,7 @@ export const useAdminStore = create()(persist((set, get) => {
         },
 
         logoutAdmin: () => {
-            localStorage.removeItem('suvidha_admin_token');
+            localStorage.removeItem('nextgen_seva_admin_token');
             delete axios.defaults.headers.common['Authorization'];
             set({ adminUser: null, isLoggedIn: false });
         },
@@ -110,7 +110,7 @@ export const useAdminStore = create()(persist((set, get) => {
                     const { user, token } = resp.data;
                     // Attach JWT to all future axios requests
                     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                    localStorage.setItem('suvidha_admin_token', token);
+                    localStorage.setItem('nextgen_seva_admin_token', token);
                     set({ adminUser: user, isLoggedIn: true, activeDept: user.department });
                     await get().fetchAllData();
                     return true;
@@ -150,7 +150,7 @@ export const useAdminStore = create()(persist((set, get) => {
                     };
                     return { ...c, status, adminNotes, citizenUpdateMessage: citizenMessage, assignedTo, updatedAt: new Date().toISOString(), statusHistory: [...c.statusHistory, newHistory] };
                 });
-                localStorage.setItem('suvidha_complaints', JSON.stringify(updated));
+                localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
             try { await axios.put(`/api/admin/complaints/${id}`, { status, adminNotes, citizenMessage, by, assignedTo }); } catch (e) { console.error(e); }
@@ -173,7 +173,7 @@ export const useAdminStore = create()(persist((set, get) => {
                         statusHistory: [...c.statusHistory, newHistory],
                     };
                 });
-                localStorage.setItem('suvidha_complaints', JSON.stringify(updated));
+                localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
         },
@@ -195,7 +195,7 @@ export const useAdminStore = create()(persist((set, get) => {
                         statusHistory: [...c.statusHistory, newHistory],
                     };
                 });
-                localStorage.setItem('suvidha_complaints', JSON.stringify(updated));
+                localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
         },
@@ -209,7 +209,7 @@ export const useAdminStore = create()(persist((set, get) => {
                 const updated = state.bills.map(b => b.id !== id ? b : {
                     ...b, alertSent: true, alertMessage: message, alertSentAt: new Date().toISOString()
                 });
-                localStorage.setItem('suvidha_bills_alerts', JSON.stringify(updated.filter(b => b.alertSent)));
+                localStorage.setItem('NextGen Seva_bills_alerts', JSON.stringify(updated.filter(b => b.alertSent)));
                 return { bills: updated };
             });
         },
@@ -252,7 +252,7 @@ export const useAdminStore = create()(persist((set, get) => {
                     };
                     return { ...c, status, adminNotes: notes, rejectionReason, statusHistory: [...c.statusHistory, newHistory] };
                 });
-                localStorage.setItem('suvidha_connections', JSON.stringify(updated));
+                localStorage.setItem('NextGen Seva_connections', JSON.stringify(updated));
                 return { connections: updated };
             });
             try { await axios.put(`/api/admin/connections/${id}`, { status, notes, rejectionReason }); } catch (e) { console.error(e); }
@@ -342,22 +342,22 @@ export const useAdminStore = create()(persist((set, get) => {
                 let newState = {};
                 if (type === 'complaint') {
                     const updated = state.complaints.map(c => c.id === id ? { ...c, checked: true } : c);
-                    localStorage.setItem('suvidha_complaints', JSON.stringify(updated));
+                    localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                     newState = { complaints: updated };
                 }
                 else if (type === 'bill') {
                     const updated = state.bills.map(b => b.id === id ? { ...b, checked: true } : b);
-                    localStorage.setItem('suvidha_bills', JSON.stringify(updated));
+                    localStorage.setItem('NextGen Seva_bills', JSON.stringify(updated));
                     newState = { bills: updated };
                 }
                 else if (type === 'connection') {
                     const updated = state.connections.map(c => c.id === id ? { ...c, checked: true } : c);
-                    localStorage.setItem('suvidha_connections', JSON.stringify(updated));
+                    localStorage.setItem('NextGen Seva_connections', JSON.stringify(updated));
                     newState = { connections: updated };
                 }
                 else if (type === 'request') {
                     const updated = state.requests.map(r => r.id === id ? { ...r, checked: true } : r);
-                    localStorage.setItem('suvidha_requests', JSON.stringify(updated));
+                    localStorage.setItem('NextGen Seva_requests', JSON.stringify(updated));
                     newState = { requests: updated };
                 }
                 return newState;
@@ -371,16 +371,16 @@ export const useAdminStore = create()(persist((set, get) => {
                 const bills = state.bills.map(b => match(b) ? { ...b, checked: true } : b);
                 const connections = state.connections.map(c => match(c) ? { ...c, checked: true } : c);
                 const requests = state.requests.map(r => match(r) ? { ...r, checked: true } : r);
-                localStorage.setItem('suvidha_complaints', JSON.stringify(complaints));
-                localStorage.setItem('suvidha_bills', JSON.stringify(bills));
-                localStorage.setItem('suvidha_connections', JSON.stringify(connections));
-                localStorage.setItem('suvidha_requests', JSON.stringify(requests));
+                localStorage.setItem('NextGen Seva_complaints', JSON.stringify(complaints));
+                localStorage.setItem('NextGen Seva_bills', JSON.stringify(bills));
+                localStorage.setItem('NextGen Seva_connections', JSON.stringify(connections));
+                localStorage.setItem('NextGen Seva_requests', JSON.stringify(requests));
                 return { complaints, bills, connections, requests };
             });
         },
     };
 }, {
-    name: 'suvidha_admin_state',
+    name: 'nextgen_seva_admin_state',
     storage: createJSONStorage(() => localStorage),
     version: 1,
     migrate: (persistedState) => {

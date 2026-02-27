@@ -8,7 +8,7 @@ export function DeviceState() {
 
     const refreshQueue = () => {
         try {
-            const raw = localStorage.getItem('suvidha_sync_queue');
+            const raw = localStorage.getItem('NextGen Seva_sync_queue');
             setSyncQueue(raw ? JSON.parse(raw) : []);
         } catch (e) {
             setSyncQueue([]);
@@ -25,7 +25,7 @@ export function DeviceState() {
 
         // Listen to storage events from other tabs (if same origin)
         const handleStorage = (e) => {
-            if (e.key === 'suvidha_sync_queue') {
+            if (e.key === 'NextGen Seva_sync_queue') {
                 refreshQueue();
             }
         };
@@ -39,7 +39,7 @@ export function DeviceState() {
     }, []);
 
     const clearQueue = () => {
-        localStorage.setItem('suvidha_sync_queue', JSON.stringify([]));
+        localStorage.setItem('NextGen Seva_sync_queue', JSON.stringify([]));
         refreshQueue();
     };
 
@@ -73,7 +73,7 @@ export function DeviceState() {
                 lastError: 'Network Timeout'
             }
         ];
-        localStorage.setItem('suvidha_sync_queue', JSON.stringify(demoQueue));
+        localStorage.setItem('NextGen Seva_sync_queue', JSON.stringify(demoQueue));
         refreshQueue();
     };
 

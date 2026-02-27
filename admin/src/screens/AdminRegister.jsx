@@ -43,7 +43,7 @@ export function AdminRegister({ onBack }) {
                         <Shield size={30} color="#fff"/>
                     </div>
                     <h1 style={{ fontSize: 42, fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: 12 }}>
-                        Join the<br />SUVIDHA Team
+                        Join the<br />NextGen Seva Team
                     </h1>
                     <p style={{ fontSize: 16, color: '#94A3B8', lineHeight: 1.7, maxWidth: 420 }}>
                         Create your administrator account to start managing citizen services and department operations.

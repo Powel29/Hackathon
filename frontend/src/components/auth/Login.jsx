@@ -24,7 +24,8 @@ const Login = ({ utilityType, onLoginSuccess }) => {
                 toast.success(`OTP sent! Demo OTP: ${response._demoOTP}`);
             } else {
                 toast.success('OTP sent successfully!');
-            }        } catch (error) {
+            }
+        } catch (error) {
             console.error(error);
             toast.error(error.message || 'Failed to send OTP');
         } finally {
@@ -40,8 +41,7 @@ const Login = ({ utilityType, onLoginSuccess }) => {
             const verifyResponse = await authService.verifyOTP(formData.consumerId, otp);
 
             if (verifyResponse.success) {
-                localStorage.setItem('token', verifyResponse.token);
-                localStorage.setItem('user', JSON.stringify(verifyResponse.user));
+                // Storage handled by authService
                 toast.success('Login successful!');
                 onLoginSuccess(verifyResponse.user);
             }

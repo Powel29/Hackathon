@@ -19,32 +19,61 @@ exports.getComplaints = async (req, res) => {
             }
         });
 
-        const formatted = complaints.map(c => ({
-            id: c.complaintId,
-            complaintId: c.complaintNumber || c.complaintId.split('-')[0], // Fallback if number is missing
-            citizenName: getCitizenName(c.citizen),
-            citizenMobile: getCitizenMobile(c.citizen),
-            consumerId: c.citizenId, // using citizenId as consumerId for simplicity if mapping doesn't exist
-            serviceType: c.serviceType.toLowerCase(),
-            complaintType: c.complaintType,
-            description: c.description,
-            priority: c.priority.toLowerCase(),
-            status: c.status.toLowerCase().replace(/\s+/g, '_'),
-            location: c.location || '',
-            assignedTo: c.assignedTo || '',
-            adminNotes: '', // Admin notes are now history-only or we'd need a separate field on Complaint
-            citizenUpdateMessage: c.resolutionNote || '',
-            attachments: [],
-            createdAt: c.createdAt,
-            updatedAt: c.updatedAt,
-            slaDeadline: new Date(new Date(c.createdAt).getTime() + 48 * 60 * 60 * 1000).toISOString(), // Mock SLA
-            statusHistory: c.statusHistory.map(h => ({
-                status: h.newStatus,
-                timestamp: h.changedAt,
-                note: h.notes || '', // Internal
-                citizenMessage: h.citizenMessage || '', // Public
-                by: h.changedBy || 'Admin'
-            }))
+        // Fetch attachments for all complaints
+        const complaintIds = complaints.map(c => c.complaintId);
+        const documents = await prisma.document.findMany({
+            where: {
+                relatedEntity: 'COMPLAINT',
+                relatedId: { in: complaintIds }
+            }
+        });
+
+        const formatted = await Promise.all(complaints.map(async c => {
+            const attachments = await Promise.all(documents
+                .filter(doc => doc.relatedId === c.complaintId)
+                .map(async doc => {
+                    const isPdf = doc.mimeType === 'application/pdf' || (doc.fileName && doc.fileName.toLowerCase().endsWith('.pdf'));
+                    let signedUrl = null;
+                    try {
+                        signedUrl = await generateSignedUrl(doc.filePath, doc.fileName);
+                    } catch (err) {
+                        console.error(`Failed to generate signed URL for document ${doc.documentId}:`, err.message);
+                    }
+                    return {
+                        id: doc.documentId,
+                        name: doc.fileName || doc.documentType.replace(/_/g, ' '),
+                        type: isPdf ? 'pdf' : 'image',
+                        dataUrl: signedUrl
+                    };
+                }));
+
+            return {
+                id: c.complaintId,
+                complaintId: c.complaintNumber || c.complaintId.split('-')[0],
+                citizenName: getCitizenName(c.citizen),
+                citizenMobile: getCitizenMobile(c.citizen),
+                consumerId: c.citizenId,
+                serviceType: c.serviceType.toLowerCase(),
+                complaintType: c.complaintType,
+                description: c.description,
+                priority: c.priority.toLowerCase(),
+                status: c.status.toLowerCase().replace(/\s+/g, '_'),
+                location: c.location || '',
+                assignedTo: c.assignedTo || '',
+                adminNotes: '',
+                citizenUpdateMessage: c.resolutionNote || '',
+                attachments: attachments,
+                createdAt: c.createdAt,
+                updatedAt: c.updatedAt,
+                slaDeadline: new Date(new Date(c.createdAt).getTime() + 48 * 60 * 60 * 1000).toISOString(),
+                statusHistory: c.statusHistory.map(h => ({
+                    status: h.newStatus,
+                    timestamp: h.changedAt,
+                    note: h.notes || '',
+                    citizenMessage: h.citizenMessage || '',
+                    by: h.changedBy || 'Admin'
+                }))
+            };
         }));
 
         res.json({ success: true, data: formatted });

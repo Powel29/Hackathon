@@ -1,10 +1,31 @@
-# Keep environment variables out of version control
+# Environment variables
 node_modules
 .env
 .env.*
-.DS_Store
-frontend/.env
-backend/.env
-admin/.env
+**/ .env
+**/ .env.local
 
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+_pycache_/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+chatbot_backend/venv/
+chatbot_backend/__pycache__/
+
+# IDEs
+.idea/
+.vscode/
+
+# Build and Prisma
+dist/
+build/
 /generated/prisma
+node_modules/

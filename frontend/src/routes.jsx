@@ -1,89 +1,91 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { LanguageSelection } from "./pages/kiosk/LanguageSelection";
-import { LoginRegister } from "./pages/kiosk/LoginRegister";
-import { ServiceSelection } from "./pages/kiosk/ServiceSelection";
-import { DepartmentVerification } from "./pages/kiosk/DepartmentVerification";
-import { AadhaarLogin } from "./pages/kiosk/AadhaarLogin";
-import { OTPVerification } from "./pages/kiosk/OTPVerification";
-import { Dashboard } from "./pages/kiosk/Dashboard";
-import { ViewBills } from "./pages/kiosk/ViewBills";
-import { PayBill } from "./pages/kiosk/PayBill";
-import { Receipt } from "./pages/kiosk/Receipt";
-import { ProtectedRoute } from "./components/kiosk/ProtectedRoute";
-import { RegisterComplaint } from "./pages/kiosk/RegisterComplaint";
-import { TrackComplaint } from "./pages/kiosk/TrackComplaint";
-import { NewConnection } from "./pages/kiosk/NewConnection";
-import { TrackNewConnection } from "./pages/kiosk/TrackNewConnection";
-import { WaterTankerBooking } from "./pages/kiosk/WaterTankerBooking";
-import { GasCylinderBooking } from "./pages/kiosk/GasCylinderBooking";
-import { TrackRequest } from "./pages/kiosk/TrackRequest";
-import { AdminDashboard } from "./pages/kiosk/AdminDashboard";
-import { PropertyTaxPayment } from "./pages/kiosk/PropertyTaxPayment";
-import { MyDocuments } from "./pages/kiosk/MyDocuments";
+import { LanguageSelection } from "./pages/nextgen-seva/LanguageSelection";
+import { LoginRegister } from "./pages/nextgen-seva/LoginRegister";
+import { ServiceSelection } from "./pages/nextgen-seva/ServiceSelection";
+import { DepartmentVerification } from "./pages/nextgen-seva/DepartmentVerification";
+import { AadhaarLogin } from "./pages/nextgen-seva/AadhaarLogin";
+import { OTPVerification } from "./pages/nextgen-seva/OTPVerification";
+import { Dashboard } from "./pages/nextgen-seva/Dashboard";
+import { ViewBills } from "./pages/nextgen-seva/ViewBills";
+import { PayBill } from "./pages/nextgen-seva/PayBill";
+import { Receipt } from "./pages/nextgen-seva/Receipt";
+import { ProtectedRoute } from "./components/nextgen-seva/ProtectedRoute";
+import { RegisterComplaint } from "./pages/nextgen-seva/RegisterComplaint";
+import { TrackComplaint } from "./pages/nextgen-seva/TrackComplaint";
+import { NewConnection } from "./pages/nextgen-seva/NewConnection";
+import { TrackNewConnection } from "./pages/nextgen-seva/TrackNewConnection";
+import { WaterTankerBooking } from "./pages/nextgen-seva/WaterTankerBooking";
+import { GasCylinderBooking } from "./pages/nextgen-seva/GasCylinderBooking";
+import { TrackRequest } from "./pages/nextgen-seva/TrackRequest";
+import { AdminDashboard } from "./pages/nextgen-seva/AdminDashboard";
+import { PropertyTaxPayment } from "./pages/nextgen-seva/PropertyTaxPayment";
+import { MyDocuments } from "./pages/nextgen-seva/MyDocuments";
+import { MunicipalServiceRequests } from "./pages/nextgen-seva/MunicipalServiceRequests";
+import { TrackServiceRequest } from "./pages/nextgen-seva/TrackServiceRequest";
 
 export const router = createBrowserRouter([
     {
         path: "/",
-        element: <Navigate to="/kiosk" replace />,
+        element: <Navigate to="/nextgen-seva" replace />,
     },
     {
-        path: "/kiosk",
+        path: "/nextgen-seva",
         Component: LanguageSelection,
     },
     {
-        path: "/kiosk/login-register",
+        path: "/nextgen-seva/login-register",
         Component: LoginRegister,
     },
     {
-        path: "/kiosk/service-selection",
+        path: "/nextgen-seva/service-selection",
         Component: ServiceSelection,
     },
     {
-        path: "/kiosk/department-verification",
+        path: "/nextgen-seva/department-verification",
         Component: DepartmentVerification,
     },
     {
-        path: "/kiosk/login",
+        path: "/nextgen-seva/login",
         Component: AadhaarLogin,
     },
     {
-        path: "/kiosk/otp-verification",
+        path: "/nextgen-seva/otp-verification",
         Component: OTPVerification,
     },
     {
-        path: "/kiosk/dashboard",
+        path: "/nextgen-seva/dashboard",
         element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
     },
     {
-        path: "/kiosk/bills",
+        path: "/nextgen-seva/bills",
         element: <ProtectedRoute><ViewBills /></ProtectedRoute>,
     },
     {
-        path: "/kiosk/pay-bill/:billId",
+        path: "/nextgen-seva/pay-bill/:billId",
         element: <ProtectedRoute><PayBill /></ProtectedRoute>,
     },
     {
-        path: "/kiosk/receipt/:transactionId",
+        path: "/nextgen-seva/receipt/:transactionId",
         element: <ProtectedRoute><Receipt /></ProtectedRoute>,
     },
     {
-        path: "/kiosk/register-complaint",
+        path: "/nextgen-seva/register-complaint",
         Component: RegisterComplaint,
     },
     {
-        path: "/kiosk/track-complaint",
+        path: "/nextgen-seva/track-complaint",
         Component: TrackComplaint,
     },
     {
-        path: "/kiosk/new-connection",
+        path: "/nextgen-seva/new-connection",
         Component: NewConnection,
     },
     {
-        path: "/kiosk/track-new-connection",
+        path: "/nextgen-seva/track-new-connection",
         Component: TrackNewConnection,
     },
     {
-        path: "/kiosk/water-tanker-booking",
+        path: "/nextgen-seva/water-tanker-booking",
         element: (
             <ProtectedRoute>
                 <WaterTankerBooking />
@@ -91,7 +93,7 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "/kiosk/gas-cylinder-booking",
+        path: "/nextgen-seva/gas-cylinder-booking",
         element: (
             <ProtectedRoute>
                 <GasCylinderBooking />
@@ -99,7 +101,7 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "/kiosk/track-request",
+        path: "/nextgen-seva/track-request",
         element: (
             <ProtectedRoute>
                 <TrackRequest />
@@ -107,7 +109,7 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "/kiosk/pay-property-tax",
+        path: "/nextgen-seva/pay-property-tax",
         element: (
             <ProtectedRoute>
                 <PropertyTaxPayment />
@@ -115,7 +117,7 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "/kiosk/pay-property-tax/:billId",
+        path: "/nextgen-seva/pay-property-tax/:billId",
         element: (
             <ProtectedRoute>
                 <PropertyTaxPayment />
@@ -123,14 +125,30 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "/kiosk/admin",
+        path: "/nextgen-seva/admin",
         Component: AdminDashboard,
     },
     {
-        path: "/kiosk/my-documents",
+        path: "/nextgen-seva/my-documents",
         element: (
             <ProtectedRoute>
                 <MyDocuments />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/nextgen-seva/municipal-service-requests",
+        element: (
+            <ProtectedRoute>
+                <MunicipalServiceRequests />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/nextgen-seva/track-service-request",
+        element: (
+            <ProtectedRoute>
+                <TrackServiceRequest />
             </ProtectedRoute>
         ),
     },

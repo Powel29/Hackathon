@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAdminStore } from '../store/adminStore';
 import { Shield, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import logo from '../assets/logo2.png';
 
 const DEPT_OPTIONS = [
     { id: 'SUPER-ADMIN-000', label: 'Super Admin', sub: 'All Departments', icon: '🏛️', color: '#7C3AED', bg: '#F3E8FF' },
@@ -57,14 +58,13 @@ export function AdminLogin({ onRegister }) {
             <div className="login-left">
                 <div style={{ marginBottom: 32 }}>
                     <div style={{
-                        width: 60, height: 60, borderRadius: 14,
-                        background: 'linear-gradient(135deg,#0066CC,#004499)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24
+                        width: 120, height: 120, borderRadius: 16,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, overflow: 'hidden'
                     }}>
-                        <Shield size={30} color="#fff" />
+                        <img src={logo} alt="NextGen Seva Admin" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                     <h1 style={{ fontSize: 42, fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: 12 }}>
-                        SUVIDHA<br />Admin Portal
+                        NextGen Seva<br />Admin Portal
                     </h1>
                     <p style={{ fontSize: 16, color: '#94A3B8', lineHeight: 1.7, maxWidth: 420 }}>
                         Unified command center for municipal and utility administrators. Manage citizen services across all departments from a single interface.

@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Voice Engine
+ * NextGen Seva Kiosk - Voice Engine
  * Phase 4: Voice Navigation (FR-VOICE-001..003)
  *
  * Invisible component that wires Web Speech API (TTS + STT)
@@ -18,22 +18,22 @@ const MIN_CONFIDENCE = 0.7;
 const RECOGNITION_TIMEOUT = 12000; // 12 seconds
 
 function getRouteGuidance(pathname, t) {
-  if (pathname === '/kiosk' || pathname === '/kiosk/language-selection') {
+  if (pathname === '/nextgen-seva' || pathname === '/nextgen-seva/language-selection') {
     return t('voice.guidance.languageSelection');
   }
-  if (pathname === '/kiosk/login-register') {
+  if (pathname === '/nextgen-seva/login-register') {
     return t('voice.guidance.loginRegister');
   }
-  if (pathname === '/kiosk/dashboard') {
+  if (pathname === '/nextgen-seva/dashboard') {
     return t('voice.guidance.dashboard');
   }
-  if (pathname.startsWith('/kiosk/pay-bill') || pathname === '/kiosk/bills') {
+  if (pathname.startsWith('/nextgen-seva/pay-bill') || pathname === '/nextgen-seva/bills') {
     return t('voice.guidance.bills');
   }
-  if (pathname === '/kiosk/register-complaint') {
+  if (pathname === '/nextgen-seva/register-complaint') {
     return t('voice.guidance.complaint');
   }
-  if (pathname === '/kiosk/new-connection') {
+  if (pathname === '/nextgen-seva/new-connection') {
     return t('voice.guidance.connection');
   }
   return t('voice.guidance.generic');

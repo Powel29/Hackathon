@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Centralized Environment Configuration
+ * NextGen Seva Kiosk - Centralized Environment Configuration
  * Phase 0: Foundation & Architecture Alignment
  *
  * ALL environment variable access must go through this module.

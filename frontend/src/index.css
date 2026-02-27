@@ -226,15 +226,26 @@
 html.a11y-text-large {
     font-size: 18px;
 }
+
 html.a11y-text-large body,
 html.a11y-text-large p,
 html.a11y-text-large span,
 html.a11y-text-large label {
     font-size: 1.125rem;
 }
-html.a11y-text-large h1 { font-size: 2rem; }
-html.a11y-text-large h2 { font-size: 1.75rem; }
-html.a11y-text-large h3 { font-size: 1.5rem; }
+
+html.a11y-text-large h1 {
+    font-size: 2rem;
+}
+
+html.a11y-text-large h2 {
+    font-size: 1.75rem;
+}
+
+html.a11y-text-large h3 {
+    font-size: 1.5rem;
+}
+
 html.a11y-text-large button,
 html.a11y-text-large input,
 html.a11y-text-large select,
@@ -246,15 +257,26 @@ html.a11y-text-large textarea {
 html.a11y-text-xl {
     font-size: 20px;
 }
+
 html.a11y-text-xl body,
 html.a11y-text-xl p,
 html.a11y-text-xl span,
 html.a11y-text-xl label {
     font-size: 1.25rem;
 }
-html.a11y-text-xl h1 { font-size: 2.25rem; }
-html.a11y-text-xl h2 { font-size: 2rem; }
-html.a11y-text-xl h3 { font-size: 1.75rem; }
+
+html.a11y-text-xl h1 {
+    font-size: 2.25rem;
+}
+
+html.a11y-text-xl h2 {
+    font-size: 2rem;
+}
+
+html.a11y-text-xl h3 {
+    font-size: 1.75rem;
+}
+
 html.a11y-text-xl button,
 html.a11y-text-xl input,
 html.a11y-text-xl select,
@@ -277,9 +299,11 @@ html.a11y-high-contrast {
     --destructive: #aa0000;
     --input-background: #f8f8f8;
 }
+
 html.a11y-high-contrast * {
     border-color: #000000 !important;
 }
+
 html.a11y-high-contrast button:focus-visible,
 html.a11y-high-contrast a:focus-visible,
 html.a11y-high-contrast input:focus-visible,
@@ -293,14 +317,17 @@ html.a11y-high-contrast select:focus-visible {
 html.a11y-easy-mode .easy-mode-hide {
     display: none !important;
 }
+
 /* Easy mode shows simplified alternatives */
 html.a11y-easy-mode .easy-mode-show {
     display: block;
 }
+
 /* Limit screen to 3 choices max (enforced via component logic + this class) */
 html.a11y-easy-mode .kiosk-choice-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
 html.a11y-easy-mode .kiosk-choice-grid .kiosk-choice:nth-child(n+4) {
     display: none;
 }
@@ -329,16 +356,42 @@ textarea:focus-visible,
 
 /* ── Network State Indicators ──────────────────────────────────────────── */
 /* Used by NetworkStatusBanner (Phase 2) */
-.network-online   { --network-color: #16a34a; --network-bg: #f0fdf4; }
-.network-offline  { --network-color: #dc2626; --network-bg: #fef2f2; }
-.network-syncing  { --network-color: #2563eb; --network-bg: #eff6ff; }
-.network-retrying { --network-color: #d97706; --network-bg: #fffbeb; }
+.network-online {
+    --network-color: #16a34a;
+    --network-bg: #f0fdf4;
+}
+
+.network-offline {
+    --network-color: #dc2626;
+    --network-bg: #fef2f2;
+}
+
+.network-syncing {
+    --network-color: #2563eb;
+    --network-bg: #eff6ff;
+}
+
+.network-retrying {
+    --network-color: #d97706;
+    --network-bg: #fffbeb;
+}
 
 /* ── Sync Queue Item States ────────────────────────────────────────────── */
-.sync-queued   { color: #6b7280; }
-.sync-retrying { color: #d97706; }
-.sync-synced   { color: #16a34a; }
-.sync-failed   { color: #dc2626; }
+.sync-queued {
+    color: #6b7280;
+}
+
+.sync-retrying {
+    color: #d97706;
+}
+
+.sync-synced {
+    color: #16a34a;
+}
+
+.sync-failed {
+    color: #dc2626;
+}
 
 /* ── Double-submit Prevention (FR-UX-002) ──────────────────────────────── */
 /* Applied programmatically when a form is being submitted */
@@ -355,7 +408,6 @@ body.kiosk-lockdown a[target="_blank"] {
     pointer-events: none;
     opacity: 0.4;
 }
-
 
 /**
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
@@ -2223,6 +2275,7 @@ html {
         -webkit-text-decoration: inherit;
         text-decoration: inherit;
     }
+
     b,
     strong {
         font-weight: bolder;
@@ -2514,5 +2567,1171 @@ html {
         font-size: var(--text-base);
         font-weight: var(--font-weight-normal);
         line-height: 1.5;
+    }
+}
+
+/* ============================================================================
+   MOBILE VIEWPORT FIXES (≤768px)
+   These rules preserve desktop rendering while fixing mobile layout issues
+   ============================================================================ */
+
+@media (max-width: 768px) {
+
+    /* VIEWPORT & SAFE AREAS
+       - Ensure notched devices are handled properly
+       - Prevent horizontal overflow
+    */
+    html,
+    body {
+        overflow-x: hidden;
+        width: 100vw;
+        max-width: 100%;
+    }
+
+    body {
+        padding: env(safe-area-inset-left) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+    }
+
+    /* CONTAINER MAX-WIDTH
+       - Override max-w-7xl, max-w-4xl, etc. to not exceed viewport
+       - Keeps 100% fluid width on mobile
+    */
+    [class*="max-w-"] {
+        max-width: 100% !important;
+    }
+
+    /* GRID LAYOUTS
+       - Language Selection: grid-cols-5 → responsive 2-3 columns
+       - Service Selection: grid-cols-2 → single column
+       - Dashboard actions: grid-cols-5 → responsive columns
+       - Reduce gap for better spacing
+    */
+
+    /* 5-column grid (Language Selection) → 2-3 columns on mobile */
+    .grid.grid-cols-5 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    /* 2-column grid (Service Selection, etc.) → 1 column on mobile */
+    .grid.grid-cols-2 {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    /* 4-column grid (Dashboard quick services) → 1 column on mobile */
+    .grid.grid-cols-4 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    /* ICON SIZING
+       - Scale down SVG icons for mobile readability
+       - Maintain visibility for senior citizens
+    */
+    svg[class*="w-8"],
+    svg[class*="h-8"] {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+
+    svg[class*="w-10"],
+    svg[class*="h-10"] {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    /* PADDING & SPACING REDUCTION
+       - p-8 (2rem) → 1.5rem on cards/containers
+       - p-6 (1.5rem) → 1rem on smaller elements
+       - Preserve vertical hierarchy, improve touch targets
+    */
+    [class*="p-8"] {
+        padding: 1.5rem;
+    }
+
+    [class*="px-8"],
+    [class*="pl-8"],
+    [class*="pr-8"] {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    [class*="py-8"],
+    [class*="pt-8"],
+    [class*="pb-8"] {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+
+    [class*="p-6"] {
+        padding: 1rem;
+    }
+
+    [class*="px-6"],
+    [class*="pl-6"],
+    [class*="pr-6"] {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    [class*="gap-6"] {
+        gap: 1rem;
+    }
+
+    [class*="gap-8"] {
+        gap: 1.25rem;
+    }
+
+    [class*="mb-8"] {
+        margin-bottom: 1.5rem;
+    }
+
+    [class*="my-6"] {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* FONT SIZES
+       - Reduce headings slightly but maintain readability
+       - Maintain text-base for body text (readability for seniors)
+       - Small text remains readable
+    */
+    [class*="text-3xl"] {
+        font-size: 1.75rem;
+        line-height: 2rem;
+    }
+
+    [class*="text-2xl"] {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+
+    [class*="text-xl"] {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+
+    /* BUTTON & TOUCH TARGET SIZING
+       - Ensure minimum 44px tap targets (accessibility standard)
+       - Large buttons: 64px → 48px (still > 44px)
+       - Medium buttons: 56px → 48px
+       - Small buttons: 44px (minimum)
+    */
+    [class*="min-h-[64px]"] {
+        min-height: 3rem;
+        padding: 1rem 1.5rem;
+    }
+
+    [class*="min-h-[56px]"] {
+        min-height: 2.75rem;
+        padding: 0.875rem 1.25rem;
+    }
+
+    [class*="min-h-[44px]"] {
+        min-height: 2.75rem;
+    }
+
+    /* BUTTON TEXT & SIZING
+       - text-xl → text-base for buttons
+       - text-lg → text-base
+       - Ensure readable touch button text
+    */
+    button[class*="text-xl"],
+    [role="button"][class*="text-xl"] {
+        font-size: 0.875rem;
+    }
+
+    button[class*="text-lg"] {
+        font-size: 0.875rem;
+    }
+
+    /* FLEX DIRECTION CHANGES
+       - Convert flex row layouts to column on mobile
+       - Header: flex-row → flex-col for logo & text
+       - Buttons side-by-side → stacked
+    */
+    [class*="flex-row"],
+    .flex {
+        /*  Don't force direction, but specific layouts below */
+    }
+
+    /* Header layout (logo + text) → vertical stack */
+    [class*="flex"]>[class*="w-16"],
+    [class*="flex"]>[class*="w-14"],
+    [class*="flex"]>[class*="w-12"],
+    [class*="flex"]>[class*="w-10"] {
+        /* These are kept as-is in flex context, flex handles wrapping */
+    }
+
+    /* Side-by-side buttons → stack vertically on mobile */
+    [class*="flex"]>[class*="gap-"]>button,
+    [class*="flex"]>[class*="gap-"]>[role="button"] {
+        /* Allows wrapping in flex containers */
+    }
+
+    /* WIDTH CONSTRAINTS
+       - Fluid widths instead of fixed widths
+       - Respect viewport width completely
+    */
+    .w-full {
+        width: 100%;
+    }
+
+    [class*="w-16"],
+    [class*="w-14"],
+    [class*="w-12"],
+    [class*="w-10"] {
+        /* Icons: maintain size for touch targets */
+    }
+
+    /* INPUT FIELDS
+       - Ensure proper sizing for mobile touch
+       - Increase padding for easier interaction
+    */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select {
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+        min-height: 2.75rem;
+    }
+
+    /* OTP INPUT FIELDS
+       - Larger tap targets for numeric input
+    */
+    [id^="otp-"] {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.5rem;
+    }
+
+    /* BORDER RADIUS
+       - Slightly reduce border radius for better visual hierarchy
+    */
+    [class*="rounded-2xl"] {
+        border-radius: 0.75rem;
+    }
+
+    [class*="rounded-xl"] {
+        border-radius: 0.625rem;
+    }
+
+    /* SHADOW REDUCTION
+       - Keep shadows but reduce for mobile readability
+    */
+    [class*="shadow-xl"] {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    [class*="shadow-lg"] {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* MARGINS
+       - mx-4 → consistent mobile margins
+    */
+    [class*="mx-4"] {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+
+    /* LANDSCAPE MODE ADJUSTMENTS (very small heights)
+       - Reduce padding further for landscape on small devices
+    */
+    @media (max-height: 500px) {
+        [class*="py-8"] {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        [class*="p-8"] {
+            padding: 1rem;
+        }
+    }
+}
+
+/* ============================================================================
+   TABLET ADJUSTMENTS (768px < width ≤ 1024px)
+   Intermediate sizing for better usability on mid-range devices
+   ============================================================================ */
+
+@media (max-width: 1024px) and (min-width: 769px) {
+
+    /* Grid layout adjustments for tablet */
+    .grid.grid-cols-5 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.grid-cols-4 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* ============================================================================
+   FOCUS & ACCESSIBILITY - Mobile Touch States
+   Ensure visible focus indicators for touch devices
+   ============================================================================ */
+
+@media (max-width: 768px) {
+
+    /* Remove hover states on touch, keep focus visible */
+    button:focus-visible,
+    [role="button"]:focus-visible {
+        outline: 2px solid #0066CC;
+        outline-offset: 2px;
+    }
+
+    /* Ensure text selection is readable */
+    ::selection {
+        background-color: #0066CC;
+        color: white;
+    }
+
+    /* Disable double-tap zoom on buttons */
+    button,
+    [role="button"],
+    a {
+        touch-action: manipulation;
+    }
+
+    /* ================================================================
+       LOGIN/REGISTER CHOICE PAGE - MOBILE OPTIMIZATION
+       Compact, clear hierarchy: Login primary, Register secondary
+       ================================================================ */
+
+    /* Page container: Reduce min-height for less vertical stretch */
+    .min-h-\[calc\(100vh-200px\)\].flex.items-center.justify-center {
+        min-height: auto !important;
+        padding: 1rem 0 !important;
+    }
+
+    /* Main card container: Compact width and padding */
+    .w-full.max-w-2xl {
+        max-width: 100% !important;
+        padding: 0 1rem !important;
+    }
+
+    /* Card: Tighter padding and shadow */
+    .bg-white.rounded-xl.shadow-sm.border.border-gray-200.p-8 {
+        padding: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* Header section: Reduce bottom margin */
+    .bg-white.rounded-xl.shadow-sm.border.border-gray-200.p-8 .text-center.mb-8 {
+        margin-bottom: 1rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    /* Title: Prominent but not oversized */
+    .bg-white.rounded-xl.shadow-sm.border.border-gray-200.p-8 h2.text-3xl.font-bold {
+        font-size: 1.75rem !important;
+        line-height: 2.125rem !important;
+        letter-spacing: -0.25px;
+        margin-bottom: 0.375rem !important;
+        font-weight: 700;
+    }
+
+    /* Subtitle: Smaller and lighter */
+    .bg-white.rounded-xl.shadow-sm.border.border-gray-200.p-8 .text-center p.text-gray-600 {
+        font-size: 0.8125rem !important;
+        line-height: 1.25rem !important;
+        color: #6b7280 !important;
+        font-weight: 400;
+    }
+
+    /* Login/Register button grid: Stack vertically with minimal gap */
+    .grid.grid-cols-2.gap-6 {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* LOGIN BUTTON - PRIMARY STYLE */
+    .grid.grid-cols-2.gap-6>button:first-child {
+        border: 2px solid #d1d5db !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .grid.grid-cols-2.gap-6>button:first-child:hover {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Login button padding: Compact but touchable (44px min) */
+    .grid.grid-cols-2.gap-6>button:first-child {
+        padding: 1rem !important;
+        min-height: 100px !important;
+    }
+
+    /* REGISTER BUTTON - SECONDARY STYLE */
+    .grid.grid-cols-2.gap-6>button:nth-child(2) {
+        border: 2px solid #d1d5db !important;
+        background-color: #ffffff !important;
+    }
+
+    .grid.grid-cols-2.gap-6>button:nth-child(2):hover {
+        border-color: #10B981 !important;
+        background-color: #f0fdf4 !important;
+    }
+
+    .grid.grid-cols-2.gap-6>button:nth-child(2) {
+        padding: 1rem !important;
+        min-height: 100px !important;
+    }
+
+    /* Button inner content: Flex column with tight spacing */
+    .grid.grid-cols-2.gap-6 button .flex.flex-col.items-center.gap-4 {
+        gap: 0.75rem !important;
+    }
+
+    /* Icon circles: Smaller on mobile (3rem instead of 4rem) */
+    .grid.grid-cols-2.gap-6 .w-16.h-16 {
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+        flex-shrink: 0;
+    }
+
+    /* Icon SVG inside circles */
+    .grid.grid-cols-2.gap-6 .w-8.h-8 {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+    }
+
+    /* Button text container */
+    .grid.grid-cols-2.gap-6 .text-center {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* Button heading text */
+    .grid.grid-cols-2.gap-6 h3.text-xl.font-bold {
+        font-size: 1rem !important;
+        line-height: 1.25rem !important;
+        margin-bottom: 0.25rem !important;
+        font-weight: 700;
+        color: #1f2937 !important;
+    }
+
+    /* Button description text: Smaller, tighter */
+    .grid.grid-cols-2.gap-6 p.text-sm.text-gray-600 {
+        font-size: 0.75rem !important;
+        line-height: 1rem !important;
+        margin: 0 !important;
+        color: #6b7280 !important;
+    }
+
+    /* Bottom info section: Much less prominent, compact */
+    .mt-8.bg-blue-50.border.border-blue-200.rounded-lg.p-4 {
+        margin-top: 0.75rem !important;
+        padding: 0.75rem !important;
+        background-color: #f3f4f6 !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0.5rem !important;
+    }
+
+    /* Bottom info text: Very small, secondary */
+    .mt-8.bg-blue-50.border.border-blue-200.rounded-lg.p-4 p {
+        font-size: 0.7rem !important;
+        line-height: 1rem !important;
+        color: #6b7280 !important;
+        text-align: center;
+        font-weight: 400;
+    }
+
+    /* Back button styling: Smaller on mobile */
+    .flex.items-center.gap-2.text-gray-600.hover\:text-gray-900.mb-6.text-sm {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    /* ================================================================
+       STATE & CITY DROPDOWN - MOBILE OPTIMIZATION
+       Larger dropdowns for senior citizens with improved visibility
+       ================================================================ */
+
+    /* Dropdown containers: Stack vertically on mobile */
+    .grid.grid-cols-2.gap-4 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* Dropdown labels: Larger and clearer for readability */
+    label.block.text-sm.font-medium.text-gray-700 {
+        font-size: 0.95rem !important;
+        line-height: 1.5rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Select dropdowns: Larger touch targets and better readability */
+    select.w-full.border.rounded-lg.px-4.py-3 {
+        font-size: 1rem !important;
+        line-height: 1.5rem !important;
+        padding: 0.875rem 1rem !important;
+        min-height: 48px !important;
+        background-color: #ffffff !important;
+        border-radius: 0.5rem !important;
+        border: 2px solid #d1d5db !important;
+    }
+
+    /* Select focus state: Better visibility */
+    select.w-full.border.rounded-lg.px-4.py-3:focus {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        outline: none !important;
+    }
+
+    /* Disabled state: More visible */
+    select.w-full.border.rounded-lg.px-4.py-3:disabled {
+        background-color: #f3f4f6 !important;
+        color: #9ca3af !important;
+        cursor: not-allowed !important;
+        opacity: 0.6 !important;
+    }
+
+    /* Select option styling: Larger dropdown menu items */
+    select.w-full.border.rounded-lg.px-4.py-3 option {
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+        line-height: 1.5rem !important;
+    }
+
+    /* Error text styling */
+    p.text-xs.text-red-600 {
+        font-size: 0.8rem !important;
+        margin-top: 0.375rem !important;
+    }
+
+    /* Input fields paired with dropdowns: Match sizing */
+    input.w-full.border.rounded-lg.px-4.py-3 {
+        font-size: 1rem !important;
+        padding: 0.875rem 1rem !important;
+        min-height: 48px !important;
+        border: 2px solid #d1d5db !important;
+    }
+
+    /* Input focus state: Match dropdown */
+    input.w-full.border.rounded-lg.px-4.py-3:focus {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        outline: none !important;
+    }
+
+    /* ================================================================
+       WARD INFORMATION CARD - MOBILE OPTIMIZATION
+       Small icon, left-aligned title for mobile view
+       ================================================================ */
+
+    /* Ward card header: Left-align content */
+    .bg-gradient-to-r.from-green-50.to-emerald-50.border.border-green-200 .flex.items-center.gap-3.mb-4 {
+        justify-content: flex-start !important;
+        text-align: left;
+    }
+
+    /* Icon container: Keep small and compact */
+    .bg-gradient-to-r.from-green-50.to-emerald-50.border.border-green-200 .w-10.h-10.bg-green-500 {
+        width: 2.25rem !important;
+        height: 2.25rem !important;
+        flex-shrink: 0;
+    }
+
+    /* Icon SVG: Keep small */
+    .bg-gradient-to-r.from-green-50.to-emerald-50.border.border-green-200 .w-5.h-5.text-white {
+        width: 1.125rem !important;
+        height: 1.125rem !important;
+    }
+
+    /* Title: Left-aligned, bold */
+    .bg-gradient-to-r.from-green-50.to-emerald-50.border.border-green-200 h3.font-bold.text-gray-900 {
+        text-align: left !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    /* Subtitle: Left-aligned */
+    .bg-gradient-to-r.from-green-50.to-emerald-50.border.border-green-200 p.text-xs.text-gray-600 {
+        text-align: left !important;
+    }
+
+    /* Ward details grid: Stack on mobile */
+    .bg-gradient-to-r.from-green-50.to-emerald-50.border.border-green-200 .grid.grid-cols-3.gap-4 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* ================================================================
+       HEADER LAYOUT FIX - Compact Mobile App Bar Style
+       Keep header horizontal and compact like a native mobile app
+       ================================================================ */
+
+    /* Header container: Keep horizontal, reduce padding for compact feel */
+    header.bg-white {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    /* Header inner container: Stay horizontal, reduce gap */
+    header .max-w-7xl {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    /* Logo + Title group: Compact spacing */
+    header .flex.items-center.gap-3 {
+        gap: 0.5rem !important;
+        flex-shrink: 0;
+    }
+
+    /* Logo icon size */
+    header .w-10.h-10 {
+        width: 2.25rem !important;
+        height: 2.25rem !important;
+        flex-shrink: 0;
+    }
+
+    header .w-10.h-10 span {
+        font-size: 1rem !important;
+    }
+
+    /* NextGen Seva title: Smaller on mobile */
+    header h1 {
+        font-size: 1.125rem !important;
+        line-height: 1.5rem !important;
+        font-weight: 700;
+    }
+
+    /* Hide subtitle paragraph on mobile */
+    header p.text-xs {
+        display: none !important;
+    }
+
+    /* Language selector group: Compact */
+    header .flex.items-center.gap-2 {
+        gap: 0.25rem !important;
+        flex-shrink: 0;
+        margin-left: auto !important;
+    }
+
+    /* Language icon */
+    header .flex.items-center.gap-2 svg {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+        display: none;
+    }
+
+    /* Language dropdown: Mobile compact size */
+    header select {
+        width: auto !important;
+        padding: 0.375rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        border-radius: 0.375rem !important;
+        min-width: 5rem;
+        background-size: 1.5em 1.5em, 1em 1em;
+    }
+
+    /* Override old vertical stacking rules */
+    header [class*="flex"] {
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+    }
+
+    header [class*="justify-between"] {
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-direction: row !important;
+    }
+
+    /* FOOTER TEXT SIZING
+       - Text remains readable but reduced for mobile
+    */
+    footer p {
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+
+    /* MAIN CONTENT PADDING
+       - Ensure proper breathing room but not excessive
+    */
+    main[class*="px-"] {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    main[class*="py-"] {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    /* CARD CONTAINERS
+       - Ensure cards don't overflow viewport
+       - Reduce shadow for clarity on small screens
+    */
+    [class*="rounded-2xl"] {
+        width: 100%;
+    }
+
+    /* FORM CONTAINERS
+       - Full width forms with proper padding
+    */
+    form,
+    [role="form"] {
+        width: 100%;
+    }
+
+    form>* {
+        width: 100%;
+    }
+
+    /* ALERT & INFO BOXES
+       - Ensure alerts don't overflow
+    */
+    [class*="bg-blue-50"],
+    [class*="bg-red-50"],
+    [class*="bg-green-50"],
+    [class*="bg-yellow-50"] {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* ================================================================
+       ACTION BUTTONS REFINEMENT - Mobile Style
+       Reduce visual heaviness and make buttons feel lighter
+       ================================================================ */
+
+    /* SERVICE CARD ICON ALIGNMENT FIX
+       - Ensure colored icon boxes are horizontally and vertically centered
+       - Fix alignment issues on mobile
+    */
+
+    button.bg-white.rounded-xl>div:first-child {
+        margin: 0 auto;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    button.bg-white.rounded-xl>div:first-child>div {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Reduce button padding for less bulky appearance */
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.gap-3>button {
+        padding: 0.625rem 1.25rem !important;
+        min-height: 2.625rem !important;
+        font-size: 0.8125rem !important;
+        font-weight: 500 !important;
+        border-radius: 0.5rem !important;
+        transition: all 0.2s ease !important;
+    }
+
+    /* Apply softer, pill-like border radius */
+    button[class*="rounded-"] {
+        border-radius: 0.5rem !important;
+    }
+
+    /* Secondary buttons: lighter visual weight on dashboard */
+    button[class*="secondary"] {
+        border: 1px solid #e5e7eb !important;
+        background-color: #f9fafb !important;
+        box-shadow: none !important;
+    }
+
+    button[class*="secondary"]:hover {
+        background-color: #f3f4f6 !important;
+        border-color: #d1d5db !important;
+    }
+
+    /* Primary buttons: maintain prominence but reduce padding */
+    button[class*="primary"] {
+        box-shadow: none !important;
+    }
+
+    /* Remove shadow from all buttons on mobile */
+    button[class*="shadow-"] {
+        box-shadow: none !important;
+    }
+
+    /* Button text sizing on mobile */
+    button span {
+        font-size: 0.8125rem;
+        line-height: 1.375rem;
+    }
+
+    /* Button icons scaled appropriately */
+    button svg {
+        width: 1rem !important;
+        height: 1rem !important;
+        flex-shrink: 0;
+    }
+
+    /* Ensure consistent gap in button flex layout */
+    button.flex {
+        gap: 0.375rem !important;
+    }
+
+    /* Main container fix: Row layout → Column layout */
+    div.bg-gradient-to-r>.flex.items-center.justify-between {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1.5rem !important;
+    }
+
+    /* User info group: Keep in row, constrain width */
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4 {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 1rem !important;
+        width: 100%;
+    }
+
+    /* Icon stays fixed size */
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4>[class*="w-14"],
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4>[class*="w-10"] {
+        flex-shrink: 0;
+    }
+
+    /* User details text group wraps and takes available space */
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.items-center.gap-4>div {
+        flex: 1;
+        min-width: 0;
+        width: 100%;
+    }
+
+    /* Button group: Horizontal → Vertical stack */
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.gap-3 {
+        flex-direction: column !important;
+        width: 100%;
+        gap: 0.75rem !important;
+        align-items: stretch !important;
+    }
+
+    /* Make all buttons in the group full width and properly sized */
+    div.bg-gradient-to-r>.flex.items-center.justify-between>.flex.gap-3>button {
+        width: 100% !important;
+        min-height: 2.75rem !important;
+        padding: 0.75rem 1.5rem !important;
+        font-size: 0.875rem !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    /* Consumer ID badge responsive sizing */
+    div.bg-gradient-to-r .bg-white.bg-opacity-70 {
+        padding: 0.5rem 0.75rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* ================================================================
+       TRACK CONNECTION SEARCH FORM FIX
+       Fix input + button layout on mobile
+       ================================================================ */
+
+    /* Search form: Input + Button side-by-side desktop → stacked mobile */
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3 {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        width: 100%;
+    }
+
+    /* Input takes full width in search form */
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>input[type="text"] {
+        width: 100% !important;
+        flex: 0 0 auto !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        min-height: 2.75rem !important;
+    }
+
+    /* Button in form takes full width */
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>button {
+        width: 100% !important;
+        min-height: 2.75rem !important;
+        padding: 0.75rem 1.5rem !important;
+        font-size: 0.875rem !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Search icon sizes on mobile */
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>button svg {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
+
+    .rounded-xl.shadow-sm.p-6>.flex.gap-3>button svg.w-4 {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
+
+    /* ================================================================
+       TRACK NEW CONNECTION APPLICATION DETAILS LAYOUT FIX
+       Fix 3-column grid layout to single column on mobile
+       ================================================================ */
+
+    /* Main application details grid: 3 columns → 1 column */
+    div.grid.grid-cols-3 {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+
+    /* Application details section: Remove col-span-2, let it take full width */
+    div.grid.grid-cols-3>div.col-span-2 {
+        grid-column: auto !important;
+        width: 100%;
+    }
+
+    /* Summary card: Adjust height and width for mobile */
+    div.grid.grid-cols-3>div.bg-white.rounded-xl.shadow-sm.border.border-gray-200.p-6 {
+        height: auto !important;
+        width: 100%;
+    }
+
+    /* Ensure good spacing in application details */
+    .space-y-4>div.bg-white {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Recent Applications grid: Ensure responsive on mobile */
+    div.grid.gap-4.md\:grid-cols-2 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* Application card styling on mobile */
+    div.bg-white.p-4.rounded-xl.border.border-gray-200.shadow-sm {
+        width: 100%;
+        padding: 1rem !important;
+    }
+
+    /* ================================================================
+       BILLS DROPDOWN AND FILTER STYLING
+       Make bill cards responsive with dropdown and filter controls
+       ================================================================ */
+
+    /* Bill header button styling */
+    div.space-y-3 button.w-full.p-6.flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    /* Bill header details layout on mobile */
+    div.space-y-3 button.w-full.p-6.flex>div.flex.items-start.gap-3 {
+        width: 100%;
+        flex-direction: column !important;
+    }
+
+    /* Bill details mobile layout */
+    div.space-y-3 button.w-full.p-6.flex>div.flex.items-center.gap-3 {
+        width: 100%;
+        flex-direction: row !important;
+        gap: 0.75rem !important;
+        flex-wrap: wrap;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    /* Status badge and chevron alignment */
+    div.space-y-3 .flex.items-center.gap-3.flex-shrink-0 {
+        width: 100%;
+        margin-top: 0.5rem !important;
+    }
+
+    /* Bill details grid on mobile */
+    div.border-t.border-gray-200.bg-gray-50.p-6 .grid.grid-cols-1 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* ================================================================
+       BILL FILTER MODAL STYLES
+       Modern modal/bottom sheet filter dialog
+       ================================================================ */
+
+    /* Modal container positioning for mobile (bottom sheet) */
+    div.fixed.inset-0.z-50.flex {
+        align-items: flex-end !important;
+    }
+
+    /* Modal wrapper with rounded corners for bottom sheet */
+    div.fixed.inset-0.z-50.flex>div.bg-white {
+        width: 100vw !important;
+        border-top-left-radius: 1.5rem !important;
+        border-top-right-radius: 1.5rem !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        max-height: 80vh !important;
+        margin: 0 !important;
+        border-radius: 1.5rem 1.5rem 0 0 !important;
+    }
+
+    /* Modal header styling for mobile */
+    div.sticky.top-0.bg-white.border-b {
+        background-color: white !important;
+        padding: 1rem !important;
+        border-radius: 1.5rem 1.5rem 0 0 !important;
+    }
+
+    /* Quick filter buttons stacking */
+    div.space-y-2>button {
+        width: 100% !important;
+        text-align: left !important;
+        padding: 0.75rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    /* Custom date input fields full width */
+    div.mt-4.space-y-3 input[type="date"] {
+        width: 100% !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 1rem !important;
+        min-height: 2.75rem !important;
+    }
+
+    /* Modal action buttons stack properly */
+    div.sticky.bottom-0.bg-white.border-t .space-y-3>button {
+        width: 100% !important;
+        min-height: 2.75rem !important;
+        padding: 0.75rem 1.5rem !important;
+    }
+
+    /* Modal content padding adjustment */
+    div.p-6.space-y-6 {
+        padding: 1.5rem !important;
+        gap: 1.5rem !important;
+    }
+
+    /* ================================================================
+       GAS CYLINDER BOOKING RECEIPT - MOBILE LAYOUT
+       Responsive receipt display for mobile view
+       ================================================================ */
+
+    /* Receipt grid: 2 columns → 1 column on mobile */
+    div.w-\[210mm\] .grid.grid-cols-2 {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* Receipt address section: Right align → Left align on mobile */
+    div.w-\[210mm\] .text-right {
+        text-align: left !important;
+    }
+
+    /* Receipt address styling on mobile */
+    div.w-\[210mm\] .text-right>div {
+        text-align: left !important;
+    }
+
+    /* ================================================================
+       MONTHLY USAGE TREND CARD - MOBILE OPTIMIZATION
+       Compact card layout for small screens with proper x-axis labels
+       ================================================================ */
+
+    /* Chart container: Flex row with full width bars and bottom labels */
+    .flex.items-end.justify-between.gap-3.h-40 {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-end !important;
+        justify-content: space-between !important;
+        gap: 2px !important;
+        height: 120px !important;
+        margin-top: 1rem !important;
+        width: 100% !important;
+    }
+
+    /* Each bar + label column container */
+    .flex.items-end.justify-between.gap-3.h-40>.flex-1.flex.flex-col.items-center.gap-2 {
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 4px !important;
+        justify-content: flex-end !important;
+    }
+
+    /* Bar styling */
+    .flex.items-end.justify-between.gap-3.h-40>.flex-1.flex.flex-col.items-center.gap-2>div {
+        width: 100% !important;
+        min-height: 2px !important;
+    }
+
+    /* Month labels: Properly aligned at bottom (x-axis style) */
+    .flex.items-end.justify-between.gap-3.h-40 span.text-\[10px\].text-gray-500 {
+        font-size: 0.75rem !important;
+        line-height: 1rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        width: 100% !important;
+        margin-top: 0.25rem !important;
+        flex-shrink: 0 !important;
+        order: 2 !important;
+    }
+
+    /* Header: Stack vertically instead of horizontal spread */
+    .flex.items-center.justify-between.mb-6:has(h3) {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Status indicator: Convert to compact badge */
+    .text-right:has(p.text-sm.font-black.text-green-600) {
+        text-align: left !important;
+        padding: 0.5rem 0.75rem !important;
+        background-color: #f0fdf4 !important;
+        border: 1px solid #bbf7d0 !important;
+        border-radius: 9999px !important;
+        width: fit-content !important;
+        margin-top: 0.25rem !important;
+    }
+
+    /* "Current Status" label: Hide on mobile */
+    .text-right p.text-xs.text-gray-500.font-bold {
+        display: none !important;
+    }
+
+    /* Status value: Compact badge style */
+    .text-right p.text-sm.font-black.text-green-600 {
+        font-size: 0.8rem !important;
+        line-height: 1rem !important;
+        font-weight: 600 !important;
+        text-transform: capitalize !important;
+        letter-spacing: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* ================================================================
+       GENERIC BUTTON TEXT & LAYOUT FIXES
+       Ensure button text and layouts remain readable and accessible
+       ================================================================ */
+
+    /* Button text wrapping */
+    button {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }
 }

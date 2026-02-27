@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - App Provider Stack
+ * NextGen Seva Kiosk - App Provider Stack
  * Phase 0: Foundation & Architecture Alignment
  *
  * Composes all providers in the correct dependency order.
@@ -42,7 +42,7 @@ class RootErrorBoundary extends Component {
 
     handleReset() {
         this.setState({ hasError: false, error: null });
-        window.location.href = '/kiosk';
+        window.location.href = '/nextgen-seva';
     }
 
     render() {

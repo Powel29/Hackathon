@@ -1,40 +1,65 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAdminStore } from '../store/adminStore';
-import { Search, X, FileText, ExternalLink, ChevronDown } from 'lucide-react';
+import { Search, X, FileText, ExternalLink, ChevronDown, Download } from 'lucide-react';
 import { canApproveConnections } from '../utils/permissions';
 function DocumentViewer({ doc, onClose }) {
-    const isPDF = doc.type === 'pdf' || doc.name.toLowerCase().endsWith('.pdf');
-    // If we have a real dataUrl, use it; otherwise show a placeholder
-    const hasData = doc.dataUrl && doc.dataUrl.length > 100;
-    const blobUrl = hasData
-        ? (isPDF
-            ? `data:application/pdf;base64,${doc.dataUrl.replace(/^data:[^;]+;base64,/, '')}`
-            : doc.dataUrl)
-        : null;
+    const isPDF = doc.type === 'pdf' || (doc.name && doc.name.toLowerCase().endsWith('.pdf'));
+    const isUrl = doc.dataUrl && (doc.dataUrl.startsWith('http') || doc.dataUrl.startsWith('https'));
+
+    // Construct the URL to display
+    const displayUrl = isPDF && !isUrl
+        ? `data:application/pdf;base64,${doc.dataUrl.replace(/^data:[^;]+;base64,/, '')}`
+        : doc.dataUrl;
+
     return (<div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-        <div className="modal modal-lg" style={{ maxHeight: '90vh' }}>
+        <div className="modal modal-lg" style={{ maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
                 <span className="modal-title">📄 {doc.name}</span>
-                <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={17} /></button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    {isUrl && (
+                        <>
+                            <a href={doc.dataUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>
+                                <ExternalLink size={14} /> View Full
+                            </a>
+                            <a href={doc.dataUrl} download={doc.name} className="btn btn-outline btn-sm" style={{ textDecoration: 'none' }}>
+                                <Download size={14} /> Download
+                            </a>
+                        </>
+                    )}
+                    <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={17} /></button>
+                </div>
             </div>
-            <div className="doc-viewer" style={{ minHeight: 500, borderRadius: 0 }}>
-                <div className="doc-viewer-toolbar">
+            <div className="doc-viewer" style={{ flex: 1, minHeight: '70vh', borderRadius: 0, display: 'flex', flexDirection: 'column' }}>
+                <div className="doc-viewer-toolbar" style={{ background: '#2D2D3F', padding: '8px 16px' }}>
                     <span style={{ fontSize: 12, color: '#94A3B8' }}>{doc.name}</span>
                     <span style={{ fontSize: 11, color: '#64748B', padding: '3px 8px', background: 'rgba(255,255,255,0.1)', borderRadius: 4 }}>
                         {isPDF ? 'PDF Document' : 'Image'}
                     </span>
                 </div>
-                <div className="doc-viewer-content" style={{ flex: 1, padding: 0 }}>
-                    {hasData ? (isPDF ? (<iframe src={blobUrl} style={{ width: '100%', height: 500, border: 'none' }} title={doc.name} />) : (<img src={doc.dataUrl} alt={doc.name} style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 8 }} />)) : (<div style={{ textAlign: 'center', color: '#64748B' }}>
-                        <div style={{ fontSize: 60, marginBottom: 16 }}>{isPDF ? '📄' : '🖼️'}</div>
-                        <div style={{ fontSize: 15, fontWeight: 600, color: '#94A3B8', marginBottom: 8 }}>{doc.name}</div>
-                        <div style={{ fontSize: 13, color: '#475569' }}>
-                            {isPDF ? 'PDF document' : 'Image file'} — uploaded by citizen
+                <div className="doc-viewer-content" style={{ flex: 1, padding: 0, background: '#F1F5F9', overflow: 'auto' }}>
+                    {doc.dataUrl ? (
+                        isPDF ? (
+                            <iframe
+                                src={displayUrl}
+                                style={{ width: '100%', height: '70vh', border: 'none' }}
+                                title={doc.name}
+                            />
+                        ) : (
+                            <img
+                                src={doc.dataUrl}
+                                alt={doc.name}
+                                style={{ maxWidth: '100%', display: 'block', margin: '0 auto', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
+                            />
+                        )
+                    ) : (
+                        <div style={{ textAlign: 'center', color: '#64748B', padding: 40 }}>
+                            <div style={{ fontSize: 60, marginBottom: 16 }}>{isPDF ? '📄' : '🖼️'}</div>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: '#94A3B8', marginBottom: 8 }}>{doc.name}</div>
+                            <div style={{ fontSize: 13, color: '#475569' }}>
+                                No document data available.
+                            </div>
                         </div>
-                        <div style={{ marginTop: 16, padding: '10px 20px', background: 'rgba(0,102,204,0.15)', borderRadius: 8, fontSize: 12, color: '#90CAF9', maxWidth: 360, margin: '16px auto 0' }}>
-                            ℹ️ In production, uploaded documents are stored securely and displayed here without requiring local download.
-                        </div>
-                    </div>)}
+                    )}
                 </div>
             </div>
         </div>

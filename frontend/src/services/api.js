@@ -30,7 +30,7 @@ api.interceptors.response.use(
             if (!currentPath.includes('/login') && !currentPath.includes('/auth')) {
                 console.warn('Session expired or invalid. Redirecting to login...');
                 tokenStrategy.securityWipe();
-                window.location.href = '/kiosk/login-register';
+                window.location.href = '/nextgen-seva/login-register';
             }
         }
         return Promise.reject(error);
@@ -139,7 +139,7 @@ export const billService = {
 
 // Payment Service (Mock)
 export const paymentService = {
-     createOrder: async ({ amount, billId, billType }) => {
+    createOrder: async ({ amount, billId, billType }) => {
         const response = await api.post('/payment/create-order', {
             amount,
             billId,
@@ -147,7 +147,7 @@ export const paymentService = {
         });
         return response.data;
     },
-   verifyPayment: async (paymentData) => {
+    verifyPayment: async (paymentData) => {
         const response = await api.post('/payment/verify-payment', paymentData);
         return response.data;
     }
@@ -366,6 +366,22 @@ export const departmentService = {
             console.error('❌ API getAlerts error:', error);
             throw error;
         }
+    }
+};
+
+// Service Request Service
+export const serviceRequestService = {
+    create: async (data) => {
+        const response = await api.post('/service-requests', data);
+        return response.data;
+    },
+    getById: async (id) => {
+        const response = await api.get(`/service-requests/${id}`);
+        return response.data;
+    },
+    getAll: async () => {
+        const response = await api.get('/service-requests');
+        return response.data;
     }
 };
 

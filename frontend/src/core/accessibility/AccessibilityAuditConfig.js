@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Accessibility Audit Configuration
+ * NextGen Seva Kiosk - Accessibility Audit Configuration
  * Phase 3: Accessibility & Inclusion (FR-A11Y-001)
  *
  * Responsibilities:

@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Feature Flag Configuration
+ * NextGen Seva Kiosk - Feature Flag Configuration
  * Phase 0: Foundation & Architecture Alignment
  *
  * Feature flags are sourced from ENV (which reads VITE_FEATURE_* env vars).

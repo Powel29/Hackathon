@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Accessibility Store
+ * NextGen Seva Kiosk - Accessibility Store
  * Phase 0: Foundation & Architecture Alignment (FR-A11Y-003, UI-DES-006)
  *
  * Persists accessibility preferences via localStorage (non-PII).

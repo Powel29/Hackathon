@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Sync Queue Service
+ * NextGen Seva Kiosk - Sync Queue Service
  * Phase 0: Foundation & Architecture Alignment (FR-OFF-002, FR-OFF-003)
  *
  * Manages the persistent offline transaction queue.

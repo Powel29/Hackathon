@@ -1,0 +1,13 @@
+2026-02-27 14:13:06,564 [INFO] main: LangChain billing agent initialized with Groq (Llama 3.3 70B).
+2026-02-27 14:13:20,082 [INFO] main: Shutting down.
+2026-02-27 14:13:23,619 [INFO] main: LangChain billing agent initialized with Groq (Llama 3.3 70B).
+2026-02-27 14:18:10,144 [INFO] main: [ACC-10042] User: show my electricity bills
+2026-02-27 14:18:10,701 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-02-27 14:18:10,724 [INFO] tools: DEBUG_TOOL: Fetching electricity bills for CID: 111122223333
+2026-02-27 14:18:12,231 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-02-27 14:18:12,934 [INFO] main:   Tool: get_electricity_bills
+2026-02-27 14:18:35,358 [INFO] main: Shutting down.
+2026-02-27 14:18:38,789 [INFO] main: LangChain billing agent initialized with Groq (Llama 3.3 70B).
+2026-02-27 14:18:54,601 [INFO] main: Shutting down.
+2026-02-27 14:18:58,154 [INFO] main: LangChain billing agent initialized with Groq (Llama 3.3 70B).
+2026-02-27 14:19:16,013 [INFO] main: Shutting down.

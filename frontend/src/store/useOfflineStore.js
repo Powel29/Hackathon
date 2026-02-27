@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Offline Store
+ * NextGen Seva Kiosk - Offline Store
  * Phase 0: Foundation & Architecture Alignment (FR-OFF-001, FR-OFF-002)
  *
  * Zustand store slice for offline/sync state.

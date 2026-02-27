@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Accessibility Provider
+ * NextGen Seva Kiosk - Accessibility Provider
  * Phase 0: Foundation & Architecture Alignment (FR-A11Y-001, FR-A11Y-003)
  *
  * Applies accessibility settings from useAccessibilityStore as:

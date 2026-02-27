@@ -1,4 +1,5 @@
 import api from '../api.js';
+import { tokenStrategy } from '../../core/security/storagePolicy';
 
 /**
  * Authentication Service
@@ -56,10 +57,10 @@ export async function verifyOTP(request) {
         if (response.data.success) {
             // Store token if needed, usually handled by interceptors if returned in headers or body
             if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
+                tokenStrategy.setToken(response.data.token);
             }
             if (response.data.user) {
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+                tokenStrategy.setUser(response.data.user);
             }
         }
 

@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Voice Assist Provider
+ * NextGen Seva Kiosk - Voice Assist Provider
  * Phase 4: Voice Navigation (FR-VOICE-001..003)
  *
  * Thin wrapper that mounts the VoiceEngine when the voice

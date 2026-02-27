@@ -1,5 +1,5 @@
 /**
- * SUVIDHA Kiosk - Offline API Resolvers
+ * NextGen Seva Kiosk - Offline API Resolvers
  * Phase 2: Offline Transaction Sync (FR-OFF-002)
  *
  * This file maps queue operation types to their actual API calls.
