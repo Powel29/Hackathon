@@ -252,7 +252,7 @@ export function WaterDashboard() {
           <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4 mb-4">
             <div className="text-center mb-3">
               <p className="text-2xl font-bold text-gray-900">₹500</p>
-              <p className="text-xs text-gray-600">Per Tanker (5000 Liters)</p>
+              <p className="text-xs text-gray-600">Per Tanker (5001 Liters)</p>
             </div>
             <button
               onClick={() => navigate('/nextgen-seva/water-tanker-booking')}

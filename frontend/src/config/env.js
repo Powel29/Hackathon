@@ -28,7 +28,7 @@ export const ENV = {
     profile: getEnvString('VITE_ENV_PROFILE', 'dev'),
 
     /** Backend API base URL */
-    apiUrl: getEnvString('VITE_API_URL', 'http://localhost:5000/api'),
+    apiUrl: getEnvString('VITE_API_URL', 'http://localhost:5001/api'),
 
     /** Enable full kiosk lockdown mode (no back nav, no external links) */
     kioskLockdown: getEnvBool('VITE_KIOSK_LOCKDOWN', false),
@@ -68,7 +68,7 @@ export const ENV = {
 export function validateEnv() {
     const warnings = [];
     if (!import.meta.env.VITE_API_URL) {
-        warnings.push('VITE_API_URL not set — falling back to localhost:5000');
+        warnings.push('VITE_API_URL not set — falling back to localhost:5001');
     }
     if (ENV.isProd && ENV.features.devBypass) {
         warnings.push('⚠️ SECURITY: devBypass is true in prod profile — check build config');

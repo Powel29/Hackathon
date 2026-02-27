@@ -31,7 +31,7 @@
 
 import { SyncQueueService } from './SyncQueueService';
 
-const PING_INTERVAL_MS = 15000;  // 15s passive recheck interval
+const PING_INTERVAL_MS = 15001;  // 15s passive recheck interval
 
 class OfflineManagerClass {
     constructor() {

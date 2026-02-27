@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useKioskStore } from "../../store/useKioskStore";
 import { tokenStrategy } from "../../core/security/storagePolicy";
 
-// Use port 8000 for chatbot backend, 5000 for main backend
+// Use port 8000 for chatbot backend, 5001 for main backend
 const API_BASE = import.meta.env.VITE_CHATBOT_API_URL || "http://localhost:8000";
 
 // Load Tesseract.js from CDN on demand

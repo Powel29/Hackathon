@@ -1,11 +1,21 @@
 const request = require('supertest');
 const app = require('../src/server');
+const prisma = require('../src/utils/prismaClient');
+const { cleanDB } = require('./testUtils');
 
 describe('Authentication API', () => {
-    let testOTP;
-    const testAadhaar = '999999990019'; // Valid Verhoeff (Calculated)
+    const testAadhaar = '999999990019';
     const testMobile = '9876543219';
+    let testOTP;
     let userToken;
+
+    beforeAll(async () => {
+        await cleanDB(testAadhaar, testMobile);
+    });
+
+    afterAll(async () => {
+        await prisma.$disconnect();
+    });
 
     test('POST /api/auth/initiate - New User', async () => {
         const res = await request(app)
@@ -24,13 +34,10 @@ describe('Authentication API', () => {
         if (process.env.NODE_ENV === 'development') {
             expect(res.body._demoOTP).toBeDefined();
             testOTP = res.body._demoOTP;
-        } else {
-            console.warn('Skipping OTP extraction in non-dev environment');
         }
     }, 10000);
 
     test('POST /api/auth/verify-otp - Success', async () => {
-        // If we didn't get an OTP (e.g. not in dev mode), we can't really test this fully automated without mocking DB
         if (!testOTP) {
             console.warn('Skipping Verify OTP test because OTP was not captured');
             return;
@@ -68,16 +75,12 @@ describe('Authentication API', () => {
     });
 
     test('POST /api/auth/resend-otp - Success', async () => {
-        // Wait for a bit if needed, or just hit it (might hit rate limit if too fast, but that's also a valid test)
         const res = await request(app)
             .post('/api/auth/resend-otp')
             .send({
                 aadharNumber: testAadhaar
             });
 
-        // It might be 429 if too fast, or 200 if cool
-        // The controller logic says 30s cooldown.
-        // Since we just called initiate, this should likely fail with 429
         if (res.status === 429) {
             expect(res.body.error.code).toBe('RESEND_TOO_SOON');
         } else {
