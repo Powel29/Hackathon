@@ -64,7 +64,7 @@ export function PayBill() {
 
       // Create order on backend
       const { data: order } = await axios.post(
-        "http://localhost:5001/api/payment/create-order",
+        "http://localhost:5000/api/payment/create-order",
         { amount, billId, billType, gateway, status, electricityBillId, gasBillId, municipalBillId, waterBillId }
       );
 
@@ -74,7 +74,7 @@ export function PayBill() {
         currency: order.currency,
         order_id: order.id,
         handler: async function (response) {
-          const verifyResult = await axios.post("http://localhost:5001/api/payment/verify-payment", {
+          const verifyResult = await axios.post("http://localhost:5000/api/payment/verify-payment", {
             ...response,
             billId,
             billType,
@@ -232,7 +232,7 @@ function PayButton({ bill, navigate, isOnline, updateBill }) {
 
     // Create order on backend
     const { data: order } = await axios.post(
-      "http://localhost:5001/api/payment/create-order",
+      "http://localhost:5000/api/payment/create-order",
       { amount, billId, billType, gateway, status, electricityBillId, gasBillId, municipalBillId, waterBillId }
     );
 
@@ -242,7 +242,7 @@ function PayButton({ bill, navigate, isOnline, updateBill }) {
       currency: order.currency,
       order_id: order.id,
       handler: async function (response) {
-        const verifyResult = await axios.post("http://localhost:5001/api/payment/verify-payment", {
+        const verifyResult = await axios.post("http://localhost:5000/api/payment/verify-payment", {
           ...response,
           billId,
           billType,

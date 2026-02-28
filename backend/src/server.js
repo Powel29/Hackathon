@@ -24,6 +24,9 @@ const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 
+// Trust proxy to allow express-rate-limit to accurately identify users
+app.set('trust proxy', 1);
+
 // Security Middleware
 app.use(helmet());
 app.use(cors({

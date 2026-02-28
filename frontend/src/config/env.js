@@ -28,7 +28,7 @@ export const ENV = {
     profile: getEnvString('VITE_ENV_PROFILE', 'dev'),
 
     /** Backend API base URL */
-    apiUrl: getEnvString('VITE_API_URL', 'http://localhost:5001/api'),
+    apiUrl: getEnvString('VITE_API_URL', 'http://localhost:5000/api'),
 
     /** Enable full kiosk lockdown mode (no back nav, no external links) */
     kioskLockdown: getEnvBool('VITE_KIOSK_LOCKDOWN', false),
