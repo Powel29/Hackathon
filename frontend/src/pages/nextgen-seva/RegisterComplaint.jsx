@@ -8,6 +8,7 @@ import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
 import { ArrowLeft, FileText, Upload, Zap, Flame, Droplets, Building2 } from 'lucide-react';
 import { complaintService, documentService } from '../../services/api';
+import MapAddressPicker from '../../components/MapAddressPicker';
 import { useVoiceStore } from '../../store/useVoiceStore';
 import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
@@ -34,6 +35,7 @@ export function RegisterComplaint() {
   const enqueue = useOfflineStore(s => s.enqueue);
   const [description, setDescription] = useState('');
   const [selectedIssue, setSelectedIssue] = useState('');
+  const [locationDetails, setLocationDetails] = useState('');
   const [files, setFiles] = useState([]);
   const [fileErrors, setFileErrors] = useState([]);
   const [errors, setErrors] = useState({});
@@ -269,6 +271,7 @@ export function RegisterComplaint() {
         complaintType,
         title: description.substring(0, 197) + (description.length > 197 ? '...' : ''),
         description: description,
+        location: locationDetails || undefined,
         // Attribution for offline sync
         aadharHash: user?.aadharHash
       };
@@ -475,6 +478,18 @@ export function RegisterComplaint() {
               )}
             </div>
           </div>
+
+          {/* Location Picker for Municipal */}
+          {selectedService === 'municipal' && (
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Pin Location on Map (Optional)
+              </label>
+              <MapAddressPicker
+                onAddressSelect={(details) => setLocationDetails(details.formattedAddress)}
+              />
+            </div>
+          )}
 
           {/* File Upload */}
           <div className="mb-6">

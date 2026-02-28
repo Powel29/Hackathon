@@ -71,6 +71,10 @@ app.use(cors({
     credentials: true
 }));
 
+// 🔥 THIS IS VERY IMPORTANT
+app.options('*', cors());
+
+
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -152,7 +156,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 if (require.main === module) {
     app.listen(PORT, () => {

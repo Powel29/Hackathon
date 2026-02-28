@@ -26,12 +26,13 @@ import { Languages, Accessibility, Clock, Home, HelpCircle, Database } from 'luc
 import { NetworkStatusBanner } from './NetworkStatusBanner';
 import { AccessibilityPanel } from './AccessibilityPanel';
 import { SyncQueuePanel } from './SyncQueuePanel';
+import { HelpModal } from './HelpModal';
 import { VoiceAssistWidget } from './VoiceAssistWidget';
 import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { useOfflineStore } from '../../store/useOfflineStore';
 import { ENV } from '../../config/env';
-import nextgenSevaLogo from '../../assets/logo2.png';
+import nextgenSevaLogo from '../../assets/changed.png';
 
 export function KioskLayout({
     children,
@@ -43,6 +44,7 @@ export function KioskLayout({
     const { language, setLanguage } = useKioskStore();
     const [a11yPanelOpen, setA11yPanelOpen] = useState(false);
     const [syncQueueOpen, setSyncQueueOpen] = useState(false);
+    const [helpModalOpen, setHelpModalOpen] = useState(false);
     const [now, setNow] = useState(new Date());
     const { isOnline } = useNetworkStatus();
     const pendingCount = useOfflineStore(s => (s.syncStats.pending || 0) + (s.syncStats.retrying || 0));
@@ -70,7 +72,7 @@ export function KioskLayout({
             handleLanguageChange(languages[nextIdx].code);
         },
         'help': () => {
-            // Future help modal toggle
+            setHelpModalOpen(true);
         }
     });
 
@@ -99,13 +101,9 @@ export function KioskLayout({
                 <header className="bg-white border-b border-gray-200 sm:static sticky top-0 z-30">
                     <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
                         {/* Left: Logo + Branding */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-16 h-16 shrink-0">
-                                <img src={nextgenSevaLogo} alt="NextGen Seva Logo" className="w-full h-full object-contain" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-[#0066CC] leading-tight">NextGen Seva</h1>
-                                <p className="text-xs text-gray-500 hidden sm:block">Smart Urban Digital Helpdesk</p>
+                        <div className="flex items-center">
+                            <div className="h-16 sm:h-20 shrink-0">
+                                <img src={nextgenSevaLogo} alt="NextGen Seva Logo" className="w-auto h-full object-contain" />
                             </div>
                         </div>
 
@@ -173,7 +171,7 @@ export function KioskLayout({
                                 <span className="easy-mode-hide hidden lg:inline">Home</span>
                             </button>
                             <button
-                                onClick={() => {/* Help modal — Phase 3 */ }}
+                                onClick={() => setHelpModalOpen(true)}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors min-h-[44px]"
                                 style={{ touchAction: 'manipulation' }}
                                 aria-label="Help"
@@ -183,16 +181,18 @@ export function KioskLayout({
                             </button>
                         </div>
 
-                        {/* Center: Voice Assist (Phase 4) */}
-                        <div className="flex-1 flex justify-center">
+                        {/* Center: Voice Assist (Phase 4) and Credits */}
+                        <div className="flex-1 flex flex-col items-center justify-center gap-1">
                             <VoiceAssistWidget />
+                            <p className="text-[10px] text-gray-500 text-center w-full">
+                                © 2026 SUVIDHA | Government of India
+                            </p>
                         </div>
 
                         {/* Center: Credits */}
                         <p className="text-xs text-gray-600 easy-mode-hide hidden md:block">
                             © 2026 NextGen Seva | Government of India
                         </p>
-
                         {/* Right: Accessibility + Queue */}
                         <div className="flex items-center gap-2 justify-end">
                             <button
@@ -234,6 +234,12 @@ export function KioskLayout({
             <SyncQueuePanel
                 isOpen={syncQueueOpen}
                 onClose={() => setSyncQueueOpen(false)}
+            />
+
+            {/* Help Panel Overlay */}
+            <HelpModal
+                isOpen={helpModalOpen}
+                onClose={() => setHelpModalOpen(false)}
             />
         </div>
     );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAdminStore } from '../store/adminStore';
 import { Shield, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import logo from '../assets/logo2.png';
+import logo from '../assets/logo.png';
 
 const DEPT_OPTIONS = [
     { id: 'SUPER-ADMIN-000', label: 'Super Admin', sub: 'All Departments', icon: '🏛️', color: '#7C3AED', bg: '#F3E8FF' },
@@ -162,27 +162,7 @@ export function AdminLogin({ onRegister }) {
                             </button>
                         </div>
 
-                        {/* Demo Hint */}
-                        <div style={{
-                            marginTop: 12, padding: 12, borderRadius: 8,
-                            background: 'rgba(0,102,204,0.05)', border: '1px dashed var(--primary)'
-                        }}>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Demo Credentials:</div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <code style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>admin@123</code>
-                                <button
-                                    id="copy-pw-btn"
-                                    type="button"
-                                    onClick={copyDemoPw}
-                                    style={{
-                                        fontSize: 10, background: 'var(--primary)', color: '#fff',
-                                        border: 'none', padding: '4px 8px', borderRadius: 4, cursor: 'pointer'
-                                    }}
-                                >
-                                    Copy Password
-                                </button>
-                            </div>
-                        </div>
+                        {/* Demo Hint Removed intentionally */}
                     </div>
 
                     {error && (
