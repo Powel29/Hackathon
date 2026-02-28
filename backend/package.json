@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "test": "cross-env NODE_ENV=development jest --forceExit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "devStart": "nodemon --exec ts-node src/script.ts"
@@ -15,24 +16,34 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@prisma/adapter-pg": "^7.3.0",
-    "@prisma/client": "^7.3.0",
+    "@aws-sdk/client-s3": "^3.893.0",
+    "@aws-sdk/s3-request-presigner": "^3.893.0",
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/client": "^6.19.2",
+    "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
-    "express": "^5.2.1",
+    "express": "^4.18.2",
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
+    "form-data": "^4.0.5",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "pg": "^8.17.2",
-    "prisma": "^7.3.0"
+    "pg": "^8.18.0",
+    "prisma": "^6.19.2",
+    "razorpay": "^2.9.6",
+    "tslib": "^2.8.1",
+    "twilio": "^5.12.2"
   },
   "devDependencies": {
     "@types/node": "^25.1.0",
     "@types/pg": "^8.16.0",
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.11",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

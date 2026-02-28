@@ -57,11 +57,13 @@ export function LoginRegister() {
 
   const validateStep1 = () => {
     const newErrors = {};
+    const dobYear = formData.dateOfBirth ? formData.dateOfBirth.split('-')[0] : '';
 
     if (!formData.fullName.trim()) newErrors.fullName = t('validation.fullNameRequired');
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = t('validation.emailRequired');
     if (!formData.mobileNumber.match(/^[0-9]{10}$/)) newErrors.mobileNumber = t('validation.mobileNumberDigits');
     if (!formData.dateOfBirth) newErrors.dateOfBirth = t('validation.dateOfBirthRequired');
+    else if (!/^\d{4}$/.test(dobYear)) newErrors.dateOfBirth = t('validation.yearMustBe4Digits', 'Year must be 4 digits');
     if (!formData.gender) newErrors.gender = t('validation.genderRequired');
 
     setErrors(newErrors);
@@ -327,6 +329,7 @@ export function LoginRegister() {
   if (mode === 'choice') {
     return (
       <KioskLayout>
+<<<<<<< Updated upstream:frontend/src/pages/kiosk/LoginRegister.jsx
         <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
           <div className="w-full max-w-2xl">
             <button
@@ -337,7 +340,19 @@ export function LoginRegister() {
               {t('common.back')}
             </button>
 
+=======
+        <div className="h-full min-h-0 flex items-center justify-center pt-2 sm:pt-3 overflow-hidden">
+          <div className="w-full max-w-2xl max-h-full">
+>>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/LoginRegister.jsx
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+              <button
+                onClick={() => navigate('/nextgen-seva')}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {t('common.back')}
+              </button>
+
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-[#212529] mb-2">{t('authentication.welcomeTitle')}</h2>
                 <p className="text-gray-600">{t('authentication.portalSubtitle')}</p>
@@ -394,10 +409,10 @@ export function LoginRegister() {
 
   if (mode === 'register') {
     return (
-      <KioskLayout>
+      <KioskLayout mainClassName="py-2 overflow-hidden">
         {showSuccess && <SuccessScreen message={t('authentication.registrationSuccessful')} />}
-        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
-          <div className="w-full max-w-3xl">
+        <div className="h-full min-h-0 flex items-center justify-center overflow-hidden">
+          <div className="w-full max-w-3xl max-h-full overflow-hidden">
             <button
               onClick={() => {
                 setMode('choice');
@@ -654,9 +669,9 @@ export function LoginRegister() {
 
   if (mode === 'login') {
     return (
-      <KioskLayout>
-        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
-          <div className="w-full max-w-md">
+      <KioskLayout mainClassName="py-2 overflow-hidden">
+        <div className="h-full min-h-0 flex items-center justify-center overflow-hidden">
+          <div className="w-full max-w-md max-h-full overflow-hidden">
             <button
               onClick={() => {
                 setMode('choice');
@@ -777,9 +792,15 @@ export function LoginRegister() {
 
   if (mode === 'otp') {
     return (
+<<<<<<< Updated upstream:frontend/src/pages/kiosk/LoginRegister.jsx
       <KioskLayout>
         <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
           <div className="w-full max-w-md">
+=======
+      <KioskLayout mainClassName="py-2 overflow-hidden">
+        <div className="h-full min-h-0 flex items-center justify-center overflow-hidden">
+          <div className="w-full max-w-md px-4 max-h-full overflow-hidden">
+>>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/LoginRegister.jsx
             <button
               onClick={() => setMode('login')}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"

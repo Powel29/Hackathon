@@ -6,7 +6,18 @@ import { KioskLayout } from '../components/KioskLayout';
 import { TouchButton } from '../components/TouchButton';
 import { SuccessScreen } from '../components/SuccessScreen';
 import { ArrowLeft, CheckCircle, Upload, Edit3, Zap, Flame, Droplets, Building2 } from 'lucide-react';
+<<<<<<< Updated upstream:frontend/kiosk/src/screens/NewConnection.tsx
 import govtLogo from '../assets/Government_of_India_logo.svg';
+=======
+import govtLogo from '../../assets/nextgen-seva/Government_of_India_logo.svg';
+import nextgenSevaLogo from '../../assets/logo2.png';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { MapPin } from 'lucide-react';
+import MapAddressPicker from '../../components/MapAddressPicker';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
+>>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/NewConnection.jsx
 
 interface FormData {
   // Common fields
@@ -995,7 +1006,7 @@ export function NewConnection() {
   
   if (showSuccess) {
     return (
-      <KioskLayout>
+      <KioskLayout mainBottomOffsetDesktop="0rem">
         <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-lg w-full text-center">
             <div className="w-16 h-16 bg-[#28A745] bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -2316,6 +2327,53 @@ export function NewConnection() {
           )}
         </div>
       </div>
+<<<<<<< Updated upstream:frontend/kiosk/src/screens/NewConnection.tsx
+=======
+
+      {/* Hidden application rendering block for html2canvas generation */}
+      <div ref={printContainerRef} style={{ display: 'none', position: 'absolute', left: '-9999px', top: 0, width: '210mm', minHeight: '297mm', padding: '8mm', background: '#fff', color: '#000', fontFamily: 'serif', fontSize: '11pt', zIndex: -1 }}>
+        <div style={{ textAlign: 'center', border: '3px double #000', padding: '12px', marginBottom: '14px' }}>
+          <img src={govtLogo} alt="Gov Logo" style={{ height: '60px', marginBottom: '6px' }} />
+          <img src={nextgenSevaLogo} alt="NextGen Seva Logo" style={{ height: '42px', marginBottom: '6px' }} />
+          <h1 style={{ fontSize: '18pt', fontWeight: 'bold', textTransform: 'uppercase', margin: '4px 0' }}>Government of India</h1>
+          <p style={{ fontSize: '13pt', fontWeight: 'bold', textTransform: 'uppercase' }}>{selectedService?.charAt(0).toUpperCase() + selectedService?.slice(1)} Department</p>
+          <p style={{ fontSize: '12pt', fontWeight: 'bold', textDecoration: 'underline' }}>Application for New Connection</p>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', border: '2px solid #000', padding: '8px 12px', marginBottom: '12px' }}>
+          <p><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</p>
+          <p><strong>Application No:</strong> <span style={{ fontSize: '13pt', fontWeight: 'bold' }}>{applicationId || 'PENDING'}</span></p>
+        </div>
+
+        <div style={{ marginBottom: '12px' }}>
+          <h2 style={{ background: '#000', color: '#fff', padding: '8px 12px', fontSize: '11pt', fontWeight: 'bold' }}>1. Applicant Details</h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000' }}>
+            <tbody>
+              <tr><td style={{ width: '40%', fontWeight: 'bold', padding: '7px 10px', borderBottom: '1px solid #ccc' }}>Full Name:</td><td style={{ padding: '7px 10px', borderBottom: '1px solid #ccc' }}>{formData.fullName}</td></tr>
+              <tr><td style={{ fontWeight: 'bold', padding: '7px 10px', borderBottom: '1px solid #ccc' }}>Mobile Number:</td><td style={{ padding: '7px 10px', borderBottom: '1px solid #ccc' }}>{formData.mobileNumber}</td></tr>
+              <tr><td style={{ fontWeight: 'bold', padding: '7px 10px', borderBottom: '1px solid #ccc' }}>Email Address:</td><td style={{ padding: '7px 10px', borderBottom: '1px solid #ccc' }}>{formData.emailAddress}</td></tr>
+              <tr><td style={{ fontWeight: 'bold', padding: '7px 10px' }}>Address:</td><td style={{ padding: '7px 10px' }}>{formData.address}, {formData.city}, {formData.state} - {formData.pincode}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginBottom: '14px' }}>
+          <h3 style={{ textAlign: 'center', fontWeight: 'bold', textDecoration: 'underline', marginBottom: '8px' }}>Declaration</h3>
+          <p style={{ textAlign: 'justify', fontSize: '10pt', marginBottom: '12px' }}>I hereby declare that the information provided above is true and correct. I understand that any false statement or omission of material facts may result in the rejection of this application.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '14px' }}>
+            <div><p>Date: {new Date().toLocaleDateString('en-IN')}</p><p>Place: {formData.city}</p></div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ height: '60px', borderBottom: '1px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {(formData.signatureType === 'digital' && formData.signature) ?
+                  <img src={formData.signature} alt="Signature" style={{ maxHeight: '56px', maxWidth: '180px' }} />
+                  : <span style={{ color: '#999', fontStyle: 'italic' }}>Signature Image Uploaded</span>}
+              </div>
+              <div style={{ fontWeight: 'bold', marginTop: '6px' }}>Applicant Signature</div>
+            </div>
+          </div>
+        </div>
+      </div>
+>>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/NewConnection.jsx
     </KioskLayout>
   );
 }

@@ -3,16 +3,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useKioskStore } from '../../store/useKioskStore';
 import { departmentService, billService } from '../../services/api';
-import { KioskLayout } from '../../components/kiosk/KioskLayout';
-import { TouchButton } from '../../components/kiosk/TouchButton';
+import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useOfflineStore } from '../../store/useOfflineStore';
+import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
+import { TouchButton } from '../../components/nextgen-seva/TouchButton';
 import { ArrowLeft, Home, FileText, IndianRupee, CreditCard, Building, MapPin, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
-import govtLogo from '../../assets/kiosk/Government_of_India_logo.svg';
+import govtLogo from '../../assets/nextgen-seva/Government_of_India_logo.svg';
 
 export function PropertyTaxPayment() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { billId } = useParams();
     const { user, updateBill } = useKioskStore();
+    const { isOnline } = useNetworkStatus();
+    const enqueue = useOfflineStore(s => s.enqueue);
 
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -71,26 +75,43 @@ export function PropertyTaxPayment() {
 
         // Simulate payment processing delay
         setTimeout(() => {
-            const transactionId = 'TXN' + Date.now();
+            const transactionId = (isOnline ? 'TXN' : 'OFFLINE-TXN-') + Date.now();
             const paymentDate = new Date().toISOString();
 
+            if (!isOnline) {
+                // Enqueue payment for later sync
+                enqueue({
+                    operationType: 'municipal_pay',
+                    payload: {
+                        billId: billDetails?.id,
+                        serviceType: 'MUNICIPAL',
+                        status: 'paid',
+                        transactionId,
+                        paymentMethod,
+                        consumerNumber: user?.consumerId || propertyId,
+                        aadharHash: user?.aadharHash
+                    }
+                });
+            }
+
             if (billDetails?.id) {
-                updateBill(billDetails.id, { status: 'paid' });
+                updateBill(billDetails.id, { status: 'paid' }, !isOnline);
             }
 
             setProcessing(false);
 
-            navigate(`/kiosk/receipt/${transactionId}`, {
+            navigate(`/nextgen-seva/receipt/${transactionId}`, {
                 state: {
                     bill: {
                         ...billDetails,
                         transactionId,
                         status: 'paid',
-                        consumerNumber: user?.consumerId || 'N/A' // Ensure consumer number is passed
+                        consumerNumber: user?.consumerId || propertyId // Ensure consumer number is passed
                     },
                     paymentDate,
                     paymentMethod,
-                    department: 'Municipal'
+                    department: 'Municipal',
+                    isOfflinePayment: !isOnline
                 }
             });
         }, 2000);
@@ -125,19 +146,18 @@ export function PropertyTaxPayment() {
             <div className="max-w-6xl mx-auto space-y-6 pb-20">
 
                 {/* Header Section similar to WaterTankerBooking */}
-                <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+                <div className="flex items-center gap-4 mb-6">
                     <TouchButton
                         variant="outline"
                         size="icon"
                         onClick={() => navigate(-1)}
-                        className="w-12 h-12 min-w-12 min-h-12 rounded-full border-2 shrink-0"
-                        style={{ width: '3rem', height: '3rem', minWidth: '3rem', minHeight: '3rem', padding: 0 }}
+                        className="w-12 h-12 rounded-full border-2"
                     >
                         <ArrowLeft className="w-6 h-6" />
                     </TouchButton>
-                    <div className="min-w-0">
-                        <h1 className="text-2xl sm:text-3xl leading-tight font-bold text-gray-900">Property Tax Payment</h1>
-                        <p className="text-sm sm:text-base text-gray-600">Review property details and pay your tax</p>
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Property Tax Payment</h1>
+                        <p className="text-gray-600">Review property details and pay your tax</p>
                     </div>
                 </div>
 
@@ -255,6 +275,14 @@ export function PropertyTaxPayment() {
                                 </div>
                             </div>
 
+                            {!isOnline && (
+                                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+                                    <p className="text-xs text-orange-800 font-medium flex gap-2">
+                                        <AlertCircle className="w-4 h-4 shrink-0" />
+                                        <span>You are currently offline. Your payment will be recorded and processed automatically when the connection is restored.</span>
+                                    </p>
+                                </div>
+                            )}
                             <div className="space-y-4">
                                 <h3 className="font-semibold text-gray-900">Select Payment Method</h3>
                                 <div className="grid grid-cols-2 gap-3">

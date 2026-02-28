@@ -1,16 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { KioskLayout } from '../../components/kiosk/KioskLayout';
-import { TouchButton } from '../../components/kiosk/TouchButton';
-import { CheckCircle, Printer, Mail, MessageSquare, QrCode, Home, AlertCircle } from 'lucide-react';
+import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
+import { TouchButton } from '../../components/nextgen-seva/TouchButton';
+import { CheckCircle, Printer, Mail, MessageSquare, QrCode, Home, AlertCircle, Database } from 'lucide-react';
 import { useKioskStore } from '../../store/useKioskStore';
-<<<<<<< Updated upstream:frontend/src/pages/kiosk/Receipt.jsx
-import govtLogo from '../../assets/kiosk/Government_of_India_logo.svg';
-=======
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import govtLogo from '../../assets/nextgen-seva/Government_of_India_logo.svg';
-import nextgenSevaLogo from '../../assets/logo2.png';
->>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/Receipt.jsx
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { documentService } from '../../services/api';
@@ -24,8 +19,10 @@ export function Receipt() {
   const { user, selectedService } = useKioskStore();
   const receiptDocRef = useRef(null);
 
-  const { bill, paymentDate } = location.state || {};
+  const { bill, paymentDate, isOfflinePayment: stateIsOfflinePayment } = location.state || {};
   const [uploadStatus, setUploadStatus] = useState('idle'); // 'idle', 'uploading', 'success', 'error'
+  const { isOnline } = useNetworkStatus();
+  const isOfflinePayment = stateIsOfflinePayment || !isOnline;
 
   const generateAndUploadReceipt = useCallback(async (isManual = false) => {
     try {
@@ -36,6 +33,16 @@ export function Receipt() {
       }
 
       if (!receiptDocRef.current) return;
+      // If offline, we can't upload.
+      if (!isOnline && !isManual) {
+        console.log(" [Receipt] Skipping auto-upload while offline");
+        return;
+      }
+
+      if (!isOnline && isManual) {
+        // For manual triggers (like download/print), we still generate PDF but skip API upload
+        // Actually, let's just generate the PDF for download but not call the service if offline.
+      }
       setUploadStatus('uploading');
 
       const element = receiptDocRef.current;
@@ -93,6 +100,17 @@ export function Receipt() {
       const pdfBlob = pdf.output('blob');
       const file = new File([pdfBlob], `Receipt_${transactionId}.pdf`, { type: 'application/pdf' });
 
+      // If manual trigger and offline, we just handle the PDF (e.g. download)
+      // But this function is primarily for uploading.
+      if (!isOnline) {
+        // If they click print, window.print handles it. 
+        // If they want to download, we could trigger download here.
+        if (isManual) {
+          pdf.save(`Receipt_${transactionId}.pdf`);
+        }
+        setUploadStatus('idle');
+        return;
+      }
       const citizenId = user?.aadhaarNumber || '111122223333';
       const relatedId = (bill.id || bill.billId || transactionId).toString();
 
@@ -121,19 +139,19 @@ export function Receipt() {
       console.error("❌ [Receipt] High-detail upload failed:", error);
       setUploadStatus('error');
     }
-  }, [transactionId, user, selectedService, bill, location.state?.department]);
+  }, [transactionId, user, selectedService, bill, location.state?.department, isOnline]);
 
   useEffect(() => {
-    if (bill && transactionId) {
+    if (bill && transactionId && isOnline) {
       const timer = setTimeout(() => generateAndUploadReceipt(false), 1500);
       return () => clearTimeout(timer);
     }
-  }, [bill, transactionId, user, generateAndUploadReceipt]);
+  }, [bill, transactionId, user, generateAndUploadReceipt, isOnline]);
 
   if (!bill) {
     return (
       <KioskLayout>
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center justify-center min-h-100">
           <div className="bg-red-50 p-8 rounded-3xl border border-red-100 text-center shadow-sm">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <p className="text-gray-900 mb-4 font-black text-2xl tracking-tight">Receipt Data Unavailable</p>
@@ -141,7 +159,7 @@ export function Receipt() {
             <TouchButton
               variant="primary"
               size="large"
-              onClick={() => navigate('/kiosk/dashboard')}
+              onClick={() => navigate('/nextgen-seva/dashboard')}
               className="w-full bg-red-600 hover:bg-red-700"
             >
               {t('bills.backToDashboard')}
@@ -151,6 +169,7 @@ export function Receipt() {
       </KioskLayout>
     );
   }
+
 
   const handlePrint = () => {
     // Ensure it's uploaded when they print
@@ -216,14 +235,7 @@ export function Receipt() {
             <div style={{ marginBottom: '8px' }}>
               <img src={govtLogo} alt="Government of India" style={{ height: '60px', margin: '0 auto' }} />
             </div>
-<<<<<<< Updated upstream:frontend/src/pages/kiosk/Receipt.jsx
-            <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: '0 0 4px 0', color: '#000' }}>SUVIDHA</h1>
-=======
-            <div style={{ marginBottom: '6px' }}>
-              <img src={nextgenSevaLogo} alt="NextGen Seva Logo" style={{ height: '44px', margin: '0 auto' }} />
-            </div>
             <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: '0 0 4px 0', color: '#000' }}>NextGen Seva</h1>
->>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/Receipt.jsx
             <p style={{ fontSize: '13px', margin: '2px 0', color: '#333', lineHeight: '1.2' }}>Government of India - Digital Services Portal</p>
             <p style={{ fontSize: '11px', margin: '0 0', color: '#666', lineHeight: '1.2' }}>Official Payment Receipt</p>
           </div>
@@ -316,18 +328,18 @@ export function Receipt() {
             <p style={{ fontSize: '11px', color: '#666', margin: '3px 0', lineHeight: '1.3' }}>• This is a system-generated receipt and does not require a signature.</p>
             <p style={{ fontSize: '11px', color: '#666', margin: '2px 0', lineHeight: '1.3' }}>• Please keep this receipt for your records and future reference.</p>
             <p style={{ fontSize: '11px', color: '#666', margin: '2px 0', lineHeight: '1.3' }}>• For any queries, please contact our helpline or visit the nearest office.</p>
-            <p style={{ fontSize: '11px', color: '#999', margin: '4px 0 2px 0', textAlign: 'center', lineHeight: '1.2' }}>SUVIDHA - Government of India Digital Services Portal</p>
-            <p style={{ fontSize: '10px', color: '#999', margin: '2px 0', textAlign: 'center', lineHeight: '1.2' }}>Helpline: 1800-XXX-XXXX | Website: www.suvidha.gov.in</p>
+            <p style={{ fontSize: '11px', color: '#999', margin: '4px 0 2px 0', textAlign: 'center', lineHeight: '1.2' }}>NextGen Seva - Government of India Digital Services Portal</p>
+            <p style={{ fontSize: '10px', color: '#999', margin: '2px 0', textAlign: 'center', lineHeight: '1.2' }}>Helpline: 1800-XXX-XXXX | Website: www.NextGen Seva.gov.in</p>
             <p style={{ fontSize: '10px', color: '#999', margin: '2px 0', textAlign: 'center', lineHeight: '1.2' }}>Generated on: {new Date().toLocaleString('en-IN')}</p>
           </div>
         </div>
       </div>
 
       {/* Screen Display */}
-      <KioskLayout mainBottomOffsetDesktop="0rem">
+      <KioskLayout>
         <div className="max-w-5xl mx-auto">
           {/* Success Header */}
-          <div className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl shadow-lg p-8 mb-8 transform transition-all hover:scale-[1.01]">
+          <div className="bg-linear-to-br from-[#10B981] to-[#059669] rounded-2xl shadow-lg p-8 mb-4 transform transition-all hover:scale-[1.01]">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md animate-bounce-short">
                 <CheckCircle className="w-10 h-10 text-[#10B981]" />
@@ -337,12 +349,28 @@ export function Receipt() {
                   {t('bills.paymentSuccessful')}
                 </h2>
                 <p className="text-lg text-white opacity-90 font-medium">
-                  Your payment has been processed and your receipt is ready.
+                  {isOfflinePayment ? 'Transaction queued for offline synchronization.' : 'Your payment has been processed and your receipt is ready.'}
                 </p>
               </div>
             </div>
           </div>
 
+          {isOfflinePayment && (
+            <div className="bg-orange-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center justify-between border-2 border-orange-500 mb-8 overflow-hidden relative">
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <AlertCircle className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black uppercase tracking-wider text-sm">Offline Transaction Enqueued</h3>
+                  <p className="text-xs opacity-90">Your payment of ₹{bill.amount.toLocaleString()} will be synced once connection is restored.</p>
+                </div>
+              </div>
+              <div className="hidden md:block absolute -right-4 -bottom-4 opacity-10">
+                <Database className="w-24 h-24 text-white" />
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-6">
             {/* Receipt Display */}
             <div className="col-span-2">
@@ -354,7 +382,7 @@ export function Receipt() {
                   <h3 className="text-2xl font-black text-[#212529] mb-1">
                     {t('bills.digitalReceipt')}
                   </h3>
-                  <p className="text-sm font-bold text-[#0066CC] tracking-wider uppercase">SUVIDHA PORTAL RECEIPT</p>
+                  <p className="text-sm font-bold text-[#0066CC] tracking-wider uppercase">NextGen Seva PORTAL RECEIPT</p>
                 </div>
 
                 <div className="space-y-4 mb-8">
@@ -399,7 +427,7 @@ export function Receipt() {
                     </span>
                   </div>
 
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 mt-6 border border-green-100">
+                  <div className="bg-linear-to-r from-green-50 to-emerald-50 rounded-2xl p-6 mt-6 border border-green-100">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-gray-700">{t('bills.amount')} {t('bills.paid')}</span>
                       <span className="text-3xl font-black text-[#10B981]">
@@ -437,8 +465,7 @@ export function Receipt() {
                     onClick={handlePrint}
                     className="w-full shadow-md active:shadow-inner"
                   >
-                    <span className="sm:hidden">Download Receipt</span>
-                    <span className="hidden sm:inline">{t('bills.printReceipt')}</span>
+                    {t('bills.printReceipt')}
                   </TouchButton>
 
                   <TouchButton
@@ -468,8 +495,8 @@ export function Receipt() {
                   variant="success"
                   size="medium"
                   icon={<Home className="w-5 h-5" />}
-                  onClick={() => navigate('/kiosk/bills')}
-                  className="w-full mb-4 shadow-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  onClick={() => navigate('/nextgen-seva/bills')}
+                  className="w-full mb-4 shadow-md bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
                 >
                   {t('bills.viewBills')}
                 </TouchButton>

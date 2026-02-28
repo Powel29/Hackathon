@@ -1,12 +1,4 @@
 import { useState } from 'react';
-<<<<<<< Updated upstream:frontend/kiosk/src/screens/WaterTankerBooking.tsx
-import { useNavigate } from 'react-router';
-import { useStore } from '../store/useStore';
-import { KioskLayout } from '../components/KioskLayout';
-import { TouchButton } from '../components/TouchButton';
-import { ArrowLeft, MapPin, Home, Droplets, Truck, CheckCircle, Printer } from 'lucide-react';
-import govtLogo from '../assets/Government_of_India_logo.svg';
-=======
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { serviceRequestService } from '../../services/api/serviceRequest.service';
@@ -16,48 +8,10 @@ import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
 import { ArrowLeft, MapPin, Home, Droplets, Truck, CheckCircle, Printer, WifiOff, AlertCircle, Database } from 'lucide-react';
 import govtLogo from '../../assets/nextgen-seva/Government_of_India_logo.svg';
-import nextgenSevaLogo from '../../assets/logo2.png';
 
 
->>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/WaterTankerBooking.jsx
 
-interface BookingFormData {
-  // Customer Details
-  fullName: string;
-  mobileNumber: string;
-  emailAddress: string;
-  
-  // Delivery Address
-  houseNumber: string;
-  buildingSocietyName: string;
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark: string;
-  
-  // Property Details
-  propertyType: string;
-  floorLevel: string;
-  tankerAccess: string;
-  
-  // Water Requirement Details
-  waterQuantity: string;
-  waterType: string;
-  waterPurpose: string;
-  
-  // Delivery Scheduling
-  deliveryType: string;
-  deliveryDate: string;
-  deliveryTime: string;
-  
-  // Additional Instructions
-  specialInstructions: string;
-}
 
-interface BookingErrors {
-  [key: string]: string;
-}
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -69,7 +23,7 @@ const INDIAN_STATES = [
   'Andaman and Nicobar Islands', 'Lakshadweep', 'Dadra and Nagar Haveli'
 ];
 
-const CITIES: { [key: string]: string[] } = {
+const CITIES = {
   'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Nellore', 'Kurnool', 'Tirupati', 'Rajahmundry', 'Kadapa', 'Anantapur'],
   'Arunachal Pradesh': ['Itanagar', 'Naharlagun', 'Pasighat', 'Tawang', 'Ziro'],
   'Assam': ['Guwahati', 'Silchar', 'Dibrugarh', 'Jorhat', 'Nagaon', 'Tinsukia', 'Tezpur'],
@@ -118,15 +72,17 @@ const WATER_TANKER_FACILITIES = [
 
 export function WaterTankerBooking() {
   const navigate = useNavigate();
-  const { user } = useStore();
-  
+  const { user } = useKioskStore();
+  const { isOnline } = useNetworkStatus();
+  const enqueue = useOfflineStore(s => s.enqueue);
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 8;
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingId, setBookingId] = useState('');
-  const [selectedFacility, setSelectedFacility] = useState<number | null>(null);
+  const [selectedFacility, setSelectedFacility] = useState(null);
 
-  const [formData, setFormData] = useState<BookingFormData>({
+  const [formData, setFormData] = useState({
     // Pre-fill from user profile if available
     fullName: user?.name || '',
     mobileNumber: user?.phoneNumber || '',
@@ -150,17 +106,17 @@ export function WaterTankerBooking() {
     specialInstructions: '',
   });
 
-  const [formErrors, setFormErrors] = useState<BookingErrors>({});
+  const [formErrors, setFormErrors] = useState({});
 
-  const handleFieldChange = (field: keyof BookingFormData, value: string) => {
+  const handleFieldChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
     if (formErrors[field]) {
       setFormErrors({ ...formErrors, [field]: '' });
     }
   };
 
-  const validateStep = (step: number): boolean => {
-    const errors: BookingErrors = {};
+  const validateStep = (step) => {
+    const errors = {};
 
     switch (step) {
       case 1: // Customer Details
@@ -190,9 +146,10 @@ export function WaterTankerBooking() {
         break;
 
       case 5: // Delivery Scheduling
-        if (!formData.deliveryDate) errors.deliveryDate = 'Delivery date is required';
+        if (formData.deliveryType === 'scheduled' && !formData.deliveryDate) {
+          errors.deliveryDate = 'Delivery date is required for scheduled deliveries';
+        }
         break;
-
       case 6: // Facility Selection
         if (!selectedFacility) errors.facility = 'Please select a water tanker facility';
         break;
@@ -214,32 +171,41 @@ export function WaterTankerBooking() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
-    const bookingNumber = 'WTB-2026-' + Math.floor(100000 + Math.random() * 900000);
-    setBookingId(bookingNumber);
-    
-    // Store booking in localStorage
-    const bookingsData = {
-      id: Date.now().toString(),
-      bookingId: bookingNumber,
-      customerName: formData.fullName,
-      mobileNumber: formData.mobileNumber,
-      deliveryAddress: `${formData.houseNumber}, ${formData.buildingSocietyName}, ${formData.street}, ${formData.city}`,
-      waterQuantity: formData.waterQuantity,
-      facility: WATER_TANKER_FACILITIES.find(f => f.id === selectedFacility)?.name || 'Selected Facility',
-      deliveryDate: formData.deliveryDate,
-      deliveryTime: formData.deliveryTime,
-      status: 'confirmed',
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const payload = {
+        serviceType: 'WATER',
+        requestType: 'WATER_TANKER',
+        details: {
+          ...formData,
+          facility: WATER_TANKER_FACILITIES.find(f => f.id === selectedFacility)?.name,
+          facilityId: selectedFacility,
+        },
+        // Non-PII link for offline sync attribute
+        aadharHash: user?.aadharHash
+      };
 
-    const existingBookings = JSON.parse(localStorage.getItem('waterTankerBookings') || '[]');
-    existingBookings.push(bookingsData);
-    localStorage.setItem('waterTankerBookings', JSON.stringify(existingBookings));
+      if (!isOnline) {
+        const tempId = enqueue({
+          operationType: 'tanker_booking',
+          payload
+        });
+        setBookingId(`QUEUED-${tempId.substring(0, 6).toUpperCase()}`);
+        setBookingSuccess(true);
+        return;
+      }
 
-    setBookingSuccess(true);
+      const response = await serviceRequestService.create(payload);
+
+      setBookingId(response.requestId || response.request?.requestId || 'WTB-' + Date.now());
+      setBookingSuccess(true);
+    } catch (error) {
+      console.error('Booking failed:', error);
+      const errorMessage = error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Failed to book tanker. Please try again.';
+      alert(`Booking Failed: ${errorMessage}`);
+    }
   };
 
   const handlePrintReceipt = () => {
@@ -248,18 +214,18 @@ export function WaterTankerBooking() {
 
   if (bookingSuccess) {
     const selectedFacilityDetails = WATER_TANKER_FACILITIES.find(f => f.id === selectedFacility);
-    const bookingDate = new Date().toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
+    const bookingDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
     });
-    const bookingTime = new Date().toLocaleTimeString('en-IN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    const bookingTime = new Date().toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
 
     return (
-      <KioskLayout mainBottomOffset="7.25rem" mainBottomOffsetDesktop="0rem" mainClassName="py-2 lg:py-0">
+      <KioskLayout>
         {/* Print-only Receipt Format */}
         <div className="print-receipt">
           <style>{`
@@ -292,21 +258,14 @@ export function WaterTankerBooking() {
               }
             }
           `}</style>
-          
+
           <div style={{ maxWidth: '750px', margin: '0 auto', padding: '10px', border: '2px solid #000' }}>
             {/* Header */}
             <div style={{ textAlign: 'center', borderBottom: '3px double #000', paddingBottom: '6px', marginBottom: '8px' }}>
               <div style={{ marginBottom: '4px' }}>
                 <img src={govtLogo} alt="Government of India" style={{ height: '45px', margin: '0 auto' }} />
               </div>
-<<<<<<< Updated upstream:frontend/kiosk/src/screens/WaterTankerBooking.tsx
-              <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 2px 0', color: '#000' }}>SUVIDHA</h1>
-=======
-              <div style={{ marginBottom: '4px' }}>
-                <img src={nextgenSevaLogo} alt="NextGen Seva Logo" style={{ height: '34px', margin: '0 auto' }} />
-              </div>
               <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 2px 0', color: '#000' }}>NextGen Seva</h1>
->>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/WaterTankerBooking.jsx
               <p style={{ fontSize: '11px', margin: '1px 0', color: '#333', lineHeight: '1.2' }}>Government of India - Water Department</p>
               <p style={{ fontSize: '10px', margin: '0', color: '#666', lineHeight: '1.2' }}>Water Tanker Booking Receipt</p>
             </div>
@@ -328,13 +287,15 @@ export function WaterTankerBooking() {
                     <td style={{ fontWeight: 'bold', padding: '3px 0' }}>Booking Date:</td>
                     <td style={{ padding: '3px 0' }}>{bookingDate}</td>
                   </tr>
-                  <tr>
-                    <td style={{ fontWeight: 'bold', padding: '3px 0' }}>Booking Time:</td>
-                    <td style={{ padding: '3px 0' }}>{bookingTime}</td>
-                  </tr>
+                  {bookingId.startsWith('QUEUED-') && (
+                    <tr>
+                      <td style={{ fontWeight: 'bold', padding: '3px 0', color: '#ea580c' }}>Sync Status:</td>
+                      <td style={{ padding: '3px 0', color: '#ea580c', fontStyle: 'italic' }}>Pending (Offline)</td>
+                    </tr>
+                  )}
                   <tr>
                     <td style={{ fontWeight: 'bold', padding: '3px 0' }}>Status:</td>
-                    <td style={{ padding: '3px 0', color: '#16a34a', fontWeight: 'bold' }}>✓ CONFIRMED</td>
+                    <td style={{ padding: '3px 0', color: '#16a34a', fontWeight: 'bold' }}>{bookingId.startsWith('QUEUED-') ? 'QUEUED' : '✓ CONFIRMED'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -404,16 +365,16 @@ export function WaterTankerBooking() {
                     <tr>
                       <td style={{ padding: '3px 0', fontWeight: 'bold' }}>Floor:</td>
                       <td style={{ padding: '3px 0' }}>
-                        {formData.floorLevel === 'ground' ? 'Ground Floor' : 
-                         formData.floorLevel === 'first' ? '1st Floor' :
-                         formData.floorLevel === 'second' ? '2nd Floor' : 'Above 2nd'}
+                        {formData.floorLevel === 'ground' ? 'Ground Floor' :
+                          formData.floorLevel === 'first' ? '1st Floor' :
+                            formData.floorLevel === 'second' ? '2nd Floor' : 'Above 2nd'}
                       </td>
                     </tr>
                     <tr>
                       <td style={{ padding: '3px 0', fontWeight: 'bold' }}>Access:</td>
                       <td style={{ padding: '3px 0' }}>
                         {formData.tankerAccess === 'easy' ? 'Easy Access' :
-                         formData.tankerAccess === 'narrow' ? 'Narrow Road' : 'Parking Restricted'}
+                          formData.tankerAccess === 'narrow' ? 'Narrow Road' : 'Parking Restricted'}
                       </td>
                     </tr>
                   </tbody>
@@ -511,37 +472,28 @@ export function WaterTankerBooking() {
 
             {/* Footer */}
             <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '2px solid #000', textAlign: 'center', fontSize: '10px', color: '#666' }}>
-              <p style={{ margin: '1px 0', fontWeight: 'bold' }}>SUVIDHA - Government of India Digital Services Portal</p>
-              <p style={{ margin: '1px 0' }}>For queries: 1800-XXX-XXXX | water@suvidha.gov.in</p>
+              <p style={{ margin: '1px 0', fontWeight: 'bold' }}>NextGen Seva - Government of India Digital Services Portal</p>
+              <p style={{ margin: '1px 0' }}>For queries: 1800-XXX-XXXX | water@NextGen Seva.gov.in</p>
               <p style={{ margin: '1px 0', fontSize: '9px', fontStyle: 'italic' }}>Computer-generated receipt - No signature required</p>
             </div>
           </div>
         </div>
 
         {/* Screen Display */}
-        <div className="bg-gradient-to-br from-cyan-50 via-blue-50 to-white flex items-center justify-center p-2 sm:p-4 min-h-[calc(100dvh-220px)]">
-          <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-6 max-w-sm w-full lg:-translate-y-8 transition-transform">
+        <div className="h-screen bg-linear-to-br from-cyan-50 via-blue-50 to-white flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
             <div className="text-center">
-              <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-10 h-10 text-cyan-600" />
+              <div className="w-20 h-20 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-12 h-12 text-cyan-600" />
               </div>
-<<<<<<< Updated upstream:frontend/kiosk/src/screens/WaterTankerBooking.tsx
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
-              <div className="bg-cyan-50 border-2 border-cyan-200 rounded-lg p-4 mb-6">
-                <p className="text-sm font-semibold text-gray-600 mb-1">Booking ID</p>
-                <p className="text-2xl font-bold text-cyan-600">{bookingId}</p>
-              </div>
-              <p className="text-gray-600 mb-6">
-                Your water tanker has been booked successfully. You will receive a confirmation SMS shortly.
-=======
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 {bookingId.startsWith('QUEUED-') ? 'Booking Enqueued!' : 'Booking Confirmed!'}
               </h2>
-              <div className="bg-cyan-50 border-2 border-cyan-200 rounded-lg p-3 sm:p-4 mb-5">
+              <div className="bg-cyan-50 border-2 border-cyan-200 rounded-lg p-4 mb-6">
                 <p className="text-sm font-semibold text-gray-600 mb-1">
                   {bookingId.startsWith('QUEUED-') ? 'Temporary Reference ID' : 'Booking ID'}
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-cyan-600 font-mono">{bookingId}</p>
+                <p className="text-2xl font-bold text-cyan-600 font-mono">{bookingId}</p>
               </div>
 
               {bookingId.startsWith('QUEUED-') && (
@@ -554,13 +506,12 @@ export function WaterTankerBooking() {
                 </div>
               )}
 
-              <p className="text-gray-600 mb-5 font-medium">
+              <p className="text-gray-600 mb-6 font-medium">
                 {bookingId.startsWith('QUEUED-')
                   ? 'Your water tanker booking has been enqueued. Please keep this ID for your records.'
                   : 'Your water tanker has been booked successfully. You will receive a confirmation SMS shortly.'}
->>>>>>> Stashed changes:frontend/src/pages/nextgen-seva/WaterTankerBooking.jsx
               </p>
-              
+
               <div className="space-y-3">
                 <TouchButton
                   variant="primary"
@@ -569,15 +520,14 @@ export function WaterTankerBooking() {
                   onClick={handlePrintReceipt}
                   className="w-full"
                 >
-                  <span className="sm:hidden">Download Receipt</span>
-                  <span className="hidden sm:inline">Print Receipt</span>
+                  Print Receipt
                 </TouchButton>
-                
+
                 <TouchButton
                   variant="secondary"
                   size="large"
                   icon={<Home className="w-5 h-5" />}
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/nextgen-seva/dashboard')}
                   className="w-full"
                 >
                   Back to Dashboard
@@ -591,13 +541,13 @@ export function WaterTankerBooking() {
   }
 
   return (
-    <KioskLayout mainBottomOffset="7.25rem">
-      <div className="bg-gradient-to-br from-cyan-50 via-blue-50 to-white p-4">
+    <KioskLayout>
+      <div className="min-h-screen bg-linear-to-br from-cyan-50 via-blue-50 to-white p-4">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/nextgen-seva/dashboard')}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
             >
               <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -613,12 +563,28 @@ export function WaterTankerBooking() {
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div
                 key={i + 1}
-                className={`flex-1 h-2 rounded-full transition-colors ${
-                  i + 1 <= currentStep ? 'bg-cyan-500' : 'bg-gray-300'
-                }`}
+                className={`flex-1 h-2 rounded-full transition-colors ${i + 1 <= currentStep ? 'bg-cyan-500' : 'bg-gray-300'
+                  }`}
               />
             ))}
           </div>
+
+          {!isOnline && (
+            <div className="mb-6 bg-orange-600 text-white rounded-2xl shadow-lg p-5 flex items-center justify-between overflow-hidden relative border-2 border-orange-500">
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="bg-white/20 p-2 rounded-xl">
+                  <WifiOff className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black uppercase tracking-wider text-sm">Offline Mode Active</h3>
+                  <p className="text-xs opacity-90 font-medium">Bookings will be enqueued and synced when online.</p>
+                </div>
+              </div>
+              <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
+                <Droplets className="w-24 h-24 text-white" />
+              </div>
+            </div>
+          )}
 
           {/* Form Content */}
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
@@ -638,9 +604,8 @@ export function WaterTankerBooking() {
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => handleFieldChange('fullName', e.target.value)}
-                    className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                      formErrors.fullName ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.fullName ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     placeholder="Enter your full name"
                   />
                   {formErrors.fullName && <p className="text-xs text-red-600 mt-1">{formErrors.fullName}</p>}
@@ -652,9 +617,8 @@ export function WaterTankerBooking() {
                     type="tel"
                     value={formData.mobileNumber}
                     onChange={(e) => handleFieldChange('mobileNumber', e.target.value)}
-                    className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                      formErrors.mobileNumber ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.mobileNumber ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     placeholder="10-digit mobile number"
                     maxLength={10}
                   />
@@ -691,9 +655,8 @@ export function WaterTankerBooking() {
                       type="text"
                       value={formData.houseNumber}
                       onChange={(e) => handleFieldChange('houseNumber', e.target.value)}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                        formErrors.houseNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.houseNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="House number"
                     />
                     {formErrors.houseNumber && <p className="text-xs text-red-600 mt-1">{formErrors.houseNumber}</p>}
@@ -705,9 +668,8 @@ export function WaterTankerBooking() {
                       type="text"
                       value={formData.buildingSocietyName}
                       onChange={(e) => handleFieldChange('buildingSocietyName', e.target.value)}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                        formErrors.buildingSocietyName ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.buildingSocietyName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Building or society name"
                     />
                     {formErrors.buildingSocietyName && <p className="text-xs text-red-600 mt-1">{formErrors.buildingSocietyName}</p>}
@@ -720,9 +682,8 @@ export function WaterTankerBooking() {
                     type="text"
                     value={formData.street}
                     onChange={(e) => handleFieldChange('street', e.target.value)}
-                    className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                      formErrors.street ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.street ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     placeholder="Street or locality"
                   />
                   {formErrors.street && <p className="text-xs text-red-600 mt-1">{formErrors.street}</p>}
@@ -737,9 +698,8 @@ export function WaterTankerBooking() {
                         setFormData({ ...formData, state: e.target.value, city: '' });
                         if (formErrors.state) setFormErrors({ ...formErrors, state: '', city: '' });
                       }}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                        formErrors.state ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.state ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     >
                       <option value="">Select State</option>
                       {INDIAN_STATES.map((state) => (
@@ -760,9 +720,8 @@ export function WaterTankerBooking() {
                         if (formErrors.city) setFormErrors({ ...formErrors, city: '' });
                       }}
                       disabled={!formData.state}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                        formErrors.city ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${formErrors.city ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     >
                       <option value="">
                         {formData.state ? 'Select City' : 'Select State First'}
@@ -786,9 +745,8 @@ export function WaterTankerBooking() {
                       type="text"
                       value={formData.pincode}
                       onChange={(e) => handleFieldChange('pincode', e.target.value)}
-                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                        formErrors.pincode ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.pincode ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="6-digit pincode"
                       maxLength={6}
                     />
@@ -831,11 +789,10 @@ export function WaterTankerBooking() {
                       <button
                         key={option.value}
                         onClick={() => handleFieldChange('propertyType', option.value)}
-                        className={`p-3 rounded-lg border-2 font-semibold transition ${
-                          formData.propertyType === option.value
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                        }`}
+                        className={`p-3 rounded-lg border-2 font-semibold transition ${formData.propertyType === option.value
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -856,11 +813,10 @@ export function WaterTankerBooking() {
                       <button
                         key={option.value}
                         onClick={() => handleFieldChange('floorLevel', option.value)}
-                        className={`p-3 rounded-lg border-2 font-semibold transition ${
-                          formData.floorLevel === option.value
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                        }`}
+                        className={`p-3 rounded-lg border-2 font-semibold transition ${formData.floorLevel === option.value
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -879,11 +835,10 @@ export function WaterTankerBooking() {
                       <button
                         key={option.value}
                         onClick={() => handleFieldChange('tankerAccess', option.value)}
-                        className={`p-3 rounded-lg border-2 font-semibold transition ${
-                          formData.tankerAccess === option.value
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                        }`}
+                        className={`p-3 rounded-lg border-2 font-semibold transition ${formData.tankerAccess === option.value
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -916,11 +871,10 @@ export function WaterTankerBooking() {
                       <button
                         key={option.value}
                         onClick={() => handleFieldChange('waterQuantity', option.value)}
-                        className={`p-3 rounded-lg border-2 font-semibold transition ${
-                          formData.waterQuantity === option.value
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                        }`}
+                        className={`p-3 rounded-lg border-2 font-semibold transition ${formData.waterQuantity === option.value
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -941,11 +895,10 @@ export function WaterTankerBooking() {
                       <button
                         key={option.value}
                         onClick={() => handleFieldChange('waterType', option.value)}
-                        className={`p-3 rounded-lg border-2 font-semibold transition text-sm ${
-                          formData.waterType === option.value
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                        }`}
+                        className={`p-3 rounded-lg border-2 font-semibold transition text-sm ${formData.waterType === option.value
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -967,11 +920,10 @@ export function WaterTankerBooking() {
                       <button
                         key={option.value}
                         onClick={() => handleFieldChange('waterPurpose', option.value)}
-                        className={`p-3 rounded-lg border-2 font-semibold transition text-sm ${
-                          formData.waterPurpose === option.value
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                        }`}
+                        className={`p-3 rounded-lg border-2 font-semibold transition text-sm ${formData.waterPurpose === option.value
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -1002,11 +954,10 @@ export function WaterTankerBooking() {
                       <button
                         key={option.value}
                         onClick={() => handleFieldChange('deliveryType', option.value)}
-                        className={`p-3 rounded-lg border-2 font-semibold transition ${
-                          formData.deliveryType === option.value
-                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                        }`}
+                        className={`p-3 rounded-lg border-2 font-semibold transition ${formData.deliveryType === option.value
+                          ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -1022,9 +973,8 @@ export function WaterTankerBooking() {
                         type="date"
                         value={formData.deliveryDate}
                         onChange={(e) => handleFieldChange('deliveryDate', e.target.value)}
-                        className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                          formErrors.deliveryDate ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                        className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${formErrors.deliveryDate ? 'border-red-500' : 'border-gray-300'
+                          }`}
                         min={new Date().toISOString().split('T')[0]}
                       />
                       {formErrors.deliveryDate && <p className="text-xs text-red-600 mt-1">{formErrors.deliveryDate}</p>}
@@ -1041,11 +991,10 @@ export function WaterTankerBooking() {
                           <button
                             key={option.value}
                             onClick={() => handleFieldChange('deliveryTime', option.value)}
-                            className={`p-3 rounded-lg border-2 font-semibold transition whitespace-pre-line text-sm ${
-                              formData.deliveryTime === option.value
-                                ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                                : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
-                            }`}
+                            className={`p-3 rounded-lg border-2 font-semibold transition whitespace-pre-line text-sm ${formData.deliveryTime === option.value
+                              ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-cyan-300'
+                              }`}
                           >
                             {option.label}
                           </button>
@@ -1074,11 +1023,10 @@ export function WaterTankerBooking() {
                     <button
                       key={facility.id}
                       onClick={() => setSelectedFacility(facility.id)}
-                      className={`w-full p-4 rounded-lg border-2 text-left transition ${
-                        selectedFacility === facility.id
-                          ? 'border-cyan-500 bg-cyan-50'
-                          : 'border-gray-300 bg-white hover:border-cyan-300'
-                      }`}
+                      className={`w-full p-4 rounded-lg border-2 text-left transition ${selectedFacility === facility.id
+                        ? 'border-cyan-500 bg-cyan-50'
+                        : 'border-gray-300 bg-white hover:border-cyan-300'
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -1219,13 +1167,12 @@ export function WaterTankerBooking() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex gap-2 sm:gap-4 justify-between pb-3 sm:pb-0">
+          <div className="flex gap-4 justify-between">
             <TouchButton
               variant="secondary"
-              size="medium"
+              size="large"
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className="px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base"
             >
               ← Previous
             </TouchButton>
@@ -1233,18 +1180,16 @@ export function WaterTankerBooking() {
             {currentStep === totalSteps ? (
               <TouchButton
                 variant="primary"
-                size="medium"
+                size="large"
                 onClick={handleSubmit}
-                className="px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base"
               >
                 ✓ Confirm Booking
               </TouchButton>
             ) : (
               <TouchButton
                 variant="primary"
-                size="medium"
+                size="large"
                 onClick={handleNext}
-                className="px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base"
               >
                 Next →
               </TouchButton>
