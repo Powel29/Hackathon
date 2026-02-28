@@ -21,9 +21,10 @@ const BASE_COMMANDS = [
   { intent: 'help', phrases: ['help', 'support', 'i need help', 'assistance', 'what do i do'] },
   { intent: 'change-language', phrases: ['change language', 'switch language', 'language'] },
   { intent: 'logout', phrases: ['logout', 'log out', 'end session', 'exit', 'quit'] },
-  { intent: 'pay-bill', phrases: ['pay bill', 'bill payment', 'pay bills'] },
-  { intent: 'register-complaint', phrases: ['register complaint', 'file complaint', 'complaint'] },
-  { intent: 'track-request', phrases: ['track request', 'check status', 'track order', 'status'] },
+  { intent: 'pay-bill', phrases: ['pay bill', 'bill payment', 'pay bills', 'electricity', 'water', 'gas', 'power'] },
+  { intent: 'register-complaint', phrases: ['register complaint', 'file complaint', 'complaint', 'problem', 'issue'] },
+  { intent: 'track-request', phrases: ['track request', 'check status', 'track order', 'status', 'check status'] },
+  { intent: 'new-connection', phrases: ['new connection', 'apply', 'request connection'] },
 ];
 
 // Multilingual command phrases
@@ -86,12 +87,13 @@ const ROUTE_HINTS = {
  * Extract number from transcript (handles digits and words)
  */
 function extractNumber(text) {
-  const match = text.match(/\b([0-5])\b/);
+  const match = text.match(/\b([0-9])\b/);
   if (match) return parseInt(match[1]);
 
   const words = {
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-    'first': 0, 'second': 1, 'third': 2, 'fourth': 3, 'fifth': 4,
+    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+    'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5, 'sixth': 6, 'seventh': 7
   };
   for (const [word, num] of Object.entries(words)) {
     if (text.includes(word)) return num;

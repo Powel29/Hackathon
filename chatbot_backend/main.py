@@ -60,12 +60,36 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
-        "https://yourdomain.com",
+        "https://nextgensevafrontend.vercel.app",
+        "https://nextgensevaadmin.vercel.app",
+        "https://nextgensevachatbotfrontend.vercel.app",
+        os.getenv("FRONTEND_URL"),
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https://*.googleapis.com; "
+        "connect-src 'self' http://localhost:* https://nextgen-seva-backend.onrender.com https://nextgen-seva-chatbot-backend.onrender.com; "
+        "frame-ancestors 'none'; "
+        "object-src 'none';"
+    )
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 
 # ─────────────────────────────────────────────────────────────

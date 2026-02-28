@@ -8,11 +8,28 @@ import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
 import { ArrowLeft, FileText, Upload, Zap, Flame, Droplets, Building2 } from 'lucide-react';
 import { complaintService, documentService } from '../../services/api';
+import { useVoiceStore } from '../../store/useVoiceStore';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function RegisterComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { addComplaint, selectedService, fetchComplaints, user } = useKioskStore();
+
+  useVoiceCommand({
+    'back': () => navigate('/nextgen-seva/dashboard'),
+    'select-number': (cmd) => {
+      const index = cmd.value - 1;
+      if (index >= 0 && index < complaintTypes.length) {
+        const issue = complaintTypes[index];
+        setSelectedIssue(issue);
+        if (!description.includes(issue)) {
+          setDescription(description ? `${issue}. ${description}` : `${issue}. Please provide more details.`);
+        }
+      }
+    },
+    'submit': () => handleSubmit(),
+  });
   const { isOnline } = useNetworkStatus();
   const enqueue = useOfflineStore(s => s.enqueue);
   const [description, setDescription] = useState('');

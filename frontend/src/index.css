@@ -78,7 +78,7 @@
     --secondary: oklch(0.95 0.0058 264.53);
     --secondary-foreground: #030213;
     --muted: #ececf0;
-    --muted-foreground: #717182;
+    --muted-foreground: #767676;
     --accent: #e9ebef;
     --accent-foreground: #030213;
     --destructive: #DC3545;
@@ -516,8 +516,10 @@ html {
     --color-gray-100: oklch(.967 .003 264.542);
     --color-gray-200: oklch(.928 .006 264.531);
     --color-gray-300: oklch(.872 .01 258.338);
-    --color-gray-400: oklch(.707 .022 261.325);
-    --color-gray-500: oklch(.551 .027 264.364);
+    --color-gray-400: oklch(0.54 0 0);
+    /* ~#767676 - WCAG AA Pass */
+    --color-gray-500: oklch(0.54 0 0);
+    /* ~#767676 - WCAG AA Pass */
     --color-gray-600: oklch(.446 .03 256.802);
     --color-gray-700: oklch(.373 .034 259.733);
     --color-gray-900: oklch(.21 .034 264.665);

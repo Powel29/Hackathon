@@ -24,6 +24,9 @@ function getRouteGuidance(pathname, t) {
   if (pathname === '/nextgen-seva/login-register') {
     return t('voice.guidance.loginRegister');
   }
+  if (pathname === '/nextgen-seva/service-selection') {
+    return t('voice.guidance.serviceSelection');
+  }
   if (pathname === '/nextgen-seva/dashboard') {
     return t('voice.guidance.dashboard');
   }
@@ -33,8 +36,14 @@ function getRouteGuidance(pathname, t) {
   if (pathname === '/nextgen-seva/register-complaint') {
     return t('voice.guidance.complaint');
   }
+  if (pathname === '/nextgen-seva/track-complaint') {
+    return t('voice.guidance.trackComplaint');
+  }
   if (pathname === '/nextgen-seva/new-connection') {
     return t('voice.guidance.connection');
+  }
+  if (pathname === '/nextgen-seva/track-new-connection') {
+    return t('voice.guidance.trackConnection');
   }
   return t('voice.guidance.generic');
 }
@@ -162,7 +171,7 @@ export function VoiceEngine() {
       }
 
       let fallback = t('voice.errors.recognitionError');
-      
+
       // Provide specific error messages
       if (event.error === 'network') {
         fallback = t('voice.errors.networkError') || 'Network error. Please check your connection.';
@@ -171,7 +180,7 @@ export function VoiceEngine() {
       } else if (event.error === 'permission-denied') {
         fallback = t('voice.errors.permissionDenied') || 'Microphone permission denied.';
       }
-      
+
       setCommandFailed(fallback);
       stopListening();
     };
@@ -215,7 +224,7 @@ export function VoiceEngine() {
     if (isListening && voiceStatus !== 'processing') {
       try {
         recognition.start();
-        
+
         // Set timeout for recognition (12 seconds)
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);

@@ -189,7 +189,7 @@ export function KioskLayout({
                         </div>
 
                         {/* Center: Credits */}
-                        <p className="text-xs text-gray-400 easy-mode-hide hidden md:block">
+                        <p className="text-xs text-gray-600 easy-mode-hide hidden md:block">
                             © 2026 NextGen Seva | Government of India
                         </p>
 

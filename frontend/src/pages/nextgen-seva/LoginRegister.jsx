@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
@@ -10,12 +9,37 @@ import { ArrowLeft, WifiOff, ShieldOff } from 'lucide-react';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import * as authService from '../../services/api/auth.service';
 import { toast } from 'sonner';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function LoginRegister() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isOnline } = useNetworkStatus();
   const { setRegistrationData, setUser } = useKioskStore();
+
+  useVoiceCommand({
+    'back': () => {
+      if (mode === 'choice') navigate('/nextgen-seva');
+      else if (mode === 'otp') setMode(loginType ? 'login' : 'register');
+      else setMode('choice');
+    },
+    'next': () => {
+      if (mode === 'register') handleNext();
+      else if (mode === 'login' && loginCredential) handleLoginSubmit();
+    },
+    'submit': () => {
+      if (mode === 'otp') handleOtpVerify();
+      else if (mode === 'register') handleNext();
+      else if (mode === 'login') handleLoginSubmit();
+    },
+    'select-number': (cmd) => {
+      if (mode === 'choice') {
+        if (cmd.value === 1) setMode('login');
+        if (cmd.value === 2) setMode('register');
+      }
+    }
+  });
+
   const [mode, setMode] = useState('choice');
   const [step, setStep] = useState(1);
   const [loginType, setLoginType] = useState(null);
@@ -251,7 +275,7 @@ export function LoginRegister() {
       const userData = isRegistration ? formData : null;
       console.log('🔵 Verifying OTP:', { loginCredential, otpValue, userData });
 
-      const verifyResponse = await axios.post("http://localhost:5000/api/payment/verify-payment", {
+      const verifyResponse = await authService.verifyOTP({
         aadhaarNumber: loginCredential,
         otp: otpValue,
         userData: userData,
@@ -333,6 +357,7 @@ export function LoginRegister() {
             <button
               onClick={() => navigate('/nextgen-seva')}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
+              aria-label={t('common.back')}
             >
               <ArrowLeft className="w-4 h-4" />
               {t('common.back')}
@@ -437,6 +462,7 @@ export function LoginRegister() {
                 setErrors({});
               }}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
+              aria-label={t('common.back')}
             >
               <ArrowLeft className="w-4 h-4" />
               {t('common.back')}
@@ -687,6 +713,7 @@ export function LoginRegister() {
                 setLoginCredential('');
               }}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
+              aria-label={t('common.back')}
             >
               <ArrowLeft className="w-4 h-4" />
               {t('common.back')}

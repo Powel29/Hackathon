@@ -7,7 +7,6 @@ import { kioskService } from './services/api/kiosk.service';
 import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
 import ChatWidget from './components/nextgen-seva/ChatWidget';
-import { VoiceAssistProvider } from './providers/VoiceAssistProvider';
 import './i18n';
 
 function App() {

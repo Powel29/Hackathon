@@ -61,7 +61,7 @@ export function TouchButton({
     ].join(' ');
 
     const variantClasses = {
-        primary: 'bg-[#0066CC] text-white hover:bg-[#0052A3] active:bg-[#004080]',
+        primary: 'bg-[#005CBF] text-white hover:bg-[#004EA3] active:bg-[#004080]',
         secondary: 'bg-gray-100 text-[#212529] hover:bg-gray-200 active:bg-gray-300 border border-gray-300',
         success: 'bg-[#28A745] text-white hover:bg-[#218838] active:bg-[#1e7e34]',
         danger: 'bg-[#DC3545] text-white hover:bg-[#c82333] active:bg-[#bd2130]',

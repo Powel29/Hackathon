@@ -3,12 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 import nextgenSevaLogo from '../../assets/logo2.png';
 
 export function LanguageSelection() {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { language, setLanguage } = useKioskStore();
+
+    useVoiceCommand({
+        'select-number': (cmd) => {
+            const index = cmd.value - 1; // Voice is 1-based usually
+            if (index >= 0 && index < languages.length) {
+                handleLanguageSelect(languages[index].code);
+            }
+        },
+        'next': () => handleContinue(),
+        'help': () => { /* VoiceEngine handles guidance */ }
+    });
 
     const languages = [
         { code: 'en', name: 'English', nativeName: 'English' },
@@ -72,7 +84,7 @@ export function LanguageSelection() {
                                     <p className="text-base font-bold text-[#212529]">
                                         {lang.nativeName}
                                     </p>
-                                    <p className="text-xs text-gray-500">{lang.name}</p>
+                                    <p className="text-xs text-gray-600 font-medium">{lang.name}</p>
                                 </div>
                                 {language === lang.code && (
                                     <div className="w-5 h-5 bg-[#28A745] rounded-full flex items-center justify-center">
@@ -93,7 +105,7 @@ export function LanguageSelection() {
                         {t('language.continue')}
                     </TouchButton>
 
-                    <p className="text-center text-xs text-gray-500 mt-6 leading-relaxed">
+                    <p className="text-center text-xs text-gray-600 mt-6 leading-relaxed">
                         Touch your preferred language to continue<br />
                         अपनी पसंदीदा भाषा को स्पर्श करें | ನಿಮ್ಮ ಆದ್ಯತೆಯ ಭಾಷೆಯನ್ನು ಸ್ಪರ್ಶಿಸಿ<br />
                         உங்கள் விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்

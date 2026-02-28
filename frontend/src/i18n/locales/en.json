@@ -543,7 +543,10 @@
       "dashboard": "Choose a service card like Pay Bills, Register Complaint, or Track Request.",
       "bills": "Review your bill details and tap Proceed to Pay when ready.",
       "complaint": "Select complaint type, add details, then submit.",
+      "trackComplaint": "Search your complaint by ID or select from the list.",
       "connection": "Complete each step and tap Next to continue your connection request.",
+      "trackConnection": "Search your connection application by ID or select from the list.",
+      "serviceSelection": "Select the service you want to access, like Electricity, Gas, or Water.",
       "generic": "Use touch controls or say Help for guidance.",
       "noPrevious": "There is no previous guidance to repeat."
     }

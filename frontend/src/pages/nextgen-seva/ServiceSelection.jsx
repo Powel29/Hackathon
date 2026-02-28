@@ -6,12 +6,25 @@ import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { ServiceCard } from '../../components/nextgen-seva/ServiceCard';
 import { Zap, Flame, Droplets, Building2, ArrowLeft, WifiOff, Clock } from 'lucide-react';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function ServiceSelection() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { setSelectedService, isAuthenticated } = useKioskStore();
     const { isOnline } = useNetworkStatus();
+
+    useVoiceCommand({
+        'back': () => navigate('/nextgen-seva/login-register'),
+        'select-number': (cmd) => {
+            const index = cmd.value - 1;
+            if (index >= 0 && index < services.length) {
+                handleServiceSelect(services[index].id);
+            }
+        },
+        'pay-bill': () => handleServiceSelect('electricity'), // Default or contextual
+        'register-complaint': () => handleServiceSelect('municipal'),
+    });
 
 
     // Check if user is authenticated, if not redirect to login
