@@ -82,18 +82,7 @@ function ComplaintDetailModal({ complaint, onClose }) {
     const statusColors = {
         open: '#E65100', in_progress: '#1565C0', resolved: '#2E7D32', closed: '#546E7A'
     };
-    const slaRemaining = () => {
-        const deadline = new Date(complaint.slaDeadline).getTime();
-        const now = Date.now();
-        const diff = deadline - now;
-        if (diff < 0)
-            return { label: 'SLA Breached', color: 'var(--danger)' };
-        const hrs = Math.floor(diff / 3600000);
-        const mins = Math.floor((diff % 3600000) / 60000);
-        const pct = Math.max(0, Math.min(100, (diff / (4 * 3600000)) * 100));
-        return { label: `${hrs}h ${mins}m remaining`, color: pct > 50 ? 'var(--success)' : pct > 25 ? 'var(--warning)' : 'var(--danger)', pct };
-    };
-    const sla = slaRemaining();
+
     return (<div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
         <div className="modal modal-lg">
             {/* Header */}
@@ -144,18 +133,7 @@ function ComplaintDetailModal({ complaint, onClose }) {
                         <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.6, background: '#fff', padding: 10, borderRadius: 8, border: '1px solid var(--border)' }}>
                             {complaint.description}
                         </div>
-                        {/* SLA */}
-                        <div style={{ marginTop: 12, background: '#fff', borderRadius: 8, padding: 10, border: '1px solid var(--border)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                <span style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <Clock size={11} /> SLA Status
-                                </span>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: sla.color }}>{sla.label}</span>
-                            </div>
-                            {sla.pct !== undefined && (<div style={{ height: 4, background: '#E2E8F0', borderRadius: 2 }}>
-                                <div style={{ height: '100%', width: `${sla.pct}%`, background: sla.color, borderRadius: 2, transition: 'width 0.3s' }} />
-                            </div>)}
-                        </div>
+
                     </div>
                 </div>
 
@@ -292,9 +270,6 @@ export function ComplaintsModule() {
             if (sortBy === 'createdAt') {
                 compareValue = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             }
-            else if (sortBy === 'slaDeadline') {
-                compareValue = new Date(a.slaDeadline).getTime() - new Date(b.slaDeadline).getTime();
-            }
             else if (sortBy === 'priority') {
                 compareValue = priorityRank[a.priority] - priorityRank[b.priority];
             }
@@ -359,11 +334,6 @@ export function ComplaintsModule() {
         resolved: complaints.filter(c => c.status === 'resolved').length,
     };
     const DEPT_ICONS = { electricity: '⚡', water: '💧', gas: '🔥', municipal: '🏛️' };
-    const isSLANear = (c) => {
-        const diff = new Date(c.slaDeadline).getTime() - Date.now();
-        return diff > 0 && diff < 4 * 3600000;
-    };
-    const isSLABreached = (c) => new Date(c.slaDeadline).getTime() < Date.now();
     const exportBaseList = useMemo(() => {
         return activeDept === 'all' ? complaints : complaints.filter(c => c.serviceType === activeDept);
     }, [complaints, activeDept]);
@@ -420,7 +390,6 @@ export function ComplaintsModule() {
             'Priority',
             'Status',
             'Assigned To',
-            'SLA Deadline',
             'Created At',
             'Admin Notes',
             'Citizen Update Message',
@@ -437,7 +406,6 @@ export function ComplaintsModule() {
             c.priority,
             c.status,
             c.assignedTo,
-            new Date(c.slaDeadline).toISOString(),
             new Date(c.createdAt).toISOString(),
             c.adminNotes,
             c.citizenUpdateMessage,
@@ -564,11 +532,7 @@ export function ComplaintsModule() {
                                 Status {sortIndicator('status')}
                             </button>
                         </th>
-                        <th>
-                            <button className="btn btn-ghost btn-sm" style={{ padding: 0, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('slaDeadline')}>
-                                SLA {sortIndicator('slaDeadline')}
-                            </button>
-                        </th>
+
                         <th>
                             <button className="btn btn-ghost btn-sm" style={{ padding: 0, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('createdAt')}>
                                 Date {sortIndicator('createdAt')}
@@ -603,9 +567,7 @@ export function ComplaintsModule() {
                         </td>
                         <td><span className={`badge priority-${c.priority}`}>{c.priority}</span></td>
                         <td><span className={`badge badge-${c.status}`}>{c.status.replace('_', ' ')}</span></td>
-                        <td>
-                            {isSLABreached(c) ? (<span style={{ fontSize: 11, color: 'var(--danger)', fontWeight: 700 }}>🔴 Breached</span>) : isSLANear(c) ? (<span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 700 }}>⚠️ Near</span>) : (<span style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600 }}>🟢 OK</span>)}
-                        </td>
+
                         <td style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                             {new Date(c.createdAt).toLocaleDateString('en-IN')}
                         </td>

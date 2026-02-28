@@ -6,6 +6,9 @@ const prisma = require('../utils/prismaClient');
  */
 exports.verifyToken = async (req, res, next) => {
     try {
+        if (req.method === 'OPTIONS') {
+            return next();
+        }
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {

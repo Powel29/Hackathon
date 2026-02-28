@@ -2,8 +2,8 @@
 node_modules
 .env
 .env.*
-**/ .env
-**/ .env.local
+**/.env
+**/.env.local
 
 # OS files
 .DS_Store

@@ -56,12 +56,12 @@ export const useAdminStore = create()(persist((set, get) => {
         fetchAllData: async () => {
             try {
                 const [comp, conn, bills, reqs, alerts, kiosks] = await Promise.all([
-                    axios.get('/admin/complaints'),
-                    axios.get('/admin/connections'),
-                    axios.get('/admin/bills'),
-                    axios.get('/admin/requests'),
-                    axios.get('/admin/alerts'),
-                    axios.get('/admin/kiosks')
+                    axios.get('/api/admin/complaints'),
+                    axios.get('/api/admin/connections'),
+                    axios.get('/api/admin/bills'),
+                    axios.get('/api/admin/requests'),
+                    axios.get('/api/admin/alerts'),
+                    axios.get('/api/admin/kiosks')
                 ]);
 
                 // Transform DB alerts back to the categorized object the UI expects
@@ -105,7 +105,7 @@ export const useAdminStore = create()(persist((set, get) => {
         // Secure login via backend API
         loginAdmin: async (deptId, password) => {
             try {
-                const resp = await axios.post('/admin/login', { deptId, password });
+                const resp = await axios.post('/api/admin/login', { deptId, password });
                 if (resp.data && resp.data.success && resp.data.user) {
                     const { user, token } = resp.data;
                     // Attach JWT to all future axios requests
@@ -127,7 +127,7 @@ export const useAdminStore = create()(persist((set, get) => {
         searchCitizen: async (query) => {
             try {
                 if (!query || !query.trim()) return [];
-                const resp = await axios.get(`/admin/citizens/search?q=${encodeURIComponent(query)}`);
+                const resp = await axios.get(`/api/admin/citizens/search?q=${encodeURIComponent(query)}`);
                 if (resp.data && resp.data.success) {
                     return resp.data.data || [];
                 }
@@ -153,7 +153,7 @@ export const useAdminStore = create()(persist((set, get) => {
                 localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
-            try { await axios.put(`/admin/complaints/${id}`, { status, adminNotes, citizenMessage, by, assignedTo }); } catch (e) { console.error(e); }
+            try { await axios.put(`/api/admin/complaints/${id}`, { status, adminNotes, citizenMessage, by, assignedTo }); } catch (e) { console.error(e); }
         },
         bulkUpdateComplaintStatus: (ids, status, by) => {
             set((state) => {
@@ -220,7 +220,7 @@ export const useAdminStore = create()(persist((set, get) => {
         },
         createBill: async (billData) => {
             try {
-                const resp = await axios.post('/admin/bills', billData);
+                const resp = await axios.post('/api/admin/bills', billData);
                 if (resp.data && resp.data.success) {
                     await get().fetchAllData();
                     return true;
@@ -232,7 +232,7 @@ export const useAdminStore = create()(persist((set, get) => {
         },
         updateBillStatus: async (id, status, serviceType) => {
             try {
-                const resp = await axios.put(`/admin/bills/${id}`, { status, serviceType });
+                const resp = await axios.put(`/api/admin/bills/${id}`, { status, serviceType });
                 if (resp.data.success) {
                     set((state) => ({
                         bills: state.bills.map(b => b.id === id ? { ...b, status } : b)
@@ -255,7 +255,7 @@ export const useAdminStore = create()(persist((set, get) => {
                 localStorage.setItem('NextGen Seva_connections', JSON.stringify(updated));
                 return { connections: updated };
             });
-            try { await axios.put(`/admin/connections/${id}`, { status, notes, rejectionReason }); } catch (e) { console.error(e); }
+            try { await axios.put(`/api/admin/connections/${id}`, { status, notes, rejectionReason }); } catch (e) { console.error(e); }
         },
         updateRequestStatus: async (id, status, assignedTo, notes, scheduledDate) => {
             set((state) => ({
@@ -268,7 +268,7 @@ export const useAdminStore = create()(persist((set, get) => {
                     return { ...r, status, assignedTo, adminNotes: notes, scheduledDate, statusHistory: [...r.statusHistory, newHistory] };
                 })
             }));
-            try { await axios.put(`/admin/requests/${id}`, { status, assignedTo, notes, scheduledDate }); } catch (e) { console.error(e); }
+            try { await axios.put(`/api/admin/requests/${id}`, { status, assignedTo, notes, scheduledDate }); } catch (e) { console.error(e); }
         },
         saveDeptAlert: async (dept, alertCategory, alertId, updates) => {
             // Optimistic UI update
@@ -282,7 +282,7 @@ export const useAdminStore = create()(persist((set, get) => {
             });
 
             try {
-                await axios.put(`/admin/alerts/${alertId}`, updates);
+                await axios.put(`/api/admin/alerts/${alertId}`, updates);
             } catch (err) {
                 console.error("Failed to save alert to backend", err);
                 // Refresh data to revert to server state
@@ -291,7 +291,7 @@ export const useAdminStore = create()(persist((set, get) => {
         },
         addDeptAlert: async (dept, alertCategory, alert) => {
             try {
-                const resp = await axios.post('/admin/alerts', {
+                const resp = await axios.post('/api/admin/alerts', {
                     ...alert,
                     serviceType: dept,
                     alertType: alertCategory
@@ -331,7 +331,7 @@ export const useAdminStore = create()(persist((set, get) => {
             });
 
             try {
-                await axios.delete(`/admin/alerts/${alertId}`);
+                await axios.delete(`/api/admin/alerts/${alertId}`);
             } catch (err) {
                 console.error("Failed to delete alert from backend", err);
                 await get().fetchAllData();
