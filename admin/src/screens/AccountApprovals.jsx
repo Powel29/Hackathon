@@ -89,7 +89,7 @@ function ApproveModal({ request, onClose, onApproved }) {
         setLoading(true);
         setError('');
         try {
-            const { data } = await axios.post(`/api/admin/account-requests/${request.id}/approve`, { accountData: formData, adminNotes });
+            const { data } = await axios.post(`/admin/account-requests/${request.id}/approve`, { accountData: formData, adminNotes });
             if (!data.success) throw new Error(data.message || 'Approval failed');
             onApproved(request.id);
             onClose();
@@ -193,7 +193,7 @@ export function AccountApprovals() {
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`/api/admin/account-requests?status=${statusFilter}`);
+            const { data } = await axios.get(`/admin/account-requests?status=${statusFilter}`);
             if (data.success) setRequests(data.requests);
         } catch (err) {
             console.error('Failed to fetch account requests:', err);
@@ -206,7 +206,7 @@ export function AccountApprovals() {
 
     const handleReject = async (id) => {
         try {
-            const { data } = await axios.post(`/api/admin/account-requests/${id}/reject`, { adminNotes: rejectNote });
+            const { data } = await axios.post(`/admin/account-requests/${id}/reject`, { adminNotes: rejectNote });
             if (data.success) {
                 setRequests(prev => prev.filter(r => r.id !== id));
                 setRejectingId(null);

@@ -250,7 +250,7 @@ export function LoginRegister() {
       const userData = isRegistration ? formData : null;
       console.log('🔵 Verifying OTP:', { loginCredential, otpValue, userData });
 
-      const verifyResponse = await authService.verifyOTP({
+      const verifyResponse = await axios.post("http://localhost:5000/api/payment/verify-payment", {
         aadhaarNumber: loginCredential,
         otp: otpValue,
         userData: userData,
