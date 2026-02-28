@@ -163,7 +163,16 @@ export function Dashboard() {
     'logout': handleLogout,
     'pay-bill': () => navigate('/nextgen-seva/bills'),
     'register-complaint': () => navigate('/nextgen-seva/register-complaint'),
-    'track-request': () => navigate('/nextgen-seva/track-request')
+    'track-request': () => navigate('/nextgen-seva/track-request'),
+    'new-connection': () => navigate('/nextgen-seva/new-connection'),
+    'select-number': (cmd) => {
+      const index = cmd.value - 1;
+      if (index >= 0 && index < actions.length) {
+        navigate(actions[index].route);
+      }
+    },
+    'back': () => navigate('/nextgen-seva/service-selection'),
+    'home': () => navigate('/nextgen-seva/dashboard')
   });
 
   return (

@@ -147,14 +147,14 @@ export function SyncQueuePanel({ isOpen, onClose }) {
 
                     {/* Queue List */}
                     <div className="space-y-3">
-                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+                        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wider">
                             {t('offline.recentActivity', 'Recent Activity')}
                         </h3>
 
                         {syncQueue.length === 0 ? (
                             <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                                 <Database className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                <p className="text-gray-500">{t('offline.queueEmpty', 'No pending operations')}</p>
+                                <p className="text-gray-600">{t('offline.queueEmpty', 'No pending operations')}</p>
                             </div>
                         ) : (
                             <div className="space-y-3">

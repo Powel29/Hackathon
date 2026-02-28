@@ -7,13 +7,13 @@ const validate = require('../middlewares/validateRequest');
 const rateLimit = require("express-rate-limit");
 
 const otpLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 10, // Limit each IP to 3 OTP requests per windowMs
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 100, // Limit each IP to 100 OTP requests per windowMs
     message: {
         success: false,
         error: {
             code: 'RATE_LIMIT',
-            message: 'Too many OTP requests from this IP, please try again after 10 minutes'
+            message: 'Too many OTP requests from this IP, please try again after 5 minutes'
         }
     }
 });

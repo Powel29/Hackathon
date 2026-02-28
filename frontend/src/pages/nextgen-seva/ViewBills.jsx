@@ -8,10 +8,47 @@ import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
 import { BillFilterModal } from '../../components/nextgen-seva/BillFilterModal';
 import { ArrowLeft, FileText, AlertCircle, CheckCircle, Clock, WifiOff, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function ViewBills() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  useVoiceCommand({
+    'back': () => navigate('/nextgen-seva/dashboard'),
+    'select-number': (cmd) => {
+      const index = cmd.value - 1;
+      if (index >= 0 && index < filteredBills.length) {
+        setExpandedBill(filteredBills[index].id);
+      }
+    },
+    'pay-bill': () => {
+      if (expandedBill) {
+        const bill = filteredBills.find(b => b.id === expandedBill);
+        if (bill && bill.status?.toLowerCase() !== 'paid') {
+          if (bill.serviceType === 'MUNICIPAL' || bill.type === 'MUNICIPAL') {
+            navigate(`/nextgen-seva/pay-property-tax/${bill.id}`);
+          } else {
+            navigate(`/nextgen-seva/pay-bill/${bill.id}`);
+          }
+        }
+      }
+    },
+    'submit': () => {
+      // Usually submit maps to pay-bill in this context
+      if (expandedBill) {
+        const bill = filteredBills.find(b => b.id === expandedBill);
+        if (bill && bill.status?.toLowerCase() !== 'paid') {
+          if (bill.serviceType === 'MUNICIPAL' || bill.type === 'MUNICIPAL') {
+            navigate(`/nextgen-seva/pay-property-tax/${bill.id}`);
+          } else {
+            navigate(`/nextgen-seva/pay-bill/${bill.id}`);
+          }
+        }
+      }
+    }
+  });
+
   const { selectedService, setBills: setStoreBills, bills: cachedBills } = useKioskStore();
   const { isOnline } = useNetworkStatus();
   const [bills, setBills] = useState([]);

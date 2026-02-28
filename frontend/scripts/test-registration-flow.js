@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
 
 // Generate a random mobile number and aadhaar for testing
 const randomMobile = '9' + Math.floor(100000000 + Math.random() * 900000000);

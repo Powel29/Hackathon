@@ -3,12 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
-import nextgenSevaLogo from '../../assets/logo2.png';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
+import nextgenSevaLogo from '../../assets/changed.png';
 
 export function LanguageSelection() {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { language, setLanguage } = useKioskStore();
+
+    useVoiceCommand({
+        'select-number': (cmd) => {
+            const index = cmd.value - 1; // Voice is 1-based usually
+            if (index >= 0 && index < languages.length) {
+                handleLanguageSelect(languages[index].code);
+            }
+        },
+        'next': () => handleContinue(),
+        'help': () => { /* VoiceEngine handles guidance */ }
+    });
 
     const languages = [
         { code: 'en', name: 'English', nativeName: 'English' },
@@ -32,14 +44,13 @@ export function LanguageSelection() {
     return (
         <KioskLayout showLanguageSwitch={false} showHeader={false}>
             <div className="min-h-screen flex flex-col items-center justify-center py-12 bg-gradient-to-br from-[#0066CC] to-[#004080]">
-                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl w-full mx-4">
-                    <div className="flex flex-col items-center justify-center gap-4 mb-8">
-                        <div className="w-32 h-32 flex items-center justify-center overflow-hidden">
-                            <img src={nextgenSevaLogo} alt="NextGen Seva Logo" className="w-full h-full object-contain" />
+                <div className="bg-white rounded-2xl shadow-xl p-6 max-w-4xl w-full mx-4">
+                    <div className="flex flex-col items-center justify-center gap-2 mb-4">
+                        <div className="h-28 sm:h-36 flex items-center justify-center overflow-hidden">
+                            <img src={nextgenSevaLogo} alt="NextGen Seva Logo" className="w-auto h-full object-contain" />
                         </div>
                         <div className="text-center">
-                            <h1 className="text-4xl font-bold text-[#212529]">NextGen Seva</h1>
-                            <p className="text-sm text-gray-600 mt-1">Government of India</p>
+                            <p className="text-sm font-semibold text-gray-600">Government of India</p>
                         </div>
                     </div>
 
@@ -49,20 +60,20 @@ export function LanguageSelection() {
                         {t('language.selectLanguage')}
                     </h2>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 mb-6">
                         {languages.map((lang) => (
                             <button
                                 key={lang.code}
                                 onClick={() => handleLanguageSelect(lang.code)}
                                 aria-pressed={language === lang.code}
                                 aria-label={`${lang.nativeName} (${lang.name})`}
-                                className={`bg-white border-2 rounded-xl p-5 flex flex-col items-center justify-center gap-3 transition-all hover:shadow-md min-h-[100px] ${language === lang.code
+                                className={`bg-white border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all hover:shadow-md min-h-[90px] ${language === lang.code
                                     ? 'border-[#0066CC] shadow-md bg-blue-50'
                                     : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 style={{ touchAction: 'manipulation' }}
                             >
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${language === lang.code
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${language === lang.code
                                     ? 'bg-[#0066CC] text-white'
                                     : 'bg-gray-100 text-gray-600'
                                     }`}>
@@ -72,7 +83,7 @@ export function LanguageSelection() {
                                     <p className="text-base font-bold text-[#212529]">
                                         {lang.nativeName}
                                     </p>
-                                    <p className="text-xs text-gray-500">{lang.name}</p>
+                                    <p className="text-xs text-gray-600 font-medium">{lang.name}</p>
                                 </div>
                                 {language === lang.code && (
                                     <div className="w-5 h-5 bg-[#28A745] rounded-full flex items-center justify-center">
@@ -93,7 +104,7 @@ export function LanguageSelection() {
                         {t('language.continue')}
                     </TouchButton>
 
-                    <p className="text-center text-xs text-gray-500 mt-6 leading-relaxed">
+                    <p className="text-center text-xs text-gray-600 mt-6 leading-relaxed">
                         Touch your preferred language to continue<br />
                         अपनी पसंदीदा भाषा को स्पर्श करें | ನಿಮ್ಮ ಆದ್ಯತೆಯ ಭಾಷೆಯನ್ನು ಸ್ಪರ್ಶಿಸಿ<br />
                         உங்கள் விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்

@@ -18,10 +18,26 @@ import {
 } from 'lucide-react';
 import { complaintService } from '../../services/api';
 import { useOfflineStore } from '../../store/useOfflineStore';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function TrackComplaint() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  useVoiceCommand({
+    'back': () => {
+      if (selectedComplaint) setSelectedComplaint(null);
+      else navigate('/nextgen-seva/dashboard');
+    },
+    'submit': () => handleSearch(),
+    'select-number': (cmd) => {
+      const index = cmd.value - 1;
+      if (!selectedComplaint && index >= 0 && index < recentComplaints.length) {
+        setSelectedComplaint(recentComplaints[index]);
+      }
+    }
+  });
+
   const { complaints: cachedComplaints, selectedService } = useKioskStore();
   const { isOnline } = useNetworkStatus();
   const { syncQueue } = useOfflineStore();

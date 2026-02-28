@@ -13,6 +13,7 @@ import { MapPin } from 'lucide-react';
 import MapAddressPicker from '../../components/MapAddressPicker';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { useOfflineStore } from '../../store/useOfflineStore';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 
 
@@ -104,6 +105,22 @@ export function NewConnection() {
   let { selectedService, setSelectedService } = useKioskStore();
   const { isOnline } = useNetworkStatus();
   const enqueue = useOfflineStore(s => s.enqueue);
+
+  useVoiceCommand({
+    'back': () => {
+      if (showSuccess) navigate('/nextgen-seva/dashboard');
+      else if (currentStep > 1) handlePrevious();
+      else navigate('/nextgen-seva/dashboard');
+    },
+    'next': () => {
+      if (currentStep < totalSteps) handleNext();
+      else handleSubmit();
+    },
+    'submit': () => {
+      if (currentStep === totalSteps) handleSubmit();
+      else handleNext();
+    }
+  });
 
   // Hard refresh fallback if store loses state but URL provides context
   useEffect(() => {

@@ -19,10 +19,27 @@ import {
 } from 'lucide-react';
 import { connectionService, documentService } from '../../services/api';
 import { useOfflineStore } from '../../store/useOfflineStore';
+import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function TrackNewConnection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  useVoiceCommand({
+    'back': () => {
+      if (selectedApp) setSelectedApp(null);
+      else navigate('/nextgen-seva/dashboard');
+    },
+    'submit': () => handleSearch(),
+    'select-number': (cmd) => {
+      const index = cmd.value - 1;
+      if (!selectedApp && index >= 0 && index < recentApps.length) {
+        setApplicationId(recentApps[index].applicationId);
+        handleSearch();
+      }
+    }
+  });
+
   const { selectedService, applications: cachedApps } = useKioskStore();
   const { isOnline } = useNetworkStatus();
   const { syncQueue } = useOfflineStore();

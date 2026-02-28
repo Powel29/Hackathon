@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAdminStore } from '../store/adminStore';
 import { LayoutDashboard, FileText, Zap, Receipt, GitBranch, Bell, LogOut, ChevronDown, Search, Users, Shield, RefreshCw, ClipboardList, Monitor, Database } from 'lucide-react';
 import { canApproveConnections, canSwitchAllDepartments, canViewAnalytics } from '../utils/permissions';
-import logo from '../assets/logo2.png';
+import logo from '../assets/logo.png';
 const DEPT_COLORS = {
     electricity: '#D97706',
     water: '#0369A1',

@@ -28,7 +28,30 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://maps.googleapis.com"],
+            connectSrc: [
+                "'self'",
+                "http://localhost:*",
+                "https://nextgen-seva-backend.onrender.com",
+                "https://nextgen-seva-chatbot-backend.onrender.com",
+                "https://maps.googleapis.com",
+                "https://*.googleapis.com"
+            ],
+            imgSrc: ["'self'", "data:", "https://*.googleapis.com", "https://*.gstatic.com", "https://maps.gstatic.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
 app.use(cors({
     origin: [
         // Production URLs
@@ -47,6 +70,10 @@ app.use(cors({
     ].filter(Boolean),
     credentials: true
 }));
+
+// 🔥 THIS IS VERY IMPORTANT
+app.options('*', cors());
+
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -129,7 +156,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 if (require.main === module) {
     app.listen(PORT, () => {
