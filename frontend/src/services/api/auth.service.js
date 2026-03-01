@@ -84,8 +84,7 @@ export async function logout() {
     } catch (error) {
         console.error('Logout error:', error);
     } finally {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        tokenStrategy.clearToken();
     }
     return {
         success: true,

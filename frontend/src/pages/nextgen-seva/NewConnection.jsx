@@ -102,7 +102,7 @@ const CITIES = {
 export function NewConnection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  let { selectedService, setSelectedService } = useKioskStore();
+  let { selectedService, setSelectedService, user, isAuthenticated } = useKioskStore();
   const { isOnline } = useNetworkStatus();
   const enqueue = useOfflineStore(s => s.enqueue);
 
@@ -122,17 +122,22 @@ export function NewConnection() {
     }
   });
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      navigate('/nextgen-seva/');
+    }
+  }, [isAuthenticated, user, navigate]);
+
   // Hard refresh fallback if store loses state but URL provides context
   useEffect(() => {
-    if (!selectedService) {
+    if (!selectedService && isAuthenticated) {
       if (window.location.pathname.includes('/new-connection')) {
-        // Defaulting or we could prompt the user to go back.
-        // Wait, the KioskDashboard uses ServiceSelection which sets selectedService.
-        // Service isn't in URL here. Let's redirect if missing.
         navigate('/nextgen-seva/service-selection');
       }
     }
-  }, [selectedService, navigate]);
+  }, [selectedService, navigate, isAuthenticated]);
+
   const canvasRef = useRef(null);
   const totalSteps = 5;
   const stepTitles = [
@@ -388,7 +393,7 @@ export function NewConnection() {
         serviceDetails.longitude = formData.longitude;
       }
 
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      // User is already available from useKioskStore() at the top of the component
       const payload = {
         serviceType: selectedService,
         applicantName: formData.fullName,
@@ -425,10 +430,9 @@ export function NewConnection() {
 
         // Upload Documents
         try {
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
-          const citizenId = user.aadhaarNumber || user.aadharNumber;
+          const citizenId = user?.aadhaarNumber || user?.aadharNumber;
           if (!citizenId) {
-            console.error("❌ [NewConnection] Missing citizenId for upload");
+            console.error("❌ [NewConnection] Missing citizenId for upload. User:", user);
             return;
           }
 
@@ -511,8 +515,7 @@ export function NewConnection() {
             const pdfBlob = pdf.output('blob');
             const file = new File([pdfBlob], `Application_${newAppId}.pdf`, { type: 'application/pdf' });
 
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const citizenId = user.aadhaarNumber || user.aadharNumber;
+            const citizenId = user?.aadhaarNumber || user?.aadharNumber;
             if (citizenId) {
               await apiModule.documentService.uploadDocument(file, {
                 citizenId,
