@@ -388,6 +388,7 @@ export function NewConnection() {
         serviceDetails.longitude = formData.longitude;
       }
 
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       const payload = {
         serviceType: selectedService,
         applicantName: formData.fullName,
@@ -2326,95 +2327,127 @@ export function NewConnection() {
                   </h4>
                   <div className="space-y-2 text-sm">
                     {/* Common Documents */}
-                    <p className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                      <span>Aadhaar Card</span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                      <span>Address Proof</span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                      <span>Photograph</span>
-                    </p>
+                    {formData.aadhaarFile && (
+                      <p className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                        <span>Aadhaar Card: <span className="text-gray-500 italic">{formData.aadhaarFile.name}</span></span>
+                      </p>
+                    )}
+                    {formData.addressProofFile && (
+                      <p className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                        <span>Address Proof: <span className="text-gray-500 italic">{formData.addressProofFile.name}</span></span>
+                      </p>
+                    )}
+                    {formData.photoFile && (
+                      <p className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                        <span>Photograph: <span className="text-gray-500 italic">{formData.photoFile.name}</span></span>
+                      </p>
+                    )}
 
                     {/* Electricity-Specific Documents */}
                     {selectedService === 'electricity' && (
                       <>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Wiring Certificate</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Ownership Proof</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Building Certificate</span>
-                        </p>
+                        {formData.wiringCertificateFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Wiring Certificate: <span className="text-gray-500 italic">{formData.wiringCertificateFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.ownershipProofFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Ownership Proof: <span className="text-gray-500 italic">{formData.ownershipProofFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.buildingCertificateFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Building Certificate: <span className="text-gray-500 italic">{formData.buildingCertificateFile.name}</span></span>
+                          </p>
+                        )}
                       </>
                     )}
 
                     {/* Gas-Specific Documents */}
                     {selectedService === 'gas' && (
                       <>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Owner NOC</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Kitchen Layout</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Safety Declaration</span>
-                        </p>
+                        {formData.ownerNOCFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Owner NOC: <span className="text-gray-500 italic">{formData.ownerNOCFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.kitchenLayoutFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Kitchen Layout: <span className="text-gray-500 italic">{formData.kitchenLayoutFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.safetyDeclarationFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Safety Declaration: <span className="text-gray-500 italic">{formData.safetyDeclarationFile.name}</span></span>
+                          </p>
+                        )}
                       </>
                     )}
 
                     {/* Water-Specific Documents */}
                     {selectedService === 'water' && (
                       <>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Plumbing Certificate</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Property Tax Receipt</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Building Plan</span>
-                        </p>
+                        {formData.plumbingCertificateFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Plumbing Certificate: <span className="text-gray-500 italic">{formData.plumbingCertificateFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.propertyTaxReceiptFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Property Tax Receipt: <span className="text-gray-500 italic">{formData.propertyTaxReceiptFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.approvedBuildingPlanFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Building Plan: <span className="text-gray-500 italic">{formData.approvedBuildingPlanFile.name}</span></span>
+                          </p>
+                        )}
                       </>
                     )}
 
                     {/* Municipal-Specific Documents */}
                     {selectedService === 'municipal' && (
                       <>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Completion Certificate</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Handover Letter</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                          <span>Property Tax Proof</span>
-                        </p>
+                        {formData.completionCertificateFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Completion Certificate: <span className="text-gray-500 italic">{formData.completionCertificateFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.builderHandoverFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Handover Letter: <span className="text-gray-500 italic">{formData.builderHandoverFile.name}</span></span>
+                          </p>
+                        )}
+                        {formData.propertyTaxProofFile && (
+                          <p className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                            <span>Property Tax Proof: <span className="text-gray-500 italic">{formData.propertyTaxProofFile.name}</span></span>
+                          </p>
+                        )}
                       </>
                     )}
 
-                    <p className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#28A745]" />
-                      <span>Signature ({formData.signatureType === 'photo' ? 'Photo' : 'Digital'})</span>
-                    </p>
+                    {(formData.signatureType === 'photo' ? formData.signaturePhotoFile : (formData.signatureType === 'digital' && hasDrawn)) && (
+                      <p className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                        <span>Signature ({formData.signatureType === 'photo' ? `Photo: ${formData.signaturePhotoFile?.name}` : 'Digital'})</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
