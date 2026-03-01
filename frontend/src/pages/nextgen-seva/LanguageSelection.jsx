@@ -42,8 +42,8 @@ export function LanguageSelection() {
     };
 
     return (
-        <KioskLayout showLanguageSwitch={false} showHeader={false}>
-            <div className="min-h-screen flex flex-col items-center justify-center py-12 bg-gradient-to-br from-[#0066CC] to-[#004080]">
+        <KioskLayout showLanguageSwitch={false} showHeader={false} fullBleed>
+            <div className="w-full min-h-screen flex flex-col items-center justify-center py-12 bg-gradient-to-br from-[#0066CC] to-[#004080]">
                 <div className="bg-white rounded-2xl shadow-xl p-6 max-w-4xl w-full mx-4">
                     <div className="flex flex-col items-center justify-center gap-2 mb-4">
                         <div className="h-28 sm:h-36 flex items-center justify-center overflow-hidden">

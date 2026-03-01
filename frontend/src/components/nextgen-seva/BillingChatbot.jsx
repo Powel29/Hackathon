@@ -310,7 +310,7 @@ export default function BillingChatbot() {
                     boxShadow: "0 0 15px rgba(74, 144, 217, 0.3)"
                 }}>💳</div>
                 <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>Billing Assistant</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>NextGen Seva Assistant</div>
                     <div style={{ fontSize: 11, color: "#4a90d9", display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#48bb78", boxShadow: "0 0 8px #48bb78" }} />
                         <span style={{ opacity: 0.9 }}>AI Agent · 10 Tools · OCR Ready</span>

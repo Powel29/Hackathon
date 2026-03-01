@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from '../../store/useKioskStore';
 import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { ServiceCard } from '../../components/nextgen-seva/ServiceCard';
-import { Zap, Flame, Droplets, Building2, ArrowLeft, WifiOff, Clock } from 'lucide-react';
+import { Zap, Flame, Droplets, Building2, ArrowLeft, WifiOff, Clock, LogOut } from 'lucide-react';
 import { useNetworkStatus } from '../../providers/NetworkStatusProvider';
 import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
 export function ServiceSelection() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { setSelectedService, isAuthenticated } = useKioskStore();
+    const { setSelectedService, isAuthenticated, resetSession } = useKioskStore();
     const { isOnline } = useNetworkStatus();
 
     useVoiceCommand({
@@ -70,15 +70,27 @@ export function ServiceSelection() {
     return (
         <KioskLayout>
             <div className="max-w-4xl mx-auto">
-                <button
-                    onClick={() => navigate('/nextgen-seva/login-register')}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm rounded-xl px-4 py-2 hover:bg-gray-100 transition-colors min-h-[44px]"
-                    style={{ touchAction: 'manipulation' }}
-                    aria-label={t('common.back')}
-                >
-                    <ArrowLeft className="w-5 h-5" aria-hidden="true" />
-                    {t('common.back')}
-                </button>
+                <div className="flex items-center justify-between mb-6">
+                    <button
+                        onClick={() => navigate('/nextgen-seva/login-register')}
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm rounded-xl px-4 py-2 hover:bg-gray-100 transition-colors min-h-[44px]"
+                        style={{ touchAction: 'manipulation' }}
+                        aria-label={t('common.back')}
+                    >
+                        <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+                        {t('common.back')}
+                    </button>
+
+                    <button
+                        onClick={() => { resetSession(); navigate('/nextgen-seva/login-register'); }}
+                        className="flex items-center gap-2 text-red-600 hover:text-white hover:bg-red-600 border border-red-200 text-sm font-semibold rounded-xl px-4 py-2 transition-all min-h-[44px]"
+                        style={{ touchAction: 'manipulation' }}
+                        aria-label="Logout"
+                    >
+                        <LogOut className="w-4 h-4" aria-hidden="true" />
+                        Logout
+                    </button>
+                </div>
 
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-[#212529] mb-2">

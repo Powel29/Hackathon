@@ -145,40 +145,74 @@ export function GasDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Gas Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Package className="w-6 h-6 text-blue-600" />
-            <span className="text-xs text-blue-700">Current</span>
+      {/* Top Row: Connection Information & Gas Stats Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Connection Information */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-center">
+          <h3 className="font-bold text-gray-900 mb-4">Gas Connection Details</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Connection Type</p>
+              <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Gas Type</p>
+              <p className="text-sm font-semibold text-gray-900">{gasType}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Pipeline Size</p>
+              <p className="text-sm font-semibold text-gray-900">{pipelineSize}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Last Reading</p>
+              <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
+            </div>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{currentUsage}</p>
-          <p className="text-xs text-gray-600 mt-1">m³ Used This Month</p>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Calendar className="w-6 h-6 text-green-600" />
-            <span className="text-xs text-green-700">Daily Avg</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{avgDailyUsage}</p>
-          <p className="text-xs text-gray-600 mt-1">m³ per Day</p>
-        </div>
+        {/* Gas Stats Cards - Small Squares */}
+        <div className="w-full max-w-xl self-center">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-3 flex flex-col justify-between aspect-square shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <Package className="w-5 h-5 text-blue-600" />
+                <span className="text-[10px] text-blue-700">Current</span>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">{currentUsage}</p>
+                <p className="text-[10px] text-gray-600 leading-tight">m³ UsedThis Month</p>
+              </div>
+            </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <TrendingUp className="w-6 h-6 text-purple-600" />
-            <span className="text-xs text-purple-700">Pressure</span>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-3 flex flex-col justify-between aspect-square shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <Calendar className="w-5 h-5 text-green-600" />
+                <span className="text-[10px] text-green-700">Daily Avg</span>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">{avgDailyUsage}</p>
+                <p className="text-[10px] text-gray-600 leading-tight">m³ / Day</p>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-3 flex flex-col justify-between aspect-square shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+                <span className="text-[10px] text-purple-700">Pressure</span>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">{pressure}</p>
+                <p className="text-[10px] text-gray-600 leading-tight">PSI</p>
+              </div>
+            </div>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{pressure}</p>
-          <p className="text-xs text-gray-600 mt-1">PSI</p>
         </div>
       </div>
 
-      {/* Gas-specific Features */}
-      <div className="grid grid-cols-1 gap-6">
+      {/* 2nd Row: Safety Center & Recent Bookings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Merged Safety Center */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
           <div className="bg-gradient-to-r from-red-600 to-orange-600 p-4 flex items-center justify-between">
             <div className="flex items-center gap-3 text-white">
               <Shield className="w-6 h-6" />
@@ -273,6 +307,57 @@ export function GasDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Usage History (Recent Bookings) */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col h-full">
+          <h3 className="font-bold text-gray-900 mb-4">Recent Bookings</h3>
+          <div className="space-y-3">
+            {recentBookings.length > 0 ? (
+              recentBookings.map((booking, index) => (
+                <div key={booking.requestId || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Flame className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {new Date(booking.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {booking.details?.cylinderType?.replace('_', ' ').toUpperCase() || 'Refill'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-gray-900">₹803</p>
+                    <p className={`text-xs font-semibold ${booking.status === 'COMPLETED' || booking.status === 'APPROVED'
+                      ? 'text-green-600'
+                      : booking.status === 'REJECTED'
+                        ? 'text-red-600'
+                        : 'text-orange-600'
+                      }`}>
+                      {booking.status}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <p className="text-sm text-gray-500">No recent bookings found</p>
+                <button
+                  onClick={() => navigate('/nextgen-seva/gas-cylinder-booking')}
+                  className="text-xs text-orange-600 font-bold mt-1 hover:underline"
+                >
+                  Book your first refill →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Gas consumption Chart (Only for PNG) */}
@@ -316,29 +401,6 @@ export function GasDashboard() {
         </div>
       )}
 
-      {/* Connection Information */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">Gas Connection Details</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <p className="text-xs text-gray-600 mb-1">Connection Type</p>
-            <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">Gas Type</p>
-            <p className="text-sm font-semibold text-gray-900">{gasType}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">Pipeline Size</p>
-            <p className="text-sm font-semibold text-gray-900">{pipelineSize}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">Last Reading</p>
-            <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Booking Action */}
       <div className="bg-white rounded-xl shadow-sm border border-orange-200 p-6 overflow-hidden relative">
         <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -359,83 +421,30 @@ export function GasDashboard() {
         </div>
       </div>
 
-      {/* Usage History */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">Recent Bookings</h3>
-        <div className="space-y-3">
-          {recentBookings.length > 0 ? (
-            recentBookings.map((booking, index) => (
-              <div key={booking.requestId || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Flame className="w-4 h-4 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {new Date(booking.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {booking.details?.cylinderType?.replace('_', ' ').toUpperCase() || 'Refill'}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-gray-900">₹803</p>
-                  <p className={`text-xs font-semibold ${booking.status === 'COMPLETED' || booking.status === 'APPROVED'
-                    ? 'text-green-600'
-                    : booking.status === 'REJECTED'
-                      ? 'text-red-600'
-                      : 'text-orange-600'
-                    }`}>
-                    {booking.status}
-                  </p>
-                </div>
+      {/* Access Denied Modal */}
+      {accessDenied && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="bg-red-600 p-6 flex justify-center">
+              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                <Shield className="w-12 h-12 text-white" />
               </div>
-            ))
-          ) : (
-            <div className="text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-              <p className="text-sm text-gray-500">No recent bookings found</p>
+            </div>
+            <div className="p-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+              <p className="text-gray-600 mb-8">
+                This consumer number does not belong to your Aadhaar record. You are not authorized to view these details.
+              </p>
               <button
-                onClick={() => navigate('/nextgen-seva/gas-cylinder-booking')}
-                className="text-xs text-orange-600 font-bold mt-1 hover:underline"
+                onClick={() => window.location.href = '/nextgen-seva/service-selection'}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
               >
-                Book your first refill →
+                Go Back to Services
               </button>
             </div>
-          )}
-        </div>
-      </div>
-
-
-      {/* Access Denied Modal */}
-      {
-        accessDenied && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
-              <div className="bg-red-600 p-6 flex justify-center">
-                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
-                  <Shield className="w-12 h-12 text-white" />
-                </div>
-              </div>
-              <div className="p-8 text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-                <p className="text-gray-600 mb-8">
-                  This consumer number does not belong to your Aadhaar record. You are not authorized to view these details.
-                </p>
-                <button
-                  onClick={() => window.location.href = '/nextgen-seva/service-selection'}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
-                >
-                  Go Back to Services
-                </button>
-              </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }

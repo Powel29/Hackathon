@@ -18,7 +18,9 @@
         "zustand": "*"
     },
     "devDependencies": {
+        "@tailwindcss/postcss": "^4.2.1",
         "@vitejs/plugin-react-swc": "^3.10.2",
+        "tailwindcss": "^4.2.1",
         "vite": "^6.4.1"
     }
 }

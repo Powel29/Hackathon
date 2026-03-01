@@ -116,10 +116,8 @@ export function MunicipalDashboard() {
 
   // Use live data or fallback to defaults
   const propertyTaxDue = accountData?.dueAmount || accountData?.lastBillAmount || 0;
-  const annualTax = accountData?.annualTaxAmount || 0;
   const propertyType = accountData?.propertyType || 'Residential';
   const propertyArea = accountData?.propertyArea || 0;
-  const wardNumber = accountData?.wardNumber || accountData?.ward || 'Not Available';
   const taxDueDate = accountData?.taxBills?.[0]?.dueDate
     ? new Date(accountData.taxBills[0].dueDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
     : 'Mar 31, 2026';
@@ -130,46 +128,6 @@ export function MunicipalDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Municipal Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-green-50 to-emerald-100 border border-green-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Building2 className="w-6 h-6 text-green-600" />
-            <span className="text-xs font-semibold text-green-700 bg-green-200 px-2 py-1 rounded-full">
-              Active
-            </span>
-          </div>
-          <p className="text-xl font-bold text-gray-900">Ward {wardNumber}</p>
-          <p className="text-xs text-gray-600 mt-1">Your Ward Number</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Home className="w-6 h-6 text-orange-600" />
-            <span className="text-xs text-orange-700">Due</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">₹{propertyTaxDue.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-gray-600 mt-1">Property Tax Due</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Calendar className="w-6 h-6 text-blue-600" />
-            <span className="text-xs text-blue-700">Deadline</span>
-          </div>
-          <p className="text-sm font-bold text-gray-900">{taxDueDate}</p>
-          <p className="text-xs text-gray-600 mt-1">Payment Deadline</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Trash2 className="w-6 h-6 text-purple-600" />
-            <span className="text-xs text-purple-700">Schedule</span>
-          </div>
-          <p className="text-sm font-bold text-gray-900">{garbageCollectionDay}</p>
-          <p className="text-xs text-gray-600 mt-1">Garbage Collection</p>
-        </div>
-      </div>
 
       {/* Municipal-specific Features */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -297,137 +255,140 @@ export function MunicipalDashboard() {
 
 
 
-      {/* Active Complaints/Requests */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-red-600" />
+      {/* Active Complaints/Requests & Waste Collection */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Active Complaints/Requests */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Active Municipal Requests</h3>
+                <p className="text-xs text-gray-600">Your recent complaints & requests</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Active Municipal Requests</h3>
-              <p className="text-xs text-gray-600">Your recent complaints & requests</p>
-            </div>
+            <button
+              onClick={() => navigate('/nextgen-seva/register-complaint')}
+              className="text-sm text-blue-600 hover:underline font-semibold"
+            >
+              New Request →
+            </button>
           </div>
-          <button
-            onClick={() => navigate('/nextgen-seva/register-complaint')}
-            className="text-sm text-blue-600 hover:underline font-semibold"
-          >
-            New Request →
-          </button>
-        </div>
 
-        <div className="space-y-3">
-          {complaints.length > 0 ? (
-            complaints.slice(0, 3).map((complaint) => {
-              const statusLower = complaint.status?.toLowerCase();
-              const color = statusLower === 'resolved' ? 'green' :
-                statusLower === 'pending' ? 'yellow' :
-                  'blue';
+          <div className="space-y-3">
+            {complaints.length > 0 ? (
+              complaints.slice(0, 3).map((complaint) => {
+                const statusLower = complaint.status?.toLowerCase();
+                const color = statusLower === 'resolved' ? 'green' :
+                  statusLower === 'pending' ? 'yellow' :
+                    'blue';
 
-              return (
-                <div key={complaint.complaintId || complaint.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/nextgen-seva/track-complaint/${complaint.complaintId || complaint.id}`)}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 ${color === 'green' ? 'bg-green-100' :
-                      color === 'blue' ? 'bg-blue-100' :
-                        'bg-yellow-100'
-                      } rounded-lg flex items-center justify-center`}>
-                      <FileText className={`w-4 h-4 ${color === 'green' ? 'text-green-600' :
-                        color === 'blue' ? 'text-blue-600' :
-                          'text-yellow-600'
-                        }`} />
+                return (
+                  <div key={complaint.complaintId || complaint.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/nextgen-seva/track-complaint/${complaint.complaintId || complaint.id}`)}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 ${color === 'green' ? 'bg-green-100' :
+                        color === 'blue' ? 'bg-blue-100' :
+                          'bg-yellow-100'
+                        } rounded-lg flex items-center justify-center`}>
+                        <FileText className={`w-4 h-4 ${color === 'green' ? 'text-green-600' :
+                          color === 'blue' ? 'text-blue-600' :
+                            'text-yellow-600'
+                          }`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{complaint.title || complaint.complaintType}</p>
+                        <p className="text-xs text-gray-600">
+                          {new Date(complaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{complaint.title || complaint.complaintType}</p>
-                      <p className="text-xs text-gray-600">
-                        {new Date(complaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                    </div>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${color === 'green' ? 'bg-green-100 text-green-700' :
+                      color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                        'bg-yellow-100 text-yellow-700'
+                      }`}>
+                      {complaint.status}
+                    </span>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${color === 'green' ? 'bg-green-100 text-green-700' :
-                    color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                    {complaint.status}
-                  </span>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-              <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No active requests found.</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Waste Collection Full Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <Trash2 className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Waste Collection Services</h3>
-              <p className="text-sm text-gray-600">Schedule and waste management information</p>
-            </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No active requests found.</p>
+              </div>
+            )}
           </div>
-          <button
-            onClick={() => navigate('/nextgen-seva/register-complaint')}
-            className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors"
-          >
-            <AlertCircle className="w-4 h-4" />
-            Report Missed Pickup
-          </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="p-2 bg-white rounded-lg shadow-sm">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-green-700">Daily Routine</span>
+        {/* Waste Collection Full Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Waste Collection Services</h3>
+                <p className="text-sm text-gray-600">Schedule and waste management information</p>
+              </div>
             </div>
-            <p className="font-bold text-gray-900">Regular Collection</p>
-            <p className="text-xs text-gray-600 mt-1">{garbageCollectionDay}</p>
-            <div className="mt-4 pt-3 border-t border-green-100">
-              <p className="text-xs font-semibold text-gray-500">Collection window:</p>
-              <p className="text-sm font-bold text-green-700">6:00 AM - 9:00 AM</p>
-            </div>
+            <button
+              onClick={() => navigate('/nextgen-seva/register-complaint')}
+              className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Report Missed Pickup
+            </button>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="p-2 bg-white rounded-lg shadow-sm">
-                <Clock className="w-5 h-5 text-blue-600" />
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Weekly Special</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 bg-white rounded-lg shadow-sm">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-green-700">Daily Routine</span>
+              </div>
+              <p className="font-bold text-gray-900">Regular Collection</p>
+              <p className="text-xs text-gray-600 mt-1">{garbageCollectionDay}</p>
+              <div className="mt-4 pt-3 border-t border-green-100">
+                <p className="text-xs font-semibold text-gray-500">Collection window:</p>
+                <p className="text-sm font-bold text-green-700">6:00 AM - 9:00 AM</p>
+              </div>
             </div>
-            <p className="font-bold text-gray-900">Dry Waste Collection</p>
-            <p className="text-xs text-gray-600 mt-1">Every Tuesday morning</p>
-            <div className="mt-4 pt-3 border-t border-blue-100">
-              <p className="text-xs font-semibold text-gray-500">Items Accepted:</p>
-              <p className="text-sm font-bold text-blue-700 line-clamp-1">Plastic, Glass, Metal, Paper</p>
-            </div>
-          </div>
 
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="p-2 bg-white rounded-lg shadow-sm">
-                <Calendar className="w-5 h-5 text-purple-600" />
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Monthly Bulk</span>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 bg-white rounded-lg shadow-sm">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Weekly Special</span>
+              </div>
+              <p className="font-bold text-gray-900">Dry Waste Collection</p>
+              <p className="text-xs text-gray-600 mt-1">Every Tuesday morning</p>
+              <div className="mt-4 pt-3 border-t border-blue-100">
+                <p className="text-xs font-semibold text-gray-500">Items Accepted:</p>
+                <p className="text-sm font-bold text-blue-700 line-clamp-1">Plastic, Glass, Metal, Paper</p>
+              </div>
             </div>
-            <p className="font-bold text-gray-900">Bulk Waste Pickup</p>
-            <p className="text-xs text-gray-600 mt-1">1st Saturday of every month</p>
-            <div className="mt-4 pt-3 border-t border-purple-100">
-              <p className="text-xs font-semibold text-gray-500">Instructions:</p>
-              <p className="text-sm font-bold text-purple-700">Keep segregated outside gate</p>
+
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="p-2 bg-white rounded-lg shadow-sm">
+                  <Calendar className="w-5 h-5 text-purple-600" />
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Monthly Bulk</span>
+              </div>
+              <p className="font-bold text-gray-900">Bulk Waste Pickup</p>
+              <p className="text-xs text-gray-600 mt-1">1st Saturday of every month</p>
+              <div className="mt-4 pt-3 border-t border-purple-100">
+                <p className="text-xs font-semibold text-gray-500">Instructions:</p>
+                <p className="text-sm font-bold text-purple-700">Keep segregated outside gate</p>
+              </div>
             </div>
           </div>
         </div>

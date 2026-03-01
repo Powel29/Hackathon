@@ -122,63 +122,76 @@ export function ElectricityDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Meter Information */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">{t('electricity.smartMeterInfo')}</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <p className="text-xs text-gray-600 mb-1">{t('electricity.connectionTypeLabel')}</p>
-            <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">{t('electricity.sanctionedLoad')}</p>
-            <p className="text-sm font-semibold text-gray-900">{sanctionedLoad}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600 mb-1">{t('electricity.lastReadingDate')}</p>
-            <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
+      {/* Top Row: Meter Info (Left Half) & Stats Squares (Right Half) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Meter Information */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-center">
+          <h3 className="font-bold text-gray-900 mb-6">{t('electricity.smartMeterInfo')}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-gray-600 mb-1">{t('electricity.connectionTypeLabel')}</p>
+              <p className="text-sm font-semibold text-gray-900">{connectionType}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">{t('electricity.sanctionedLoad')}</p>
+              <p className="text-sm font-semibold text-gray-900">{sanctionedLoad}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">{t('electricity.lastReadingDate')}</p>
+              <p className="text-sm font-semibold text-gray-900">{lastReadingDate}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Electricity Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Zap className="w-6 h-6 text-yellow-600" />
-            <span className="text-xs font-semibold text-yellow-700 bg-yellow-200 px-2 py-1 rounded-full">
-              {t('electricity.active')}
-            </span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{currentUsage}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('electricity.kwhThisMonth')}</p>
-        </div>
+        {/* Electricity Stats Cards - Single row of small squares */}
+        <div className="flex items-center">
+          <div className="w-full grid grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-3 flex flex-col justify-between aspect-square">
+              <div className="flex items-center justify-between mb-1">
+                <Zap className="w-5 h-5 text-yellow-600" />
+                <span className="text-[10px] font-semibold text-yellow-700 bg-yellow-200 px-1.5 py-0.5 rounded-full">
+                  {t('electricity.active')}
+                </span>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">{currentUsage}</p>
+                <p className="text-[10px] text-gray-600 leading-tight">{t('electricity.kwhThisMonth')}</p>
+              </div>
+            </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <TrendingUp className="w-6 h-6 text-blue-600" />
-            <span className="text-xs text-blue-700">{t('electricity.avgPerDay')}</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{avgDailyUsage}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('electricity.kwhDailyAverage')}</p>
-        </div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-3 flex flex-col justify-between aspect-square">
+              <div className="flex items-center justify-between mb-1">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <span className="text-[10px] text-blue-700">{t('electricity.avgPerDay')}</span>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">{avgDailyUsage}</p>
+                <p className="text-[10px] text-gray-600 leading-tight">{t('electricity.kwhDailyAverage')}</p>
+              </div>
+            </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <BatteryCharging className="w-6 h-6 text-green-600" />
-            <span className="text-xs text-green-700">{t('electricity.peakLoad')}</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{peakLoad}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('electricity.kwMaximumLoad')}</p>
-        </div>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-3 flex flex-col justify-between aspect-square">
+              <div className="flex items-center justify-between mb-1">
+                <BatteryCharging className="w-5 h-5 text-green-600" />
+                <span className="text-[10px] text-green-700 leading-none text-right">{t('electricity.peakLoad')}</span>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">{peakLoad}</p>
+                <p className="text-[10px] text-gray-600 leading-tight">{t('electricity.kwMaximumLoad')}</p>
+              </div>
+            </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <AlertTriangle className="w-6 h-6 text-red-600" />
-            <span className="text-xs text-red-700">{t('electricity.alert')}</span>
+            <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-3 flex flex-col justify-between aspect-square">
+              <div className="flex items-center justify-between mb-1">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <span className="text-[10px] text-red-700">{t('electricity.alert')}</span>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-gray-900">₹{lastBillAmount}</p>
+                <p className="text-[10px] text-gray-600 leading-tight">{t('electricity.lastBillAmount')}</p>
+              </div>
+            </div>
           </div>
-          <p className="text-2xl font-bold text-gray-900">₹{lastBillAmount}</p>
-          <p className="text-xs text-gray-600 mt-1">{t('electricity.lastBillAmount')}</p>
         </div>
       </div>
 
@@ -303,29 +316,31 @@ export function ElectricityDashboard() {
       </div>
 
       {/* Access Denied Modal */}
-      {accessDenied && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="bg-red-600 p-6 flex justify-center">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
-                <Shield className="w-12 h-12 text-white" />
+      {
+        accessDenied && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+              <div className="bg-red-600 p-6 flex justify-center">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                  <Shield className="w-12 h-12 text-white" />
+                </div>
+              </div>
+              <div className="p-8 text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+                <p className="text-gray-600 mb-8">
+                  This consumer number does not belong to your Aadhaar record. You are not authorized to view these details.
+                </p>
+                <button
+                  onClick={() => window.location.href = '/nextgen-seva/service-selection'}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
+                >
+                  Go Back to Services
+                </button>
               </div>
             </div>
-            <div className="p-8 text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600 mb-8">
-                This consumer number does not belong to your Aadhaar record. You are not authorized to view these details.
-              </p>
-              <button
-                onClick={() => window.location.href = '/nextgen-seva/service-selection'}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
-              >
-                Go Back to Services
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </div>
   );
 }
