@@ -141,7 +141,7 @@ async def chat(
 
     # Set context for tools based on the actual logged-in citizen from frontend
     # For the hackathon, we prioritize the account_id and user_name passed from the secure frontend.
-    final_account_id = request.account_id if request.account_id != "DEMO-USER" else (user.get("account_id") or "111122223333")
+    final_account_id = request.account_id if request.account_id != "DEMO-USER" else (user.get("account_id") or "user_citizen")
     citizen_id = final_account_id
     
     current_citizen_id.set(citizen_id)

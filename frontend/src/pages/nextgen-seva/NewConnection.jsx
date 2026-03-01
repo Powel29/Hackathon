@@ -426,7 +426,11 @@ export function NewConnection() {
         // Upload Documents
         try {
           const user = JSON.parse(localStorage.getItem('user') || '{}');
-          const citizenId = user.aadhaarNumber || '111122223333';
+          const citizenId = user.aadhaarNumber || user.aadharNumber;
+          if (!citizenId) {
+            console.error("❌ [NewConnection] Missing citizenId for upload");
+            return;
+          }
 
           const uploadConfig = [
             { file: formData.aadhaarFile, type: 'AADHAAR' },

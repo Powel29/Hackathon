@@ -35,7 +35,7 @@ export function MyDocuments() {
         try {
             setLoading(true);
             const citizenId = user?.aadhaarNumber || user?.aadharNumber;
-            const docs = await documentService.getUserDocuments(citizenId, selectedService);
+            const docs = await documentService.getUserDocuments(citizenId);
             setDocuments(docs || []);
         } catch (error) {
             console.error('Error fetching documents:', error);
