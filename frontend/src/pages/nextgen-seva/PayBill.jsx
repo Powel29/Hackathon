@@ -9,7 +9,7 @@ import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
 import { LoadingScreen } from '../../components/nextgen-seva/LoadingScreen';
 import { ArrowLeft, CreditCard, FileText, WifiOff } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 
 export function PayBill() {
   const { t } = useTranslation();
@@ -63,8 +63,8 @@ export function PayBill() {
       const waterBillId = bill.waterBillId || undefined;
 
       // Create order on backend
-      const { data: order } = await axios.post(
-        "http://localhost:5001/api/payment/create-order",
+      const { data: order } = await api.post(
+        "/payment/create-order",
         { amount, billId, billType, gateway, status, electricityBillId, gasBillId, municipalBillId, waterBillId }
       );
 
@@ -74,7 +74,7 @@ export function PayBill() {
         currency: order.currency,
         order_id: order.id,
         handler: async function (response) {
-          const verifyResult = await axios.post("http://localhost:5001/api/payment/verify-payment", {
+          const verifyResult = await api.post("/payment/verify-payment", {
             ...response,
             billId,
             billType,
@@ -224,8 +224,8 @@ function PayButton({ bill, navigate, isOnline, updateBill }) {
     const waterBillId = bill.waterBillId || undefined;
 
     // Create order on backend
-    const { data: order } = await axios.post(
-      "http://localhost:5001/api/payment/create-order",
+    const { data: order } = await api.post(
+      "/payment/create-order",
       { amount, billId, billType, gateway, status, electricityBillId, gasBillId, municipalBillId, waterBillId }
     );
 
@@ -235,7 +235,7 @@ function PayButton({ bill, navigate, isOnline, updateBill }) {
       currency: order.currency,
       order_id: order.id,
       handler: async function (response) {
-        const verifyResult = await axios.post("http://localhost:5001/api/payment/verify-payment", {
+        const verifyResult = await api.post("/payment/verify-payment", {
           ...response,
           billId,
           billType,

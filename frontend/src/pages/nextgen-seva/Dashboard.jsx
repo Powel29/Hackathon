@@ -18,7 +18,8 @@ import {
   Zap,
   Flame,
   Droplets,
-  Building2
+  Building2,
+  RefreshCw
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useOfflineStore } from '../../store/useOfflineStore';
@@ -230,6 +231,14 @@ export function Dashboard() {
             </div>
 
             <div className="flex gap-3">
+              <TouchButton
+                variant="secondary"
+                size="medium"
+                icon={<RefreshCw className="w-4 h-4" />}
+                onClick={() => window.location.reload()}
+              >
+                Refresh
+              </TouchButton>
               <TouchButton
                 variant="secondary"
                 size="medium"
