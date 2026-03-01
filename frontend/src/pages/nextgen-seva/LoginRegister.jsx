@@ -11,6 +11,10 @@ import * as authService from '../../services/api/auth.service';
 import { toast } from 'sonner';
 import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 
+const validateAadhaar = (aadhaar) => {
+  return /^\d{12}$/.test(aadhaar);
+};
+
 export function LoginRegister() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -98,7 +102,9 @@ export function LoginRegister() {
   const validateStep2 = () => {
     const newErrors = {};
 
-    if (!formData.aadhaarNumber.match(/^[0-9]{12}$/)) newErrors.aadhaarNumber = t('authentication.invalidAadhaar');
+    if (!validateAadhaar(formData.aadhaarNumber)) {
+      newErrors.aadhaarNumber = t('authentication.invalidAadhaar');
+    }
     if (!formData.address.trim()) newErrors.address = t('validation.addressRequired');
 
     setErrors(newErrors);
@@ -173,7 +179,7 @@ export function LoginRegister() {
     }
 
     // Validate based on login type
-    if (loginType === 'aadhaar' && loginCredential.length !== 12) {
+    if (loginType === 'aadhaar' && !validateAadhaar(loginCredential)) {
       alert(t('authentication.invalidAadhaar'));
       return;
     }

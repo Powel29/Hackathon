@@ -39,6 +39,7 @@ export function KioskLayout({
     showLanguageSwitch = true,
     showHeader = true,
     showFooter = true,
+    fullBleed = false,
 }) {
     const { i18n } = useTranslation();
     const { language, setLanguage } = useKioskStore();
@@ -151,7 +152,7 @@ export function KioskLayout({
             )}
 
             {/* Main Content */}
-            <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6" role="main">
+            <main className={fullBleed ? 'flex-1 w-full overflow-hidden' : 'flex-1 max-w-7xl mx-auto w-full px-4 py-6'} role="main">
                 {children}
             </main>
 
@@ -181,18 +182,13 @@ export function KioskLayout({
                             </button>
                         </div>
 
-                        {/* Center: Voice Assist (Phase 4) and Credits */}
-                        <div className="flex-1 flex flex-col items-center justify-center gap-1">
+                        {/* Center: Voice Assist + Credits */}
+                        <div className="flex-1 flex items-center justify-center gap-3">
                             <VoiceAssistWidget />
-                            <p className="text-[10px] text-gray-500 text-center w-full">
+                            <p className="text-[11px] font-medium text-gray-500">
                                 © 2026 SUVIDHA | Government of India
                             </p>
                         </div>
-
-                        {/* Center: Credits */}
-                        <p className="text-xs text-gray-600 easy-mode-hide hidden md:block">
-                            © 2026 NextGen Seva | Government of India
-                        </p>
                         {/* Right: Accessibility + Queue */}
                         <div className="flex items-center gap-2 justify-end">
                             <button

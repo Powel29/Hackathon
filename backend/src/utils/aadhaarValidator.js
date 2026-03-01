@@ -37,25 +37,13 @@ if (!aadhaarSalt || aadhaarSalt.trim() === '') {
 }
 
 /**
- * Validate Aadhaar number using Verhoeff algorithm
+ * Validate Aadhaar number
  * @param {string} aadhaar - 12 digit Aadhaar number
  * @returns {boolean} - true if valid
  */
 function validateAadhaar(aadhaar) {
-    // Format check
-    if (!/^\d{12}$/.test(aadhaar)) {
-        return false;
-    }
-
-    // Verhoeff checksum
-    let c = 0;
-    const digits = aadhaar.split('').reverse().map(Number);
-
-    for (let i = 0; i < digits.length; i++) {
-        c = d[c][p[(i % 8)][digits[i]]];
-    }
-
-    return c === 0;
+    // Format check - Hackathon mode: dynamically accept any 12-digit number
+    return /^\d{12}$/.test(aadhaar);
 }
 
 /**

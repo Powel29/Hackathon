@@ -142,7 +142,7 @@ async def chat(
     # Set context for tools based on the actual logged-in citizen from frontend
     # In a real system, verify_token would provide the verified ID. 
     # For the hackathon, we use the account_id passed from the secure frontend.
-    citizen_id = request.account_id if request.account_id != "DEMO-USER" else "111122223333"
+    citizen_id = "111122223333" if request.account_id == "DEMO-USER" else request.account_id
     current_citizen_id.set(citizen_id)
     current_account_id.set(request.account_id)
 

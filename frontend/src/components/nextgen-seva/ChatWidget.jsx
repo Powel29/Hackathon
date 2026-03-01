@@ -38,7 +38,7 @@ export default function ChatWidget() {
                     <div className="bg-slate-800/50 p-3 flex items-center justify-between border-bottom border-slate-700">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-white font-semibold text-sm">Billing Assistant</span>
+                            <span className="text-white font-semibold text-sm">NextGen Seva Assistant</span>
                         </div>
                         <div className="flex items-center gap-2">
                             {/* Full Screen Toggle */}
