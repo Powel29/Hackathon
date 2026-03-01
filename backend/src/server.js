@@ -75,20 +75,6 @@ app.use(cors({
 app.options('*', cors());
 
 
-// Rate Limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: {
-        success: false,
-        error: {
-            code: 'RATE_LIMIT',
-            message: 'Too many requests. Please try again later'
-        }
-    }
-});
-app.use(limiter);
-
 // Body Parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -98,6 +84,23 @@ app.use((req, res, next) => {
     console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
     next();
 });
+
+// Routes that should NOT be rate limited strictly (System/Hardware health)
+app.use('/api/kiosks', require('./routes/kioskRoutes'));
+
+// Rate Limiting (Applied to all other regular user routes)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500, // Increased from 100 to support high kiosk activity
+    message: {
+        success: false,
+        error: {
+            code: 'RATE_LIMIT',
+            message: 'Too many requests. Please try again later'
+        }
+    }
+});
+app.use(limiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -111,7 +114,6 @@ app.use('/api/connections', require('./routes/connectionRoutes'));
 app.use('/api/upload', uploadRoutes);
 app.use('/api/download', downloadRoutes);
 app.use('/api/documents', documentRoutes);
-app.use('/api/kiosks', require('./routes/kioskRoutes'));
 app.use("/api/payment", paymentRoutes);
 
 // Serve uploaded files
