@@ -21,7 +21,7 @@ import {
   Building2,
   RefreshCw
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useOfflineStore } from '../../store/useOfflineStore';
 import { WifiOff, AlertCircle } from 'lucide-react';
 import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
@@ -290,11 +290,11 @@ export function Dashboard() {
               <TouchButton
                 variant="secondary"
                 size="medium"
-                icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+                icon={<RefreshCw className={`w-4 h-4 ${kioskLoading ? 'animate-spin' : ''}`} />}
                 onClick={handleRefresh}
-                disabled={loading}
+                disabled={kioskLoading}
               >
-                {loading ? 'Refreshing...' : 'Refresh'}
+                {kioskLoading ? 'Refreshing...' : 'Refresh'}
               </TouchButton>
               <TouchButton
                 variant="secondary"
