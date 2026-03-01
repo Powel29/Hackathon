@@ -266,7 +266,7 @@ You will need to create a `.env` file in the respective directories:
 
 ### Backend (`backend/.env`)
 ```env
-PORT=5000
+PORT=5001
 DATABASE_URL="postgresql://user:password@localhost:5432/suvidha"
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
@@ -278,13 +278,13 @@ JWT_SECRET=your_super_secret_key
 
 ### Frontend (`frontend/.env`)
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5001/api
 VITE_RAZORPAY_KEY_ID=your_razorpay_key
 ```
 
 ### Admin (`admin/.env`)
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5001/api
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
