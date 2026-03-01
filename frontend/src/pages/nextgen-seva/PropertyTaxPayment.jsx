@@ -98,7 +98,7 @@ export function PropertyTaxPayment() {
                 municipalBillId
             });
 
-            const order = orderData.order;
+            const order = orderData;
 
             const options = {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -116,7 +116,8 @@ export function PropertyTaxPayment() {
                             amount,
                             gateway,
                             status: "SUCCESS",
-                            municipalBillId
+                            municipalBillId,
+                            billId // Added for consistency with markBillAsPaid
                         });
 
                         if (verifyResult.data && verifyResult.data.success) {

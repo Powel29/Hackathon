@@ -274,10 +274,10 @@ exports.getMyComplaints = async (req, res) => {
         // Calculate summary
         const summary = {
             total: complaints.length,
-            open: complaints.filter(c => c.status === 'OPEN').length,
-            inProgress: complaints.filter(c => c.status === 'IN_PROGRESS').length,
-            resolved: complaints.filter(c => c.status === 'RESOLVED').length,
-            closed: complaints.filter(c => c.status === 'CLOSED').length
+            open: complaints.filter(c => c.status.toUpperCase() === 'OPEN').length,
+            inProgress: complaints.filter(c => c.status.toUpperCase() === 'IN_PROGRESS').length,
+            resolved: complaints.filter(c => c.status.toUpperCase() === 'RESOLVED').length,
+            closed: complaints.filter(c => c.status.toUpperCase() === 'CLOSED').length
         };
 
         res.json({

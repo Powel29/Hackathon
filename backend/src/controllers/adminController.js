@@ -87,10 +87,25 @@ exports.updateComplaint = async (req, res) => {
     const { id } = req.params;
     const { status, adminNotes, citizenMessage, by, assignedTo } = req.body;
     try {
+        const existing = await prisma.complaint.findUnique({
+            where: { complaintId: id }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Complaint not found' });
+        }
+
+        const normalizedStatus = status ? status.toUpperCase() : existing.status;
         const updateData = {};
-        if (status) updateData.status = status;
-        if (citizenMessage) updateData.resolutionNote = citizenMessage; // Use resolutionNote for the latest citizen update
+
+        if (status) updateData.status = normalizedStatus;
+        if (citizenMessage) updateData.resolutionNote = citizenMessage;
         if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
+
+        // Update resolvedAt if status changed to RESOLVED
+        if (normalizedStatus === 'RESOLVED' && existing.status !== 'RESOLVED') {
+            updateData.resolvedAt = new Date();
+        }
 
         const complaint = await prisma.complaint.update({
             where: { complaintId: id },
@@ -101,8 +116,8 @@ exports.updateComplaint = async (req, res) => {
         await prisma.complaintStatusHistory.create({
             data: {
                 complaintId: id,
-                newStatus: status || complaint.status,
-                oldStatus: complaint.status,
+                newStatus: normalizedStatus,
+                oldStatus: existing.status,
                 changedBy: by || 'Admin',
                 notes: adminNotes || '',
                 citizenMessage: citizenMessage || ''

@@ -47,7 +47,7 @@ model OTPVerification {
   otpHash      String   @db.VarChar(64)
   purpose      String   @db.VarChar(20)
   attempts     Int      @default(0)
-  maxAttempts  Int      @default(3)
+  maxAttempts  Int      @default(5)
   expiresAt    DateTime
   isVerified   Boolean  @default(false)
   createdAt    DateTime @default(now())

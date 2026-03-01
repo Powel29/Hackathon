@@ -150,7 +150,6 @@ export const useAdminStore = create()(persist((set, get) => {
                     };
                     return { ...c, status, adminNotes, citizenUpdateMessage: citizenMessage, assignedTo, updatedAt: new Date().toISOString(), statusHistory: [...c.statusHistory, newHistory] };
                 });
-                localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
             try { await axios.put(`/admin/complaints/${id}`, { status, adminNotes, citizenMessage, by, assignedTo }); } catch (e) { console.error(e); }
@@ -173,7 +172,6 @@ export const useAdminStore = create()(persist((set, get) => {
                         statusHistory: [...c.statusHistory, newHistory],
                     };
                 });
-                localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
         },
@@ -195,7 +193,6 @@ export const useAdminStore = create()(persist((set, get) => {
                         statusHistory: [...c.statusHistory, newHistory],
                     };
                 });
-                localStorage.setItem('nextgen_seva_complaints', JSON.stringify(updated));
                 return { complaints: updated };
             });
         },

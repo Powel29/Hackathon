@@ -112,7 +112,7 @@ exports.initiateAuth = async (req, res) => {
                 }
             });
 
-            if (recentOTPs >= 3) {
+            if (recentOTPs >= 5) {
                 await logAudit(
                     existingCitizen?.aadharNumber,
                     'OTP_RATE_LIMIT',
@@ -412,7 +412,7 @@ exports.verifyOTP = async (req, res) => {
                     data: { attempts: { increment: 1 } }
                 });
 
-                const attemptsLeft = latestOTP.maxAttempts - latestOTP.attempts - 1;
+                const attemptsLeft = 5 - latestOTP.attempts - 1;
 
                 if (attemptsLeft <= 0) {
                     await logAudit(citizen?.aadharNumber || aadharNumber, 'OTP_MAX_ATTEMPTS', req);

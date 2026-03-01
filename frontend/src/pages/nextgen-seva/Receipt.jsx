@@ -111,7 +111,12 @@ export function Receipt() {
         setUploadStatus('idle');
         return;
       }
-      const citizenId = user?.aadhaarNumber || '111122223333';
+      const citizenId = user?.aadhaarNumber || user?.aadharNumber;
+      if (!citizenId) {
+        console.error("❌ [Receipt] Missing citizenId for upload");
+        setUploadStatus('error');
+        return;
+      }
       const relatedId = (bill.id || bill.billId || transactionId).toString();
 
       console.log("📤 [Receipt] Uploading high-detail PDF:", {

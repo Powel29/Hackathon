@@ -24,6 +24,7 @@ import { MyDocuments } from "./pages/nextgen-seva/MyDocuments";
 import { MunicipalServiceRequests } from "./pages/nextgen-seva/MunicipalServiceRequests";
 import { TrackServiceRequest } from "./pages/nextgen-seva/TrackServiceRequest";
 
+
 export const router = createBrowserRouter([
     {
         element: (
@@ -160,6 +161,14 @@ export const router = createBrowserRouter([
                     </ProtectedRoute>
                 ),
             },
+            {
+                path: "/nextgen-seva/*",
+                element: <Navigate to="/nextgen-seva" replace />,
+            },
+            {
+                path: "*",
+                element: <Navigate to="/nextgen-seva" replace />,
+            }
         ]
     }
 ]);

@@ -201,8 +201,9 @@ export function TrackComplaint() {
 
   const getStatusTranslationKey = (status) => {
     if (!status) return '';
-    if (status === 'in_progress') return 'inProgress';
-    return status;
+    const s = status.toLowerCase();
+    if (s === 'in_progress') return 'inProgress';
+    return s;
   };
 
   const statusColors = {
