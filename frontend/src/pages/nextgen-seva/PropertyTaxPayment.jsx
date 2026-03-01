@@ -8,6 +8,8 @@ import { useOfflineStore } from '../../store/useOfflineStore';
 import { KioskLayout } from '../../components/nextgen-seva/KioskLayout';
 import { TouchButton } from '../../components/nextgen-seva/TouchButton';
 import { ArrowLeft, Home, FileText, IndianRupee, CreditCard, Building, MapPin, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
+import api from '../../services/api';
 import govtLogo from '../../assets/nextgen-seva/Government_of_India_logo.svg';
 
 export function PropertyTaxPayment() {
@@ -24,6 +26,14 @@ export function PropertyTaxPayment() {
     const [billDetails, setBillDetails] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('card');
     const [error, setError] = useState(null);
+
+    // Razorpay checkout script injection
+    useEffect(() => {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -72,49 +82,79 @@ export function PropertyTaxPayment() {
 
     const handlePayment = async () => {
         setProcessing(true);
+        try {
+            const billId = billDetails?.id || billDetails?.billId;
+            const amount = billDetails?.amount || 0;
+            const billType = "MUNICIPAL";
+            const gateway = "razorpay";
+            const municipalBillId = billId;
 
-        // Simulate payment processing delay
-        setTimeout(() => {
-            const transactionId = (isOnline ? 'TXN' : 'OFFLINE-TXN-') + Date.now();
-            const paymentDate = new Date().toISOString();
-
-            if (!isOnline) {
-                // Enqueue payment for later sync
-                enqueue({
-                    operationType: 'municipal_pay',
-                    payload: {
-                        billId: billDetails?.id,
-                        serviceType: 'MUNICIPAL',
-                        status: 'paid',
-                        transactionId,
-                        paymentMethod,
-                        consumerNumber: user?.consumerId || propertyId,
-                        aadharHash: user?.aadharHash
-                    }
-                });
-            }
-
-            if (billDetails?.id) {
-                updateBill(billDetails.id, { status: 'paid' }, !isOnline);
-            }
-
-            setProcessing(false);
-
-            navigate(`/nextgen-seva/receipt/${transactionId}`, {
-                state: {
-                    bill: {
-                        ...billDetails,
-                        transactionId,
-                        status: 'paid',
-                        consumerNumber: user?.consumerId || propertyId // Ensure consumer number is passed
-                    },
-                    paymentDate,
-                    paymentMethod,
-                    department: 'Municipal',
-                    isOfflinePayment: !isOnline
-                }
+            // Create order on backend
+            const { data: orderData } = await api.post("/payment/create-order", {
+                amount,
+                billId,
+                billType,
+                gateway,
+                municipalBillId
             });
-        }, 2000);
+
+            const order = orderData.order;
+
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                amount: order.amount,
+                currency: order.currency,
+                order_id: order.id,
+                name: "Suvidha Kiosk",
+                description: "Property Tax Payment",
+                handler: async function (response) {
+                    try {
+                        const verifyResult = await api.post("/payment/verify-payment", {
+                            ...response,
+                            billId,
+                            billType,
+                            amount,
+                            gateway,
+                            status: "SUCCESS",
+                            municipalBillId
+                        });
+
+                        if (verifyResult.data && verifyResult.data.success) {
+                            updateBill(billId, { status: "PAID" });
+                            navigate(`/nextgen-seva/receipt/${response.razorpay_payment_id}`, {
+                                state: {
+                                    bill: { ...billDetails, status: "PAID", consumerNumber: propertyId },
+                                    transactionId: response.razorpay_payment_id,
+                                    paymentDate: new Date().toISOString(),
+                                    paymentMethod: "Card",
+                                    isOfflinePayment: !isOnline
+                                }
+                            });
+                        } else {
+                            toast.error("Payment verification failed");
+                        }
+                    } catch (err) {
+                        console.error("Verification error:", err);
+                        toast.error("Error verifying payment");
+                    } finally {
+                        setProcessing(false);
+                    }
+                },
+                theme: { color: "#3399cc" },
+                modal: {
+                    ondismiss: function () {
+                        setProcessing(false);
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        } catch (err) {
+            console.error("Payment error:", err);
+            toast.error(err.response?.data?.message || "Failed to initiate payment");
+            setProcessing(false);
+        }
     };
 
     if (loading) {

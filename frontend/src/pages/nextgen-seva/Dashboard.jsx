@@ -25,11 +25,22 @@ import { useEffect } from 'react';
 import { useOfflineStore } from '../../store/useOfflineStore';
 import { WifiOff, AlertCircle } from 'lucide-react';
 import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
+import { toast } from 'sonner';
 
 export function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, resetSession, isAuthenticated, selectedService } = useKioskStore();
+  const {
+    user,
+    resetSession,
+    isAuthenticated,
+    selectedService,
+    fetchBills,
+    fetchComplaints,
+    fetchApplications,
+    fetchServiceRequests,
+    loading
+  } = useKioskStore();
   const networkStatus = useOfflineStore((state) => state.networkStatus);
   const isOnline = networkStatus === 'online';
 
@@ -176,6 +187,21 @@ export function Dashboard() {
     'home': () => navigate('/nextgen-seva/dashboard')
   });
 
+  const handleRefresh = async () => {
+    try {
+      await Promise.all([
+        fetchBills(),
+        fetchComplaints(),
+        fetchApplications(),
+        fetchServiceRequests()
+      ]);
+      toast.success(t('dashboard.refreshSuccess', 'Dashboard data refreshed successfully!'));
+    } catch (error) {
+      console.error('Refresh failed:', error);
+      toast.error(t('dashboard.refreshError', 'Failed to refresh data. Please try again.'));
+    }
+  };
+
   return (
     <KioskLayout>
       <div className="max-w-7xl mx-auto space-y-6">
@@ -234,10 +260,11 @@ export function Dashboard() {
               <TouchButton
                 variant="secondary"
                 size="medium"
-                icon={<RefreshCw className="w-4 h-4" />}
-                onClick={() => window.location.reload()}
+                icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+                onClick={handleRefresh}
+                disabled={loading}
               >
-                Refresh
+                {loading ? 'Refreshing...' : 'Refresh'}
               </TouchButton>
               <TouchButton
                 variant="secondary"

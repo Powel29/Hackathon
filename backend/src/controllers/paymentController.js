@@ -28,9 +28,15 @@ exports.verifyPayment = async (req, res) => {
     try {
         const {
             billId,
+            billType,
             razorpay_order_id,
             razorpay_payment_id,
-            razorpay_signature
+            razorpay_signature,
+            amount,
+            electricityBillId,
+            gasBillId,
+            municipalBillId,
+            waterBillId
         } = req.body;
 
         // Verify signature
@@ -45,19 +51,47 @@ exports.verifyPayment = async (req, res) => {
             // Update payment in database
             const payment = await prisma.payment.create({
                 data: {
-                    billId,
-                    amount: req.body.amount,
-                    paymentMethod: 'ONLINE',
-                    transactionId: razorpay_payment_id,
-                    status: 'SUCCESS'
+                    billId: billType === 'SERVICE' ? billId : null,
+                    amount: amount,
+                    gateway: 'RAZORPAY',
+                    transactionRef: razorpay_payment_id,
+                    status: 'SUCCESS',
+                    billType: billType || 'SERVICE',
+                    electricityBillId: electricityBillId || null,
+                    gasBillId: gasBillId || null,
+                    municipalBillId: municipalBillId || null,
+                    waterBillId: waterBillId || null
                 }
             });
 
-            // Update bill status
-            await prisma.bill.update({
-                where: { id: billId },
-                data: { status: 'PAID' }
-            });
+            // Update bill status in correct table
+            const type = (billType || 'SERVICE').toUpperCase();
+            if (type === 'ELECTRICITY') {
+                await prisma.electricityBill.update({
+                    where: { billId: electricityBillId || billId },
+                    data: { status: 'PAID' }
+                });
+            } else if (type === 'GAS') {
+                await prisma.gasBill.update({
+                    where: { billId: gasBillId || billId },
+                    data: { status: 'PAID' }
+                });
+            } else if (type === 'WATER') {
+                await prisma.waterBill.update({
+                    where: { billId: waterBillId || billId },
+                    data: { status: 'PAID' }
+                });
+            } else if (type === 'MUNICIPAL') {
+                await prisma.municipalBill.update({
+                    where: { billId: municipalBillId || billId },
+                    data: { status: 'PAID' }
+                });
+            } else {
+                await prisma.bill.update({
+                    where: { billId: billId },
+                    data: { status: 'PAID' }
+                });
+            }
 
             res.json({
                 success: true,
@@ -71,6 +105,7 @@ exports.verifyPayment = async (req, res) => {
             });
         }
     } catch (error) {
+        console.error('Verify payment error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

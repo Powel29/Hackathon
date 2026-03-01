@@ -122,8 +122,8 @@ class ChatResponse(BaseModel):
 # Auth dependency (replace with real JWT in production)
 # ─────────────────────────────────────────────────────────────
 async def verify_token(authorization: Optional[str] = Header(None)):
-    # For the hackathon, we return a mock user that matches our demo data
-    return {"user_id": "usr_demo", "user_name": "John Doe", "account_id": "111122223333"}
+    # For the hackathon, we return a mock user that can be overridden by request payload
+    return {"user_id": "usr_demo", "user_name": "Citizen", "account_id": None}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -140,11 +140,12 @@ async def chat(
     logger.info(f"[{user['account_id']}] User: {request.message[:80]}")
 
     # Set context for tools based on the actual logged-in citizen from frontend
-    # In a real system, verify_token would provide the verified ID. 
-    # For the hackathon, we use the account_id passed from the secure frontend.
-    citizen_id = "111122223333" if request.account_id == "DEMO-USER" else request.account_id
+    # For the hackathon, we prioritize the account_id and user_name passed from the secure frontend.
+    final_account_id = request.account_id if request.account_id != "DEMO-USER" else (user.get("account_id") or "111122223333")
+    citizen_id = final_account_id
+    
     current_citizen_id.set(citizen_id)
-    current_account_id.set(request.account_id)
+    current_account_id.set(final_account_id)
 
     try:
         # Keep only the last 10 messages (5 exchanges) to stay within free tier token limits
