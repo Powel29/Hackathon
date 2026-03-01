@@ -21,14 +21,11 @@ import {
   Building2,
   RefreshCw
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useOfflineStore } from '../../store/useOfflineStore';
 import { WifiOff, AlertCircle } from 'lucide-react';
 import { useVoiceCommand } from '../../core/voice/useVoiceCommand';
 import { toast } from 'sonner';
-import { documentService } from '../../services/api';
-import { format } from 'date-fns';
-import { Download } from 'lucide-react';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -44,8 +41,6 @@ export function Dashboard() {
     fetchServiceRequests,
     loading: kioskLoading
   } = useKioskStore();
-  const [recentReceipts, setRecentReceipts] = useState([]);
-  const [docsLoading, setDocsLoading] = useState(true);
   const networkStatus = useOfflineStore((state) => state.networkStatus);
   const isOnline = networkStatus === 'online';
 
@@ -54,30 +49,6 @@ export function Dashboard() {
       navigate('/nextgen-seva/');
     }
   }, [isAuthenticated, user, navigate]);
-
-  useEffect(() => {
-    if (isAuthenticated && user && isOnline) {
-      fetchRecentReceipts();
-    }
-  }, [isAuthenticated, user, isOnline]);
-
-  const fetchRecentReceipts = async () => {
-    try {
-      setDocsLoading(true);
-      const citizenId = user?.aadhaarNumber || user?.aadharNumber;
-      if (!citizenId) return;
-      const docs = await documentService.getUserDocuments(citizenId);
-      // Filter for payment receipts and take the latest 3
-      const receipts = (docs || [])
-        .filter(doc => doc.documentType === 'PAYMENT_RECEIPT')
-        .slice(0, 3);
-      setRecentReceipts(receipts);
-    } catch (error) {
-      console.error('Error fetching recent receipts:', error);
-    } finally {
-      setDocsLoading(false);
-    }
-  };
 
   if (!user) return null;
 
@@ -224,7 +195,6 @@ export function Dashboard() {
         fetchApplications(),
         fetchServiceRequests()
       ]);
-      await fetchRecentReceipts();
       toast.success(t('dashboard.refreshSuccess', 'Dashboard data refreshed successfully!'));
     } catch (error) {
       console.error('Refresh failed:', error);
@@ -290,11 +260,11 @@ export function Dashboard() {
               <TouchButton
                 variant="secondary"
                 size="medium"
-                icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+                icon={<RefreshCw className={`w-4 h-4 ${kioskLoading ? 'animate-spin' : ''}`} />}
                 onClick={handleRefresh}
-                disabled={loading}
+                disabled={kioskLoading}
               >
-                {loading ? 'Refreshing...' : 'Refresh'}
+                {kioskLoading ? 'Refreshing...' : 'Refresh'}
               </TouchButton>
               <TouchButton
                 variant="secondary"
@@ -315,54 +285,6 @@ export function Dashboard() {
           </div>
         </div>
         {/* User Info Section ends here */}
-
-        {/* Recent Receipts Section */}
-        {isOnline && (recentReceipts.length > 0 || docsLoading) && (
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-[#212529]">
-                Recent Receipts
-              </h3>
-              <TouchButton
-                variant="secondary"
-                size="small"
-                onClick={() => navigate('/nextgen-seva/my-documents')}
-              >
-                View All
-              </TouchButton>
-            </div>
-
-            {docsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {recentReceipts.map((receipt) => (
-                  <div
-                    key={receipt.documentId}
-                    className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer group"
-                    onClick={() => window.open(receipt.url, '_blank')}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <Download className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                    </div>
-                    <p className="text-sm font-bold text-gray-900 line-clamp-1">Payment Receipt</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {receipt.createdAt ? format(new Date(receipt.createdAt), 'MMM dd, yyyy') : 'Recently'}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-2 font-mono uppercase">
-                      ID: {receipt.relatedId?.substring(0, 8)}...
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Action Cards Section - Common for all departments */}
         <div>
