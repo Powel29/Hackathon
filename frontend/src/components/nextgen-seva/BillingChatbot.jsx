@@ -197,8 +197,8 @@ export default function BillingChatbot() {
             const data = await sendChatMessage({
                 message: `I uploaded "${file.name}". OCR result:\n${text.slice(0, 1000)}`,
                 history: [...messages, userMsg],
-                user_name: user?.name || "Citizen",
-                account_id: user?.consumerId || user?.aadharNumber || "DEMO-USER",
+                user_name: user?.name || user?.fullName || "Citizen",
+                account_id: user?.aadharNumber || "DEMO-USER",
                 token: token
             });
             setMessages(prev => [...prev, { role: "assistant", content: data.reply, toolCalls: data.tool_calls || [] }]);
@@ -219,8 +219,8 @@ export default function BillingChatbot() {
             const data = await sendChatMessage({
                 message: text,
                 history: [...messages, userMsg],
-                user_name: user?.name || "Citizen",
-                account_id: user?.consumerId || user?.aadharNumber || "DEMO-USER",
+                user_name: user?.name || user?.fullName || "Citizen",
+                account_id: user?.aadharNumber || "DEMO-USER",
                 token: token
             });
             setMessages(prev => [...prev, { role: "assistant", content: data.reply, toolCalls: data.tool_calls || [] }]);
