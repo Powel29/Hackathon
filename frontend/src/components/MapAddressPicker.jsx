@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
+import { AlertCircle } from 'lucide-react';
 
 const libraries = ['places'];
 const mapContainerStyle = {
@@ -104,8 +105,42 @@ const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
         resolveAddress(lat, lng);
     }, []);
 
-    if (loadError) return <div className="p-4 bg-red-50 text-red-600 rounded">Error loading maps</div>;
-    if (!isLoaded) return <div className="p-4 bg-gray-50 text-gray-500 rounded text-center">Loading Maps...</div>;
+    if (loadError) {
+        return (
+            <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
+                <div className="flex items-start gap-4">
+                    <div className="p-2 bg-red-100 rounded-lg">
+                        <AlertCircle className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-lg font-bold text-red-900 mb-1">Maps Service Unavailable</h3>
+                        <p className="text-sm text-red-700 leading-relaxed mb-4">
+                            We're having trouble loading the interactive map. This can happen due to restricted network settings or browser extensions (like ad-blockers).
+                        </p>
+                        <div className="bg-white/50 p-3 rounded-lg border border-red-100 mb-4">
+                            <p className="text-xs font-semibold text-red-800 uppercase tracking-wider mb-1">How to proceed:</p>
+                            <p className="text-sm text-red-800 italic">Please enter your address details manually in the form below. You can skip the map selection.</p>
+                        </div>
+                        <button
+                            onClick={() => onAddressSelect && onAddressSelect({ manualMode: true })}
+                            className="w-full py-2 bg-white border border-red-300 text-red-700 rounded-lg font-semibold hover:bg-red-50 transition-colors shadow-sm"
+                        >
+                            Continue with Manual Entry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isLoaded) {
+        return (
+            <div className="p-12 bg-gray-50 border border-gray-200 border-dashed rounded-xl flex flex-col items-center justify-center gap-4">
+                <div className="w-10 h-10 border-4 border-gray-200 border-t-[#0066CC] rounded-full animate-spin"></div>
+                <p className="text-gray-500 font-medium">Initializing Google Maps...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-3">

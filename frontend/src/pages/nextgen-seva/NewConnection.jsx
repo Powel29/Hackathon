@@ -1327,6 +1327,10 @@ export function NewConnection() {
                   <MapAddressPicker
                     initialAddress={formData.address}
                     onAddressSelect={(location) => {
+                      if (location.manualMode) {
+                        setUseMapMode(false);
+                        return;
+                      }
                       setFormData(prev => ({
                         ...prev,
                         address: location.formattedAddress,

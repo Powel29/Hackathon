@@ -485,7 +485,7 @@ export function RegisterComplaint() {
                 Pin Location on Map (Optional)
               </label>
               <MapAddressPicker
-                onAddressSelect={(details) => setLocationDetails(details.formattedAddress)}
+                onAddressSelect={(details) => details?.formattedAddress && setLocationDetails(details.formattedAddress)}
               />
             </div>
           )}
