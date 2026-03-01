@@ -129,19 +129,19 @@ export function PayBill() {
           {t('back')}
         </button>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-[#0066CC] bg-opacity-10 rounded-lg flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-[#0066CC]" />
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-14 h-14 bg-[#0066CC] bg-opacity-10 rounded-xl flex items-center justify-center">
+              <CreditCard className="w-7 h-7 text-[#0066CC]" />
             </div>
             <h2 className="text-2xl font-bold text-[#212529]">
               {t('paymentSummary')}
             </h2>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-5 mb-6">
-            <div className="flex items-start gap-3 mb-4">
-              <FileText className="w-5 h-5 text-[#0066CC]" />
+          <div className="bg-gray-50 rounded-xl p-6 mb-8">
+            <div className="flex items-start gap-3 mb-5">
+              <FileText className="w-6 h-6 text-[#0066CC] mt-0.5" />
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-[#212529]">
                   {bill.billNumber}
@@ -152,24 +152,26 @@ export function PayBill() {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">{t('consumerNumber')}:</span>
-                <span className="text-sm font-semibold text-[#212529]">
-                  {bill.consumerNumber}
-                </span>
-              </div>
+            <div className="border-t border-gray-200 pt-5 space-y-4">
+              {bill.consumerNumber && (
+                <div className="flex justify-between items-center">
+                  <span className="text-base text-gray-700">{t('consumerNumber')}:</span>
+                  <span className="text-base font-semibold text-[#212529]">
+                    {bill.consumerNumber}
+                  </span>
+                </div>
+              )}
 
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">{t('billingPeriod')}:</span>
-                <span className="text-sm font-semibold text-[#212529]">
+                <span className="text-base text-gray-700">{t('billingPeriod')}:</span>
+                <span className="text-base font-semibold text-[#212529]">
                   {bill.billingPeriod}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">{t('dueDate')}:</span>
-                <span className="text-sm font-semibold text-[#212529]">
+                <span className="text-base text-gray-700">{t('dueDate')}:</span>
+                <span className="text-base font-semibold text-[#212529]">
                   {new Date(bill.dueDate).toLocaleDateString('en-IN', {
                     day: '2-digit',
                     month: 'long',
@@ -178,10 +180,10 @@ export function PayBill() {
                 </span>
               </div>
 
-              <div className="border-t-2 border-gray-300 pt-3 mt-3">
+              <div className="border-t-2 border-gray-300 pt-4 mt-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-base font-bold text-gray-700">{t('amount')}:</span>
-                  <span className="text-2xl font-bold text-[#0066CC]">
+                  <span className="text-lg font-bold text-gray-700">{t('amount')}:</span>
+                  <span className="text-3xl font-bold text-[#0066CC]">
                     ₹{bill.amount.toLocaleString()}
                   </span>
                 </div>
@@ -189,25 +191,16 @@ export function PayBill() {
             </div>
           </div>
 
-          <div className={`${isOnline ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} border rounded-lg p-4 mb-6`}>
-            <p className="text-sm text-center text-gray-700 flex items-center justify-center gap-2">
-              {!isOnline && <WifiOff className="w-4 h-4 text-orange-600" />}
+          <div className={`${isOnline ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} border rounded-xl p-5 mb-8`}>
+            <p className="text-base text-center text-gray-700 flex items-center justify-center gap-2">
+              {!isOnline && <WifiOff className="w-5 h-5 text-orange-600" />}
               {isOnline
                 ? t('bills.securePayment', 'Your payment will be processed securely')
                 : 'Device is offline. Payment will be recorded locally and synced when online.'}
             </p>
           </div>
 
-          <div className="flex gap-3 mt-6">
-            <TouchButton
-              variant="secondary"
-              size="medium"
-              onClick={() => navigate('/nextgen-seva/bills')}
-              className="flex-1"
-            >
-              {t('cancel')}
-            </TouchButton>
-
+          <div className="mt-8">
             <PayButton bill={bill} navigate={navigate} isOnline={isOnline} updateBill={updateBill} />
           </div>
         </div>
@@ -281,7 +274,10 @@ function PayButton({ bill, navigate, isOnline, updateBill }) {
   };
 
   return (
-    <button onClick={handleRazorpay} className="btn btn-primary">
+    <button
+      onClick={handleRazorpay}
+      className="w-full bg-[#0066CC] hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-lg"
+    >
       Pay
     </button>
   );
