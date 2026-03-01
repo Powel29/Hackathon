@@ -295,10 +295,9 @@ export function RegisterComplaint() {
 
         // Upload files if any
         if (files.length > 0) {
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
-          const citizenId = response.complaint.citizenId || user.aadhaarNumber;
+          const citizenId = response.complaint.citizenId || user?.aadhaarNumber || user?.aadharNumber;
           if (!citizenId) {
-            console.error('Cannot upload documents: citizenId unavailable');
+            console.error('Cannot upload documents: citizenId unavailable. User:', user);
           } else {
             const uploadErrors = [];
             for (const fileObj of files) {
@@ -486,7 +485,7 @@ export function RegisterComplaint() {
                 Pin Location on Map (Optional)
               </label>
               <MapAddressPicker
-                onAddressSelect={(details) => setLocationDetails(details.formattedAddress)}
+                onAddressSelect={(details) => details?.formattedAddress && setLocationDetails(details.formattedAddress)}
               />
             </div>
           )}
