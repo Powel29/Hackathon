@@ -23,6 +23,18 @@ const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
+        // Dynamically inject the Google Maps script if not already present.
+        // We do this in React (not index.html) so that import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+        // is substituted correctly by Vite's build step, working in both dev and production.
+        const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        if (!document.querySelector('script[data-maps-injected]')) {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&loading=async&libraries=places`;
+            script.async = true;
+            script.setAttribute('data-maps-injected', 'true');
+            document.head.appendChild(script);
+        }
+
         const checkGoogle = setInterval(() => {
             if (window.google && window.google.maps) {
                 setIsLoaded(true);
