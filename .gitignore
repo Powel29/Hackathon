@@ -29,3 +29,6 @@ dist/
 build/
 /generated/prisma
 node_modules/
+
+data.txt
+prd.txt

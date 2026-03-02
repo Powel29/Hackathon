@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { AlertCircle } from 'lucide-react';
 
 const libraries = ['places'];
@@ -14,15 +14,23 @@ const defaultCenter = {
 };
 
 const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
-    const { isLoaded, loadError } = useLoadScript({
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-        libraries
-    });
-
     const [markerPos, setMarkerPos] = useState(defaultCenter);
     const [addressText, setAddressText] = useState(initialAddress || '');
     const [isResolving, setIsResolving] = useState(false);
     const mapRef = useRef();
+
+    // Fallback since script is global
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        const checkGoogle = setInterval(() => {
+            if (window.google && window.google.maps) {
+                setIsLoaded(true);
+                clearInterval(checkGoogle);
+            }
+        }, 100);
+        return () => clearInterval(checkGoogle);
+    }, []);
 
     const onMapLoad = useCallback((map) => {
         mapRef.current = map;
@@ -52,8 +60,10 @@ const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
             const geocoder = new window.google.maps.Geocoder();
             const response = await geocoder.geocode({ location: { lat, lng } });
 
-            if (response.results && response.results.length > 0) {
-                const result = response.results[0];
+            let results = response?.results || (Array.isArray(response) ? response : []);
+
+            if (results && results.length > 0) {
+                const result = results[0];
                 setAddressText(result.formatted_address);
 
                 // Parse address components
@@ -104,34 +114,6 @@ const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
         setMarkerPos({ lat, lng });
         resolveAddress(lat, lng);
     }, []);
-
-    if (loadError) {
-        return (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-xl">
-                <div className="flex items-start gap-4">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                        <AlertCircle className="w-6 h-6 text-red-600" />
-                    </div>
-                    <div className="flex-1">
-                        <h3 className="text-lg font-bold text-red-900 mb-1">Maps Service Unavailable</h3>
-                        <p className="text-sm text-red-700 leading-relaxed mb-4">
-                            We're having trouble loading the interactive map. This can happen due to restricted network settings or browser extensions (like ad-blockers).
-                        </p>
-                        <div className="bg-white/50 p-3 rounded-lg border border-red-100 mb-4">
-                            <p className="text-xs font-semibold text-red-800 uppercase tracking-wider mb-1">How to proceed:</p>
-                            <p className="text-sm text-red-800 italic">Please enter your address details manually in the form below. You can skip the map selection.</p>
-                        </div>
-                        <button
-                            onClick={() => onAddressSelect && onAddressSelect({ manualMode: true })}
-                            className="w-full py-2 bg-white border border-red-300 text-red-700 rounded-lg font-semibold hover:bg-red-50 transition-colors shadow-sm"
-                        >
-                            Continue with Manual Entry
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     if (!isLoaded) {
         return (

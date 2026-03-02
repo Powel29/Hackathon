@@ -111,13 +111,12 @@ export function PropertyTaxPayment() {
                     try {
                         const verifyResult = await api.post("/payment/verify-payment", {
                             ...response,
-                            billId,
+                            billId: municipalBillId,
                             billType,
                             amount,
                             gateway,
                             status: "SUCCESS",
-                            municipalBillId,
-                            billId // Added for consistency with markBillAsPaid
+                            municipalBillId
                         });
 
                         if (verifyResult.data && verifyResult.data.success) {

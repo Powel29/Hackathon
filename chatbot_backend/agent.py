@@ -5,6 +5,7 @@ Get your free key at: https://console.groq.com
 """
 
 import os
+import httpx
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
@@ -61,9 +62,41 @@ def build_agent(groq_api_key: str) -> AgentExecutor:
     Builds a LangChain AgentExecutor using Groq's free API.
     """
 
+    import groq
+
+    # Render outbound proxies can struggle with default http settings for Groq
+    # A custom httpx client with extended timeouts and forced http/1.1 prevents APIConnectionErrors
+    http_client = httpx.Client(
+        http2=False,
+        timeout=httpx.Timeout(60.0, connect=10.0),
+        limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+    )
+    http_async_client = httpx.AsyncClient(
+        http2=False,
+        timeout=httpx.Timeout(60.0, connect=10.0),
+        limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+    )
+
+    # LangChain's ChatGroq expects `client` = the chat.completions Completions resource,
+    # and `async_client` = the async equivalent. Wrapping the custom httpx clients in
+    # groq.Groq / groq.AsyncGroq and pulling .chat.completions ensures our proxy-safe
+    # settings are actually used (passing the root Groq object directly causes
+    # AttributeError: 'Groq' object has no attribute 'create').
+    groq_sync = groq.Groq(
+        api_key=groq_api_key,
+        http_client=http_client,
+        max_retries=2
+    )
+    groq_async = groq.AsyncGroq(
+        api_key=groq_api_key,
+        http_client=http_async_client,
+        max_retries=2
+    )
+
     llm = ChatGroq(
         model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
-        groq_api_key=groq_api_key,
+        client=groq_sync.chat.completions,
+        async_client=groq_async.chat.completions,
         temperature=0,
         max_tokens=1024,
         max_retries=2,
