@@ -83,12 +83,12 @@ def build_agent(groq_api_key: str) -> AgentExecutor:
     # settings are actually used (passing the root Groq object directly causes
     # AttributeError: 'Groq' object has no attribute 'create').
     groq_sync = groq.Groq(
-        api_key=groq_api_key,
+        api_key=groq_api_key.strip(),
         http_client=http_client,
         max_retries=2
     )
     groq_async = groq.AsyncGroq(
-        api_key=groq_api_key,
+        api_key=groq_api_key.strip(),
         http_client=http_async_client,
         max_retries=2
     )
