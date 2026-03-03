@@ -194,11 +194,13 @@ export default function BillingChatbot() {
             const userMsg = { role: "human", content: `Uploaded ${file.name}.` };
             setMessages(prev => [...prev, userMsg]);
             setLoading(true);
+            // aadharHash is an opaque SHA-256 token — non-PII but stable per citizen
+            const stableId = user?.aadharHash;
             const data = await sendChatMessage({
                 message: `I uploaded "${file.name}". OCR result:\n${text.slice(0, 1000)}`,
                 history: [...messages, userMsg],
-                user_name: user?.name || user?.fullName || "Citizen",
-                account_id: user?.aadharNumber || "DEMO-USER",
+                user_name: user?.displayName || user?.name || user?.fullName || "Citizen",
+                ...(stableId !== undefined && { account_id: stableId }),
                 token: token
             });
             setMessages(prev => [...prev, { role: "assistant", content: data.reply, toolCalls: data.tool_calls || [] }]);
@@ -216,11 +218,13 @@ export default function BillingChatbot() {
         setLoading(true);
         setLoadingLabel("Thinking...");
         try {
+            // aadharHash is an opaque SHA-256 token — non-PII but stable per citizen
+            const stableId = user?.aadharHash;
             const data = await sendChatMessage({
                 message: text,
                 history: [...messages, userMsg],
-                user_name: user?.name || user?.fullName || "Citizen",
-                account_id: user?.aadharNumber || "DEMO-USER",
+                user_name: user?.displayName || user?.name || user?.fullName || "Citizen",
+                ...(stableId !== undefined && { account_id: stableId }),
                 token: token
             });
             setMessages(prev => [...prev, { role: "assistant", content: data.reply, toolCalls: data.tool_calls || [] }]);

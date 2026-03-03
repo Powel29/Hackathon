@@ -21,6 +21,9 @@ const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
 
     // Fallback since script is global
     const [isLoaded, setIsLoaded] = useState(false);
+    const [loadError, setLoadError] = useState(false);
+
+    const MAX_WAIT_MS = 10_000; // give Maps script up to 10 s to load
 
     useEffect(() => {
         // Dynamically inject the Google Maps script if not already present.
@@ -39,9 +42,20 @@ const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
             if (window.google && window.google.maps) {
                 setIsLoaded(true);
                 clearInterval(checkGoogle);
+                clearTimeout(giveUp);
             }
         }, 100);
-        return () => clearInterval(checkGoogle);
+
+        // Timeout: stop polling and show an error if Maps never arrives
+        const giveUp = setTimeout(() => {
+            clearInterval(checkGoogle);
+            setLoadError(true);
+        }, MAX_WAIT_MS);
+
+        return () => {
+            clearInterval(checkGoogle);
+            clearTimeout(giveUp);
+        };
     }, []);
 
     const onMapLoad = useCallback((map) => {
@@ -126,6 +140,16 @@ const MapAddressPicker = ({ onAddressSelect, initialAddress }) => {
         setMarkerPos({ lat, lng });
         resolveAddress(lat, lng);
     }, []);
+
+    if (loadError) {
+        return (
+            <div className="p-12 bg-red-50 border border-red-200 border-dashed rounded-xl flex flex-col items-center justify-center gap-4">
+                <AlertCircle className="w-8 h-8 text-red-400" />
+                <p className="text-red-500 font-medium">Google Maps failed to load.</p>
+                <p className="text-gray-400 text-sm">Please check your connection or API key and refresh the page.</p>
+            </div>
+        );
+    }
 
     if (!isLoaded) {
         return (

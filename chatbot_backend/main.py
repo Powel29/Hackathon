@@ -24,10 +24,12 @@ logger = logging.getLogger(__name__)
 # App lifecycle
 # ─────────────────────────────────────────────────────────────
 agent_executor = None
+http_client = None
+http_async_client = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global agent_executor
+    global agent_executor, http_client, http_async_client
     groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
         raise RuntimeError("GROQ_API_KEY environment variable is not set.")
@@ -38,10 +40,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Database init skipped: {e}")
 
-    agent_executor = build_agent(groq_api_key)
+    agent_executor, http_client, http_async_client = build_agent(groq_api_key)
     logger.info("LangChain billing agent initialized with Groq (Llama 3.3 70B).")
     yield
     logger.info("Shutting down.")
+    if http_client:
+        http_client.close()
+    if http_async_client:
+        await http_async_client.aclose()
+    logger.info("HTTP clients closed.")
 
 
 app = FastAPI(
@@ -103,8 +110,8 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
     history: list[ChatMessage] = Field(default=[], max_length=40)
-    user_name: str = Field(default="John Doe")
-    account_id: str = Field(default="ACC-10042")
+    user_name: str = Field(default="Citizen")
+    account_id: Optional[str] = Field(default=None)  # opaque aadharHash from frontend, resolved server-side
 
 
 class ToolCall(BaseModel):
@@ -139,13 +146,28 @@ async def chat(
 
     logger.info(f"[{user['account_id']}] User: {request.message[:80]}")
 
-    # Set context for tools based on the actual logged-in citizen from frontend
-    # For the hackathon, we prioritize the account_id and user_name passed from the secure frontend.
-    final_account_id = request.account_id if request.account_id != "DEMO-USER" else (user.get("account_id") or "user_citizen")
-    citizen_id = final_account_id
-    
-    current_citizen_id.set(citizen_id)
-    current_account_id.set(final_account_id)
+    # Resolve the opaque aadharHash sent by the frontend to the real citizenId
+    # (aadharNumber) used in all DB tables. Falls back to the raw value if the
+    # hash lookup fails (e.g., unauthenticated / demo sessions).
+    raw_account_id = request.account_id or ""
+    resolved_citizen_id = ""
+    if raw_account_id:
+        try:
+            from database import get_citizen_by_hash
+            citizen = get_citizen_by_hash(raw_account_id)
+            if citizen:
+                resolved_citizen_id = citizen["aadharNumber"]
+                logger.info(f"[chat] Resolved aadharHash → citizenId (hash={raw_account_id[:8]}...)")
+            else:
+                # Hash not found — could be a legacy plain-text id; use as-is
+                resolved_citizen_id = raw_account_id
+                logger.warning(f"[chat] aadharHash not found in citizens table, using raw value")
+        except Exception as e:
+            resolved_citizen_id = raw_account_id
+            logger.warning(f"[chat] Hash resolution failed ({e}), using raw account_id")
+
+    current_citizen_id.set(resolved_citizen_id)
+    current_account_id.set(resolved_citizen_id)
 
     try:
         # Keep only the last 10 messages (5 exchanges) to stay within free tier token limits
@@ -156,7 +178,7 @@ async def chat(
             "input": request.message,
             "chat_history": chat_history,
             "user_name": user.get("user_name", request.user_name),
-            "account_id": user.get("account_id", request.account_id),
+            "account_id": resolved_citizen_id or request.user_name,
         })
 
         tool_calls = []
