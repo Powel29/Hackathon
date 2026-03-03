@@ -57,7 +57,7 @@ The authenticated citizen is: {user_name} (Account: {account_id})"""
 # ─────────────────────────────────────────────────────────────
 # Build the LangChain agent
 # ─────────────────────────────────────────────────────────────
-def build_agent(groq_api_key: str) -> AgentExecutor:
+def build_agent(groq_api_key: str) -> tuple[AgentExecutor, httpx.Client, httpx.AsyncClient]:
     """
     Builds a LangChain AgentExecutor using Groq's free API.
     """
@@ -124,7 +124,7 @@ def build_agent(groq_api_key: str) -> AgentExecutor:
         return_intermediate_steps=True,
         handle_parsing_errors=True,
     )   
-    return executor
+    return executor, http_client, http_async_client
 
 
 # ─────────────────────────────────────────────────────────────

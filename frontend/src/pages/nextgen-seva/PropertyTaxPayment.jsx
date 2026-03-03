@@ -84,7 +84,8 @@ export function PropertyTaxPayment() {
         setProcessing(true);
         try {
             const billId = billDetails?.id || billDetails?.billId;
-            const amount = billDetails?.amount || 0;
+            // MunicipalBill schema uses `totalAmount`; generic Bill uses `amount`
+            const amount = Number(billDetails?.totalAmount ?? billDetails?.amount ?? 0);
             const billType = "MUNICIPAL";
             const gateway = "razorpay";
             const municipalBillId = billId;
@@ -175,7 +176,8 @@ export function PropertyTaxPayment() {
     const carpetArea = propertyDetails?.carpetArea || propertyDetails?.propertyArea ? `${propertyDetails.propertyArea} sq. ft.` : "N/A";
     const propertyType = propertyDetails?.propertyType || "N/A";
 
-    const totalAmount = billDetails?.amount || 0;
+    // MunicipalBill schema uses `totalAmount`; generic Bill uses `amount`
+    const totalAmount = Number(billDetails?.totalAmount ?? billDetails?.amount ?? 0);
     const billNumber = billDetails?.billNumber || "N/A";
     const dueDate = billDetails?.dueDate ? new Date(billDetails.dueDate).toLocaleDateString() : "N/A";
     const period = billDetails?.billingPeriod || "2025-2026";

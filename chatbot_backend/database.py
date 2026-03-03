@@ -351,6 +351,27 @@ def get_citizen(citizen_id: str) -> dict:
     return dict(row) if row else {}
 
 
+def get_citizen_by_hash(aadhar_hash: str) -> dict:
+    """
+    Resolves an opaque aadharHash token to the citizen's aadharNumber.
+    The frontend sends aadharHash (SHA-256, non-PII) rather than the raw
+    Aadhaar number; this function translates it back to the citizenId used
+    in all other tables.
+    Returns a dict with at least 'aadharNumber', or {} if not found.
+    """
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT "aadharNumber", "fullName"
+        FROM citizens
+        WHERE "aadharHash" = %s LIMIT 1;
+    """, (aadhar_hash,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return dict(row) if row else {}
+
+
 # ─────────────────────────────────────────────────────────────
 # SUPPORT TICKETS
 # ─────────────────────────────────────────────────────────────
