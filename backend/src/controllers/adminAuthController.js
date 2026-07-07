@@ -2,7 +2,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prismaClient');
 
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'change-me-in-production';
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET.trim() === '') {
+    throw new Error(
+        'FATAL: ADMIN_JWT_SECRET environment variable is not set or is empty. ' +
+        'Please configure ADMIN_JWT_SECRET in your .env file for secure admin authentication'
+    );
+}
 const JWT_EXPIRES_IN = '8h';
 
 /**

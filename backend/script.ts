@@ -15,4 +15,3 @@ const prisma = new PrismaClient({
 });
 
 console.log("Script Started")
-console.log("DATABASE_URL =", process.env.DATABASE_URL);
